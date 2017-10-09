@@ -20,7 +20,27 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.JsonSerialization"
+                "test.JsonSerialization",
+                "test.Threads"
+            ]
+        },
+        {
+            "name": "TestClient",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": true,
+            "pythonPath": "${config:python.pythonPath}",
+            "module": "unittest",
+            "cwd": "${workspaceRoot}",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ],
+            "args": [
+                "test.Client"
             ]
         },
         {
