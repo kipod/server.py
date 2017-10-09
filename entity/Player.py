@@ -27,4 +27,5 @@ class Player(Serializable):
         data = json.loads(string_data)
         self.id = data[u"id"]
         self.name = data[u"name"]
-    
+    #test
+	
