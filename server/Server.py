@@ -1,48 +1,35 @@
 """
 Game server
 """
-import socket
-import sys
+import asyncio
+from defines import *
 
-SERVER_PORT = 1973
+@asyncio.coroutine
+def handle_echo(reader, writer):
+    data = yield from reader.read(100)
+    message = data.decode()
+    addr = writer.get_extra_info('peername')
+    print("Received %r from %r" % (message, addr))
 
-class Server(object):
-    """
-    TCP/IP simple server (https://pymotw.com/2/socket/tcp.html)
-    """
-    def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("Send: %r" % message)
+    writer.write(data)
+    yield from writer.drain()
 
-    def start(self):
-        """ starts server
-        """
-        server_address = ('localhost', SERVER_PORT)
-        print >>sys.stderr, 'starting up on %s port %s' % server_address
-        self.socket.bind(server_address)
-        # Listen for incoming connections
-        self.socket.listen(1)
-        while True:
-            # Wait for a connection
-            print >>sys.stderr, 'waiting for a connection'
-            connection, client_address = self.socket.accept()
-            try:
-                print >>sys.stderr, 'connection from', client_address
+    print("Close the client socket")
+    writer.close()
 
-                # Receive the data in small chunks and retransmit it
-                while True:
-                    data = connection.recv(16)
-                    print >>sys.stderr, 'received "%s"' % data
-                    if data:
-                        print >>sys.stderr, 'sending data back to the client'
-                        connection.sendall(data)
-                    else:
-                        print >>sys.stderr, 'no more data from', client_address
-                        break
-                    
-            finally:
-                # Clean up the connection
-                connection.close()
+loop = asyncio.get_event_loop()
+coro = asyncio.start_server(handle_echo, '0.0.0.0', SERVER_PORT, loop=loop)
+server = loop.run_until_complete(coro)
 
-if __name__ == '__main__':
-    server = Server()
-    server.start()
+# Serve requests until Ctrl+C is pressed
+print('Serving on {}'.format(server.sockets[0].getsockname()))
+try:
+    loop.run_forever()
+except KeyboardInterrupt:
+    pass
+
+# Close the server
+server.close()
+loop.run_until_complete(server.wait_closed())
+loop.close()

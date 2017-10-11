@@ -3,8 +3,7 @@
 import socket
 import sys
 import unittest
-from server.Server import SERVER_PORT
-
+from server.defines import SERVER_PORT
 
 class TestClient(unittest.TestCase):
     """
