@@ -1,48 +1,54 @@
 """ simple client for echo-server
 """
-import socket
-import sys
+import asyncio
 import unittest
-from server.defines import SERVER_PORT
+from server.defs import SERVER_PORT, Action
+
+
+@asyncio.coroutine
+def send_command(self, message, loop):
+
+    #print('Send: %r' % message)
+    self._writer.write(message.encode())
+
+    data = yield from self._reader.read(100)
+    #print('Received: %r' % data.decode())
+
+
+@asyncio.coroutine
+def connect_to_server(cls):
+    cls._loop = asyncio.get_event_loop()
+    cls._reader, cls._writer = yield from asyncio.open_connection('127.0.0.1', SERVER_PORT,
+                                                                  loop=cls._loop)
+
+
+def run_in_foreground(task, *, loop=None):
+    """Runs event loop in current thread until the given task completes
+
+    Returns the result of the task.
+    For more complex conditions, combine with asyncio.wait()
+    To include a timeout, combine with asyncio.wait_for()
+    """
+    if loop is None:
+        loop = asyncio.get_event_loop()
+    return loop.run_until_complete(asyncio.ensure_future(task, loop=loop))
 
 class TestClient(unittest.TestCase):
-    """
-    Test-fixture
-    """
-    def setUp(self):
-        pass
+    @classmethod
+    def setUpClass(cls):
+        run_in_foreground(connect_to_server(cls))
 
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def tearDownClass(cls):
+        #print('Close the socket')
+        cls._writer.close()
+        cls._loop.close()
 
 
-    def test_connection(self):
+    def test_send_test_message(self):
         """
         simple test client connection
         """
-        # Create a TCP/IP socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Connect the socket to the port where the server is listening
-        server_address = ('localhost', SERVER_PORT)
-        print >>sys.stderr, 'connecting to %s port %s' % server_address
-        sock.connect(server_address)
-        try:
-            # Send data
-            message = 'This is the message.  It will be repeated.'
-            print >>sys.stderr, 'sending "%s"' % message
-            sock.sendall(message)
-
-            # Look for the response
-            amount_received = 0
-            amount_expected = len(message)
-            
-            while amount_received < amount_expected:
-                data = sock.recv(16)
-                amount_received += len(data)
-                print >>sys.stderr, 'received "%s"' % data
-
-        finally:
-            print >>sys.stderr, 'closing socket'
-            sock.close()
+        message = 'Hello World!'
+        run_in_foreground(send_command(self, message, asyncio.get_event_loop()))

@@ -2,24 +2,27 @@
 Game server
 """
 import asyncio
-from defines import *
+from defs import *
 
-@asyncio.coroutine
-def handle_echo(reader, writer):
-    data = yield from reader.read(100)
-    message = data.decode()
-    addr = writer.get_extra_info('peername')
-    print("Received %r from %r" % (message, addr))
+class EchoServerClientProtocol(asyncio.Protocol):
+    def connection_made(self, transport):
+        peername = transport.get_extra_info('peername')
+        print('Connection from {}'.format(peername))
+        self.transport = transport
 
-    print("Send: %r" % message)
-    writer.write(data)
-    yield from writer.drain()
+    def data_received(self, data):
+        message = data.decode()
+        print('Data received: {!r}'.format(message))
 
-    print("Close the client socket")
-    writer.close()
+        print('Send: {!r}'.format(message))
+        self.transport.write(data)
+
+        print('Close the client socket')
+        self.transport.close()
 
 loop = asyncio.get_event_loop()
-coro = asyncio.start_server(handle_echo, '0.0.0.0', SERVER_PORT, loop=loop)
+# Each client connection will create a new protocol instance
+coro = loop.create_server(EchoServerClientProtocol, '0.0.0.0', SERVER_PORT)
 server = loop.run_until_complete(coro)
 
 # Serve requests until Ctrl+C is pressed
