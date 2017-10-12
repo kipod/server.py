@@ -13,3 +13,13 @@ class Action(IntEnum):
     STOP = 4
     NEXT = 5
     MAP = 10
+
+
+class Result(IntEnum):
+    """ server response code
+    """
+    OKEY = 0
+    BAD_COMMAND = 1
+    RESOURCE_NOT_FOUND = 2
+    PATH_NOT_FOUND = 3
+    ACCESS_DENIED = 5

@@ -47,7 +47,7 @@
             "name": "server",
             "type": "python",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
             "program": "${workspaceRoot}/server/Server.py",
             "cwd": "${workspaceRoot}/server",

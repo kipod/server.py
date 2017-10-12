@@ -5,7 +5,7 @@ from entity.Map import Map
 class Game(object):
     """ game
         has:
-          sessions - list of network sessions
+          plyers - list of players on this game
           map - game map
           status - [ready, run, finish]
           tick_time - current time
@@ -14,5 +14,11 @@ class Game(object):
 
     """
     def __init__(self):
-        self.sessions = list()
+        self._players = list()
         self.map = Map()
+        
+
+    def add_player(self, player):
+        if not player in self._players:
+            self._players.append(player)
+

@@ -2,17 +2,19 @@
 """
 import asyncio
 import unittest
-from server.defs import SERVER_PORT, Action
+from server.defs import SERVER_PORT, Action, Result
 
 
 @asyncio.coroutine
-def send_command(self, message, loop):
+def send_command(self, action, message, loop):
 
-    #print('Send: %r' % message)
-    self._writer.write(message.encode())
+    self._writer.write(action.to_bytes(4, byteorder='little'))
+    if message:
+        self._writer.write(len(message).to_bytes(4, byteorder='little'))
+        self._writer.write(message.encode('utf-8'))
 
-    data = yield from self._reader.read(100)
-    #print('Received: %r' % data.decode())
+    data = yield from self._reader.read(4)
+    return int(data)
 
 
 @asyncio.coroutine
@@ -50,5 +52,4 @@ class TestClient(unittest.TestCase):
         """
         simple test client connection
         """
-        message = 'Hello World!'
-        run_in_foreground(send_command(self, message, asyncio.get_event_loop()))
+        run_in_foreground(send_command(self, Action.LOGIN, 'Boris', asyncio.get_event_loop()))
