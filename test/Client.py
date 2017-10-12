@@ -14,7 +14,7 @@ def send_command(self, action, message, loop):
         self._writer.write(message.encode('utf-8'))
 
     data = yield from self._reader.read(4)
-    return int(data)
+    return Result(int.from_bytes(data[0:4], byteorder = 'little'))
 
 
 @asyncio.coroutine
@@ -52,4 +52,11 @@ class TestClient(unittest.TestCase):
         """
         simple test client connection
         """
-        run_in_foreground(send_command(self, Action.LOGIN, 'Boris', asyncio.get_event_loop()))
+        result = run_in_foreground(
+            send_command(self, Action.LOGIN, 'Boris', asyncio.get_event_loop())
+            )
+        self.assertEqual(Result.OKEY, result)
+        result = run_in_foreground(
+            send_command(self, Action.LOGOUT, None, asyncio.get_event_loop())
+            )
+        self.assertEqual(Result.OKEY, result)

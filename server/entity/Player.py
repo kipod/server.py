@@ -2,7 +2,7 @@
 Entity Player
 """
 import uuid
-from Serializable import Serializable
+from .Serializable import Serializable
 import json
 
 # all registred players

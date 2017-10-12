@@ -3,7 +3,7 @@ Game server
 """
 import asyncio
 from defs import SERVER_PORT, Action, Result
-from entity import Player
+from entity.Player import Player
 
 class EchoServerClientProtocol(asyncio.Protocol):
     def __init__(self):
