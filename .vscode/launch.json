@@ -40,11 +40,11 @@
             "name": "Test",
             "type": "python",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
             "module": "unittest",
             "cwd": "${workspaceRoot}",
-            "env": {},
+            "env": {"pythonPath": "${workspaceRoot}"},
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
@@ -52,8 +52,7 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.JsonSerialization",
-                "test.Threads"
+                "test.entity"
             ]
         },
         {

@@ -10,7 +10,10 @@ class DbMap(object):
         self._connection = sqlite3.connect(db_path)
         self.reset_db()
 
+
     def drop_table(self, table):
+        """ drop table by name with ignore error
+        """
         try:
             self._connection.execute('drop table {}'.format(table))
             self._connection.commit()

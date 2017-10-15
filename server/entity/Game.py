@@ -15,8 +15,8 @@ class Game(object):
     """
     def __init__(self):
         self._players = list()
-        self.map = Map()
-        
+        self.map = Map('map01')
+
 
     def add_player(self, player):
         if not player in self._players:

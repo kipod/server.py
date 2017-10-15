@@ -4,8 +4,9 @@ Game server
 import asyncio
 from defs import SERVER_PORT, Action, Result
 from entity.Player import Player
+from entity.Game import Game
 
-class EchoServerClientProtocol(asyncio.Protocol):
+class GameServerProtocol(asyncio.Protocol):
     def __init__(self):
         asyncio.Protocol.__init__(self)
         self._action = None
@@ -13,6 +14,8 @@ class EchoServerClientProtocol(asyncio.Protocol):
         self.message = None
         self.data = None
         self._player = None
+        self._game = Game()
+        self._game.add_player(self._player)
 
     def connection_made(self, transport):
         self.peername = transport.get_extra_info('peername')
@@ -79,16 +82,26 @@ class EchoServerClientProtocol(asyncio.Protocol):
         print('Close the client socket')
         self.transport.close()
 
+    def _on_get_map(self, layer):
+        if int(layer) == 0: #terrain = static objects
+            message = self._game.map.to_json_str()
+            self._write_respose(Result.OKEY, message)
+        elif int(layer) == 1: #dynamic objects
+            message = ''
+            self._write_respose(Result.OKEY, message)
+        else:
+            self._write_respose(Result.RESOURCE_NOT_FOUND)
 
     COMMAND_MAP = {
         Action.LOGIN : _on_login,
-        Action.LOGOUT : _on_logout
+        Action.LOGOUT : _on_logout,
+        Action.MAP : _on_get_map
     }
 
 
 loop = asyncio.get_event_loop()
 # Each client connection will create a new protocol instance
-coro = loop.create_server(EchoServerClientProtocol, '0.0.0.0', SERVER_PORT)
+coro = loop.create_server(GameServerProtocol, '0.0.0.0', SERVER_PORT)
 server = loop.run_until_complete(coro)
 
 # Serve requests until Ctrl+C is pressed

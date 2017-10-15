@@ -3,7 +3,7 @@
 import asyncio
 import unittest
 from server.defs import SERVER_PORT, Action, Result
-
+from server.entity.Map import Map
 
 @asyncio.coroutine
 def send_command(self, action, message, loop):
@@ -14,7 +14,18 @@ def send_command(self, action, message, loop):
         self._writer.write(message.encode('utf-8'))
 
     data = yield from self._reader.read(4)
-    return Result(int.from_bytes(data[0:4], byteorder = 'little'))
+    return Result(int.from_bytes(data[0:4], byteorder='little'))
+
+
+@asyncio.coroutine
+def read_message(self):
+    data = yield from self._reader.read(4)
+    msg_len = int.from_bytes(data[0:4], byteorder='little')
+    message = str()
+    if msg_len != 0:
+        data = yield from self._reader.read(msg_len)
+        message = data.decode('utf-8')
+    return message
 
 
 @asyncio.coroutine
@@ -56,6 +67,19 @@ class TestClient(unittest.TestCase):
             send_command(self, Action.LOGIN, 'Boris', asyncio.get_event_loop())
             )
         self.assertEqual(Result.OKEY, result)
+
+        result = run_in_foreground(
+            send_command(self, Action.MAP, str(0), asyncio.get_event_loop())
+            )
+        self.assertEqual(Result.OKEY, result)
+        message = run_in_foreground(
+            read_message(self)
+        )
+        self.assertNotEqual(len(message), 0)
+        map01 = Map()
+        map01.from_json_str(message)
+        self.assertEqual(len(map01.line), 12)
+        self.assertEqual(len(map01.point), 12)
         result = run_in_foreground(
             send_command(self, Action.LOGOUT, None, asyncio.get_event_loop())
             )
