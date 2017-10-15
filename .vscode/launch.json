@@ -5,6 +5,38 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Consoled",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": true,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${file}",
+            "cwd": "",
+            "console": "externalTerminal",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit"
+            ]
+        },
+        {
+            "name": "Map Generator",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "program": "${workspaceRoot}/server/db/gen_map_db.py",
+            "cwd": "${workspaceRoot}",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ]
+        },
+        {
             "name": "Test",
             "type": "python",
             "request": "launch",
