@@ -1,11 +1,12 @@
 import sqlite3
-
+import os
+DEF_PATH_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'map.db')
 
 class DbMap(object):
     """
     DB map generator
     """
-    def __init__(self, db_path='map.db'):
+    def __init__(self, db_path=DEF_PATH_DB):
         self._connection = sqlite3.connect(db_path)
         self.reset_db()
 
@@ -99,13 +100,11 @@ class DbMap(object):
 
 
 with DbMap() as db:
-    db.add_post('', 0, map_id=0) # empty post (post_id = 0)
     ######################################################
     ## Map01. See map01.png
     map_id = db.add_map('map01')
     post_id = db.add_post('town-one', 1, 10) # town, population=10
-    p0 = db.add_point() # zero point
-    p1 = db.add_point(post_id);
+    p1 = db.add_point(post_id)
     p2 = db.add_point()
     p3 = db.add_point()
     p4 = db.add_point()
@@ -129,4 +128,5 @@ with DbMap() as db:
     db.add_line(10, p10, p11) #10: 10-11
     db.add_line(10, p11, p12) #11: 11-12
     db.add_line(10, p12, p7) #12: 12-7
+    print('OK')
     ######################################################
