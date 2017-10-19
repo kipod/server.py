@@ -73,9 +73,14 @@ Reads game map. Map loads by layers:
 * Layer 0 - static objects
 * Layer 1 - dynamic objects
 
-Layer 0 includes info about map index(idx) lines(line), points(point), 
+Layer 0 includes info about map index(idx), map name(name), lines(line), points(point)
 
-Map JSON string data example:
+#### Example
+
+Action MAP message:
+Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
+
+Map JSON string data example for result of action MAP for layer=0:
 
 ``` JSON
 {
