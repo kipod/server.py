@@ -56,4 +56,70 @@ struct ResposeMessage
 
 ### Login
 
-This action message must be first in client-server "dialog".
+This action message must be first in client-server "dialog". In data server expected to receive in data value **name**
+
+#### Example
+
+Hex: |01 00 00 00|17 00 00 00|"{\n    "name": "Boris"\n}"
+
+### Logout
+
+This action closes connection. Data empty.
+
+### Map
+
+Reads game map. Map loads by layers:
+
+* Layer 0 - static objects
+* Layer 1 - dynamic objects
+
+Layer 0 includes info about map index(idx) lines(line), points(point), 
+
+Map JSON string data example:
+
+``` JSON
+{
+    "idx": 1,
+    "line": [
+      {
+         "idx": 1,
+         "length": 10,
+         "point": [
+             1,
+             7
+          ]
+      },
+      {
+          "idx": 2,
+          "length": 10,
+          "point": [
+              8,
+              2
+            ]
+      },
+        {
+            "idx": 3,
+            "length": 10,
+            "point": [
+                9,
+                3
+            ]
+        },
+        **...**
+    ],
+    "name": "map01",
+    "point": [
+        {
+            "idx": 1,
+            "post_id": 1
+        },
+        {
+            "idx": 2
+        },
+        {
+            "idx": 3
+        },
+        **...**
+    ]
+}
+```
