@@ -2,6 +2,7 @@
 Game server
 """
 import asyncio
+import json
 from defs import SERVER_PORT, Action, Result
 from entity.Player import Player
 from entity.Game import Game
@@ -39,7 +40,7 @@ class GameServerProtocol(asyncio.Protocol):
     def _process_data(self, data):
         """
         parsing input command
-        returns True if command parsing complited
+        returns True if command parsing completed
         """
         # read action [4 bytes]
         if not self._action:
@@ -73,24 +74,33 @@ class GameServerProtocol(asyncio.Protocol):
             self.transport.write(len(message).to_bytes(4, byteorder='little'))
             self.transport.write(message.encode('utf-8'))
 
-    def _on_login(self, name):
-        self._player = Player(name)
-        self._write_respose(Result.OKEY)
+    def _on_login(self, json_string_data):
+        data = json.loads(json_string_data)
+        if 'name' in data.keys():
+            self._player = Player(data['name'])
+            self._write_respose(Result.OKEY)
+        else:
+            self._write_respose(Result.BAD_COMMAND)
 
     def _on_logout(self, _):
         self._write_respose(Result.OKEY)
         print('Close the client socket')
         self.transport.close()
 
-    def _on_get_map(self, layer):
-        if int(layer) == 0: #terrain = static objects
-            message = self._game.map.to_json_str()
-            self._write_respose(Result.OKEY, message)
-        elif int(layer) == 1: #dynamic objects
-            message = ''
-            self._write_respose(Result.OKEY, message)
+    def _on_get_map(self, json_string_data):
+        data = json.loads(json_string_data)
+        if 'layer' in data.keys():
+            layer = data['layer']
+            if int(layer) == 0: #terrain = static objects
+                message = self._game.map.to_json_str()
+                self._write_respose(Result.OKEY, message)
+            elif int(layer) == 1: #dynamic objects
+                message = ''
+                self._write_respose(Result.OKEY, message)
+            else:
+                self._write_respose(Result.RESOURCE_NOT_FOUND)
         else:
-            self._write_respose(Result.RESOURCE_NOT_FOUND)
+            self._write_respose(Result.BAD_COMMAND)
 
     COMMAND_MAP = {
         Action.LOGIN : _on_login,

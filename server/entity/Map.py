@@ -49,7 +49,7 @@ class Map(Serializable):
                                             population=post_row[2],
                                             armor=post_row[3],
                                             product=post_row[4]))
-            connection.close()
+            connection.close() 
             self.okey = True
         except sqlite3.Error as e:
             print("An error occurred:", e.args[0])

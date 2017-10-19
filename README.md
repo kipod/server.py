@@ -5,7 +5,7 @@
 ### Common message format
 
 Client sends to server some "action" messages and retrieves "response" message.
-The *Action message* always begins from action code. On C++ language all possible action codes can be represents by enumeration:
+The **Action message** always begins from action code. On C++ language all possible action codes can be represents by enumeration:
 
 ```C++
 class enum Action: public uint32_t
@@ -20,7 +20,7 @@ class enum Action: public uint32_t
 ```
 
 After action code (if necessary) follows data section.
-As answer from server client gets response message. Response message starts with "result code":
+As answer from server client gets **response message**. Response message starts with **result code**:
 
 ```C++
 class enum Result: public uint32_t
@@ -34,7 +34,7 @@ class enum Result: public uint32_t
 ```
 
 After result code follows (if it necessary) data section.
-*Data section* format:
+**Data section** format:
 {data length (4 bytes)}+{bytes of UTF-8 string, contains data in JSON format}
 So client-server messages can be represent by follow types:
 
@@ -55,3 +55,5 @@ struct ResposeMessage
 ```
 
 ### Login
+
+This action message must be first in client-server "dialog".

@@ -2,37 +2,9 @@
 """
 import asyncio
 import unittest
+import json
 from server.defs import SERVER_PORT, Action, Result
 from server.entity.Map import Map
-
-@asyncio.coroutine
-def send_command(self, action, message, loop):
-
-    self._writer.write(action.to_bytes(4, byteorder='little'))
-    if message:
-        self._writer.write(len(message).to_bytes(4, byteorder='little'))
-        self._writer.write(message.encode('utf-8'))
-
-    data = yield from self._reader.read(4)
-    return Result(int.from_bytes(data[0:4], byteorder='little'))
-
-
-@asyncio.coroutine
-def read_message(self):
-    data = yield from self._reader.read(4)
-    msg_len = int.from_bytes(data[0:4], byteorder='little')
-    message = str()
-    if msg_len != 0:
-        data = yield from self._reader.read(msg_len)
-        message = data.decode('utf-8')
-    return message
-
-
-@asyncio.coroutine
-def connect_to_server(cls):
-    cls._loop = asyncio.get_event_loop()
-    cls._reader, cls._writer = yield from asyncio.open_connection('127.0.0.1', SERVER_PORT,
-                                                                  loop=cls._loop)
 
 
 def run_in_foreground(task, *, loop=None):
@@ -46,34 +18,73 @@ def run_in_foreground(task, *, loop=None):
         loop = asyncio.get_event_loop()
     return loop.run_until_complete(asyncio.ensure_future(task, loop=loop))
 
+
+class ServerConnection(object):
+    def __init__(self):
+        run_in_foreground(self.connect_to_server())
+
+    def __del__(self):
+        self._writer.close()
+        self._loop.close()
+
+    @asyncio.coroutine
+    def send_action(self, action, data, loop):
+        self._writer.write(action.to_bytes(4, byteorder='little'))
+        if not data is None:
+            message = json.dumps(data, sort_keys=True, indent=4)
+            self._writer.write(len(message).to_bytes(4, byteorder='little'))
+            self._writer.write(message.encode('utf-8'))
+
+        data = yield from self._reader.read(4)
+        return Result(int.from_bytes(data[0:4], byteorder='little'))
+
+
+    @asyncio.coroutine
+    def read_message(self):
+        data = yield from self._reader.read(4)
+        msg_len = int.from_bytes(data[0:4], byteorder='little')
+        message = str()
+        if msg_len != 0:
+            data = yield from self._reader.read(msg_len)
+            message = data.decode('utf-8')
+        return message
+
+
+    @asyncio.coroutine
+    def connect_to_server(self):
+        self._loop = asyncio.get_event_loop()
+        self._reader, self._writer = yield from asyncio.open_connection('127.0.0.1', SERVER_PORT,
+                                                                    loop=self._loop)
+
+
+
 class TestClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        run_in_foreground(connect_to_server(cls))
+        cls._conn = ServerConnection()
 
 
     @classmethod
     def tearDownClass(cls):
         #print('Close the socket')
-        cls._writer.close()
-        cls._loop.close()
+        del cls._conn
 
 
-    def test_send_test_message(self):
+    def test_get_map(self):
         """
         simple test client connection
         """
         result = run_in_foreground(
-            send_command(self, Action.LOGIN, 'Boris', asyncio.get_event_loop())
+            self._conn.send_action(Action.LOGIN, {'name': 'Boris'}, asyncio.get_event_loop())
             )
         self.assertEqual(Result.OKEY, result)
 
         result = run_in_foreground(
-            send_command(self, Action.MAP, str(0), asyncio.get_event_loop())
+            self._conn.send_action(Action.MAP, {'layer': 0}, asyncio.get_event_loop())
             )
         self.assertEqual(Result.OKEY, result)
         message = run_in_foreground(
-            read_message(self)
+            self._conn.read_message()
         )
         self.assertNotEqual(len(message), 0)
         map01 = Map()
@@ -81,6 +92,6 @@ class TestClient(unittest.TestCase):
         self.assertEqual(len(map01.line), 12)
         self.assertEqual(len(map01.point), 12)
         result = run_in_foreground(
-            send_command(self, Action.LOGOUT, None, asyncio.get_event_loop())
+            self._conn.send_action(Action.LOGOUT, None, asyncio.get_event_loop())
             )
         self.assertEqual(Result.OKEY, result)
