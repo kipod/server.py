@@ -105,7 +105,7 @@ Map JSON string data example:
                 3
             ]
         },
-        **...**
+        /*...*/
     ],
     "name": "map01",
     "point": [
@@ -119,7 +119,7 @@ Map JSON string data example:
         {
             "idx": 3
         },
-        **...**
+        /*...*/
     ]
 }
 ```
