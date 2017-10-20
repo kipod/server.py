@@ -15,6 +15,7 @@ class enum Action: public uint32_t
     RUN = 3,
     STOP = 4,
     NEXT = 5,
+    TURN = 6,
     MAP = 10
 }
 ```
@@ -110,7 +111,7 @@ Map JSON string data example for result of action MAP for layer=0:
                 3
             ]
         },
-        /*...*/
+        ...
     ],
     "name": "map01",
     "point": [
@@ -124,7 +125,7 @@ Map JSON string data example for result of action MAP for layer=0:
         {
             "idx": 3
         },
-        /*...*/
+        ...
     ]
 }
 ```

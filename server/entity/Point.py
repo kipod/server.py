@@ -6,19 +6,10 @@ class Point(object):
     """
     Point entity
     defined by:
-    unique id (idx),
-    name (may be empty),
-    post type ( number, TBD ),
-    population (for the Town type),
-    armor (for the Town type),
-    product (for the Shop type)
+    unique id (idx) - index of point,
+    post_id (may be empty) - index of post; defined if with the point associated the post,
     """
-    def __init__(self, idx, name='', post_type=None,
-                 population=None, armor=None, product=None):
+    def __init__(self, idx, post_id=None):
         self.idx = idx
-        if name:
-            self.name = name
-            self.post_type = post_type
-            self.population = population
-            self.armor = armor
-            self.product = product
+        if not post_id is None:
+            self.post_id = post_id

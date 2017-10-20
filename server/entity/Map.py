@@ -38,18 +38,8 @@ class Map(Serializable):
                 if post_id == 0:
                     self.point.append(Point(row[0]))
                 else:
-                    cur_post = connection.cursor()
-                    cur_post.execute('select name, type, population, armor, product'
-                                     ' from post'
-                                     ' where id=?', (post_id,))
-                    post_row = cur_post.fetchone()
-                    self.point.append(Point(row[0],
-                                            name=post_row[0],
-                                            post_type=post_row[1],
-                                            population=post_row[2],
-                                            armor=post_row[3],
-                                            product=post_row[4]))
-            connection.close() 
+                    self.point.append(Point(row[0], post_id=post_id))
+            connection.close()
             self.okey = True
         except sqlite3.Error as e:
             print("An error occurred:", e.args[0])
@@ -69,13 +59,9 @@ class Map(Serializable):
         self.point = []
         points = data[u"point"]
         for p in points:
-            if u"name" in p.keys():
+            if u"post_id" in p.keys():
                 self.point.append(Point(p[u"idx"],
-                                        name=p[u"name"],
-                                        post_type=p[u"post_type"],
-                                        population=p[u"population"],
-                                        armor=p[u"armor"],
-                                        product=p[u"product"]))
+                                        post_id=p[u"post_id"]))
             else:
                 self.point.append(Point(p[u"idx"]))
         self.okey = True

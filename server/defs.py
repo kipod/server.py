@@ -12,6 +12,7 @@ class Action(IntEnum):
     RUN = 3
     STOP = 4
     NEXT = 5
+    TURN = 6
     MAP = 10
 
 

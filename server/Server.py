@@ -3,6 +3,7 @@ Game server
 """
 import asyncio
 import json
+from log import LOG
 from defs import SERVER_PORT, Action, Result
 from entity.Player import Player
 from entity.Game import Game
@@ -20,18 +21,19 @@ class GameServerProtocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.peername = transport.get_extra_info('peername')
-        print('Connection from {}'.format(self.peername))
+        LOG(LOG.INFO, 'Connection from %s', self.peername)
         self.transport = transport
 
 
     def connection_lost(self, exc):
-        print('Connection from {} \n\tReson: {}'.format(self.peername, exc))
+        LOG(LOG.WARNING, 'Connection from %s lost. Reason:%s', self.peername, exc)
 
     def data_received(self, data):
         if self.data:
             data = self.data + data
             self.data = b""
         if self._process_data(data):
+            LOG(LOG.INFO, str(Action(self._action)))
             method = self.COMMAND_MAP[self._action]
             if method:
                 method(self, self.message)
@@ -79,18 +81,20 @@ class GameServerProtocol(asyncio.Protocol):
         if 'name' in data.keys():
             self._player = Player(data['name'])
             self._write_respose(Result.OKEY)
+            LOG(LOG.INFO, "Login player: %s", data['name'])
         else:
             self._write_respose(Result.BAD_COMMAND)
 
     def _on_logout(self, _):
         self._write_respose(Result.OKEY)
-        print('Close the client socket')
+        LOG(LOG.INFO, 'Logout. Player:%s', self._player.name)
         self.transport.close()
 
     def _on_get_map(self, json_string_data):
         data = json.loads(json_string_data)
         if 'layer' in data.keys():
             layer = data['layer']
+            LOG(LOG.INFO, "Load map layer=%d", layer)
             if int(layer) == 0: #terrain = static objects
                 message = self._game.map.to_json_str()
                 self._write_respose(Result.OKEY, message)
@@ -112,16 +116,16 @@ class GameServerProtocol(asyncio.Protocol):
 loop = asyncio.get_event_loop()
 # Each client connection will create a new protocol instance
 coro = loop.create_server(GameServerProtocol, '0.0.0.0', SERVER_PORT)
-server = loop.run_until_complete(coro)
+SERVER = loop.run_until_complete(coro)
 
 # Serve requests until Ctrl+C is pressed
-print('Serving on {}'.format(server.sockets[0].getsockname()))
+LOG(LOG.INFO, 'Serving on %s', SERVER.sockets[0].getsockname())
 try:
     loop.run_forever()
 except KeyboardInterrupt:
-    pass
+    LOG(LOG.WARNING, 'Server stopped by keyboard interrupt...')
 
 # Close the server
-server.close()
-loop.run_until_complete(server.wait_closed())
+SERVER.close()
+loop.run_until_complete(SERVER.wait_closed())
 loop.close()

@@ -5,12 +5,16 @@ import uuid
 from .Serializable import Serializable
 import json
 
-# all registred players
+# all registered players
 player_list = list()
 
 class Player(Serializable):
     """
     Player
+    * name - player name
+    * id - player id
+    * trains - list of trains
+    * home - post id of the home town
     """
     def __init__(self, name):
         self.name = name
