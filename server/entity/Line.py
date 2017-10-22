@@ -1,4 +1,4 @@
-""" Graph eage entity - Line
+""" Graph edge entity - Line
 """
 
 class Line(object):

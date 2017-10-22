@@ -9,10 +9,8 @@ class Action(IntEnum):
     """
     LOGIN = 1
     LOGOUT = 2
-    RUN = 3
-    STOP = 4
-    NEXT = 5
-    TURN = 6
+    MOVE = 3
+    TURN = 5
     MAP = 10
 
 

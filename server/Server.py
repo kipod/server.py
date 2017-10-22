@@ -16,8 +16,7 @@ class GameServerProtocol(asyncio.Protocol):
         self.message = None
         self.data = None
         self._player = None
-        self._game = Game()
-        self._game.add_player(self._player)
+        self._game = None
 
     def connection_made(self, transport):
         self.peername = transport.get_extra_info('peername')
@@ -79,7 +78,9 @@ class GameServerProtocol(asyncio.Protocol):
     def _on_login(self, json_string_data):
         data = json.loads(json_string_data)
         if 'name' in data.keys():
+            self._game = Game.create('Game of {}'.format(data['name']))
             self._player = Player(data['name'])
+            self._game.add_player(self._player)
             self._write_respose(Result.OKEY)
             LOG(LOG.INFO, "Login player: %s", data['name'])
         else:
@@ -95,14 +96,8 @@ class GameServerProtocol(asyncio.Protocol):
         if 'layer' in data.keys():
             layer = data['layer']
             LOG(LOG.INFO, "Load map layer=%d", layer)
-            if int(layer) == 0: #terrain = static objects
-                message = self._game.map.to_json_str()
-                self._write_respose(Result.OKEY, message)
-            elif int(layer) == 1: #dynamic objects
-                message = ''
-                self._write_respose(Result.OKEY, message)
-            else:
-                self._write_respose(Result.RESOURCE_NOT_FOUND)
+            message = self._game.map.layer_to_json_str(layer)
+            self._write_respose(Result.OKEY, message)
         else:
             self._write_respose(Result.BAD_COMMAND)
 

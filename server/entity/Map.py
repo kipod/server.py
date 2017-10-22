@@ -1,11 +1,14 @@
 """ Game map entity
 """
 import sqlite3
+from .log import LOG
 from .Line import Line
 from .Point import Point
+from .Post import Post
 from .Serializable import Serializable
 import json
 import os
+import copy
 PATH_MAP_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'db', 'map.db')
 
 class Map(Serializable):
@@ -39,10 +42,25 @@ class Map(Serializable):
                     self.point.append(Point(row[0]))
                 else:
                     self.point.append(Point(row[0], post_id=post_id))
+
+            self.post = []
+            cur.execute('select id, name, type, population, armor, product'
+                        ' from post'
+                        ' where map_id=?'
+                        ' order by id', (self.idx,))
+            for row in cur.fetchall():
+                self.post.append(Post(
+                    idx=row[0],
+                    name=row[1],
+                    post_type=row[2],
+                    population=row[3],
+                    armor=row[4],
+                    product=row[5]))
+
             connection.close()
             self.okey = True
-        except sqlite3.Error as e:
-            print("An error occurred:", e.args[0])
+        except sqlite3.Error as exception:
+            LOG(LOG.Error, "An error occurred: %s", exception.args[0])
 
 
     def from_json_str(self, string_data):
@@ -65,3 +83,15 @@ class Map(Serializable):
             else:
                 self.point.append(Point(p[u"idx"]))
         self.okey = True
+
+    def layer_to_json_str(self, layer):
+        data = {}
+        choise_list = ()
+        if layer == 0:
+            choise_list = ('idx', 'name', 'point', 'line')
+        elif layer == 1:
+            choise_list = ('idx', 'post')
+        for key in self.__dict__.keys():
+            if key in choise_list:
+                data[key] = self.__dict__[key]
+        return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)

@@ -27,6 +27,9 @@ class Player(Serializable):
             self.id = str(uuid.uuid4())
             player_list.append(self)
 
+    def __eq__(self, other):
+        return self.id == other.id
+
     def from_json_str(self, string_data):
         data = json.loads(string_data)
         self.id = data[u"id"]
