@@ -1,5 +1,5 @@
 """
-json serialization helpers
+JSON serialization helpers
 """
 import json
 
