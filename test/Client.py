@@ -3,6 +3,7 @@
 import asyncio
 import unittest
 import json
+import time
 from server.defs import SERVER_PORT, Action, Result
 from server.entity.Map import Map
 
@@ -62,6 +63,8 @@ class ServerConnection(object):
 
 class TestClient(unittest.TestCase):
 
+    PLAYER_NAME = 'Test Player Name'
+
     @classmethod
     def setUpClass(self):
         self._conn = ServerConnection()
@@ -91,8 +94,15 @@ class TestClient(unittest.TestCase):
     def test_1_login(self):
         result = self.do_action(
             Action.LOGIN,
-            {'name': 'Test Player Name'})
+            {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
+        message = self.get_message()
+        self.assertNotEqual(len(message), 0)
+        data = json.loads(message)
+        self.assertIn('idx', data)
+        player_id = data['idx']
+        self.assertIsNotNone(player_id)
+
 
     def test_ZZZ_logout(self):
         result = self.do_action(Action.LOGOUT, None)
@@ -117,10 +127,6 @@ class TestClient(unittest.TestCase):
         """
         simple test client connection
         """
-        result = self.do_action(Action.LOGIN,
-                                {'name': 'Test Player Name'})
-        self.assertEqual(Result.OKEY, result)
-
         result = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         message = self.get_message()
@@ -132,3 +138,77 @@ class TestClient(unittest.TestCase):
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
 
+
+    def get_train_pos(self, train_id):
+        result = self.do_action(Action.MAP, {'layer': 1})
+        self.assertEqual(Result.OKEY, result)
+        message = self.get_message()
+        data = json.loads(message)
+        train = data['train'][train_id]
+        return train['position']
+
+    def get_train_line(self, train_id):
+        result = self.do_action(Action.MAP, {'layer': 1})
+        self.assertEqual(Result.OKEY, result)
+        message = self.get_message()
+        data = json.loads(message)
+        train = data['train'][train_id]
+        return train['line_idx']
+
+
+    def test_3_move_train(self):
+        """
+        get train belongs to the Player
+        """
+        # login for get player id
+        self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        data = json.loads(self.get_message())
+        player_id = data['idx']
+
+        result = self.do_action(Action.MAP, {'layer': 1})
+        self.assertEqual(Result.OKEY, result)
+        message = self.get_message()
+        data = json.loads(message)
+        self.assertIn('train', data)
+        trains = data['train']
+        self.assertNotEqual(0, len(trains))
+        train = trains[0]
+        self.assertEqual(train['player_id'], player_id)
+        # begin moving
+        result = self.do_action(Action.MOVE, {
+            'train_idx': train['idx'],
+            'speed': 1,
+            'line_idx': 1})
+        self.assertEqual(Result.OKEY, result)
+        result = self.do_action(Action.TURN, {})
+        self.assertEqual(Result.OKEY, result)
+        self.assertGreater(self.get_train_pos(0), 0)
+
+        self.move_to_next_line(7, train['idx'], 1)
+        self.move_to_next_line(8, train['idx'], 1)
+        self.move_to_next_line(9, train['idx'], 1)
+        self.move_to_next_line(10, train['idx'], 1)
+        self.move_to_next_line(11, train['idx'], 1)
+        self.move_to_next_line(12, train['idx'], 1)
+        self.move_to_next_line(1, train['idx'], -1)
+        self.move_to_next_line(1, train['idx'], 0)
+        for _ in range(self.get_train_pos(0)):
+            result = self.do_action(Action.TURN, {})
+            self.assertEqual(Result.OKEY, result)
+        self.assertEqual(self.get_train_pos(0), 0)
+        self.assertEqual(self.get_train_line(0), 1)
+
+
+    def move_to_next_line(self, next_line_id, train_idx, speed):
+        result = self.do_action(Action.MOVE, {
+            'train_idx': train_idx,
+            'speed': speed,
+            'line_idx': next_line_id})
+        self.assertEqual(Result.OKEY, result)
+        for _ in range(11):
+            result = self.do_action(Action.TURN, {})
+            self.assertEqual(Result.OKEY, result)
+            if next_line_id == self.get_train_line(train_idx):
+                break
+        else:
+            self.assertTrue(False, "Cant arrive to line:{}".format(next_line_id))

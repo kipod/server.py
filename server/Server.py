@@ -1,6 +1,9 @@
 """
 Game server
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import asyncio
 import json
 from log import LOG
@@ -77,12 +80,13 @@ class GameServerProtocol(asyncio.Protocol):
 
     def _on_login(self, json_string_data):
         data = json.loads(json_string_data)
-        if 'name' in data.keys():
+        if 'name' in data:
             self._game = Game.create('Game of {}'.format(data['name']))
             self._player = Player(data['name'])
             self._game.add_player(self._player)
-            self._write_respose(Result.OKEY)
             LOG(LOG.INFO, "Login player: %s", data['name'])
+            message = self._player.to_json_str()
+            self._write_respose(Result.OKEY, message)
         else:
             self._write_respose(Result.BAD_COMMAND)
 
@@ -90,6 +94,9 @@ class GameServerProtocol(asyncio.Protocol):
         self._write_respose(Result.OKEY)
         LOG(LOG.INFO, 'Logout. Player:%s', self._player.name)
         self.transport.close()
+        self._game.stop()
+        del self._game
+        self._game = None
 
     def _on_get_map(self, json_string_data):
         data = json.loads(json_string_data)
@@ -101,10 +108,23 @@ class GameServerProtocol(asyncio.Protocol):
         else:
             self._write_respose(Result.BAD_COMMAND)
 
+    def _on_move(self, json_string_data):
+        data = json.loads(json_string_data)
+        res = self._game.move_train(data['train_idx'],
+                                    data['speed'],
+                                    data['line_idx'])
+        self._write_respose(res)
+
+    def _on_turn(self, _):
+        self._game.turn()
+        self._write_respose(Result.OKEY)
+
     COMMAND_MAP = {
         Action.LOGIN : _on_login,
         Action.LOGOUT : _on_logout,
-        Action.MAP : _on_get_map
+        Action.MAP : _on_get_map,
+        Action.MOVE : _on_move,
+        Action.TURN : _on_turn
     }
 
 
