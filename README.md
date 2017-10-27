@@ -199,3 +199,34 @@ Each __train__ has follows key fields:
 * **player_id** - id of player, who owner of this train
 * **position** - position of this train in the current line
 * **speed** - speed on the train
+
+### MOVE action
+
+#### Example of message of MOVE action
+
+``` JSON
+{
+    "line_idx": 1,
+    "speed": 1,
+    "train_idx": 0
+}
+```
+
+**MOVE** action must send follow fields:
+
+* **line_idx** - line index. Index of line where the train will be placed in start on the game or in the next point
+* **speed** - speed of the point. Possible values:
+  * 0 - the train will be stopped on the next point
+  * 1 - the train moves in positive direction
+  * -1 - the train moves in negative direction
+* **train_idx** - index of the train
+
+### TURN action
+
+Turn action needs for force next turn of the game and don't wait game's time slice.
+Game time slice equal to 1 second.
+TURN action don't need any parameters.
+
+#### Example turn action bin data
+
+Hex: |05 00 00 00|00 00 00 00|
