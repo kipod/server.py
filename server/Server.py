@@ -72,11 +72,10 @@ class GameServerProtocol(asyncio.Protocol):
         self.data = data[self.message_len:]
         return True
 
-    def _write_respose(self, result, message=None):
+    def _write_respose(self, result, message=""):
         self.transport.write(result.to_bytes(4, byteorder='little'))
-        if message:
-            self.transport.write(len(message).to_bytes(4, byteorder='little'))
-            self.transport.write(message.encode('utf-8'))
+        self.transport.write(len(message).to_bytes(4, byteorder='little'))
+        self.transport.write(message.encode('utf-8'))
 
     def _on_login(self, json_string_data):
         data = json.loads(json_string_data)

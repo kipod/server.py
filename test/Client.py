@@ -40,25 +40,21 @@ class ServerConnection(object):
             self._writer.write(message.encode('utf-8'))
 
         data = yield from self._reader.read(4)
-        return Result(int.from_bytes(data[0:4], byteorder='little'))
-
-
-    @asyncio.coroutine
-    def read_message(self):
+        result = Result(int.from_bytes(data[0:4], byteorder='little'))
         data = yield from self._reader.read(4)
         msg_len = int.from_bytes(data[0:4], byteorder='little')
         message = str()
         if msg_len != 0:
             data = yield from self._reader.read(msg_len)
             message = data.decode('utf-8')
-        return message
+        return result, message
 
 
     @asyncio.coroutine
     def connect_to_server(self):
         self._loop = asyncio.get_event_loop()
         self._reader, self._writer = yield from asyncio.open_connection('127.0.0.1', SERVER_PORT,
-                                                                loop=self._loop)
+                                                                        loop=self._loop)
 
 
 class TestClient(unittest.TestCase):
@@ -85,18 +81,11 @@ class TestClient(unittest.TestCase):
             self._conn.send_action(action, data)
             )
 
-
-    def get_message(self):
-        return run_in_foreground(
-            self._conn.read_message()
-        )
-
     def test_1_login(self):
-        result = self.do_action(
+        result, message = self.do_action(
             Action.LOGIN,
             {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
-        message = self.get_message()
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertIn('idx', data)
@@ -105,7 +94,7 @@ class TestClient(unittest.TestCase):
 
 
     def test_ZZZ_logout(self):
-        result = self.do_action(Action.LOGOUT, None)
+        result, _ = self.do_action(Action.LOGOUT, None)
         self.assertEqual(Result.OKEY, result)
 
 
@@ -113,9 +102,8 @@ class TestClient(unittest.TestCase):
         """
         simple test client connection
         """
-        result = self.do_action(Action.MAP, {'layer': 0})
+        result, message = self.do_action(Action.MAP, {'layer': 0})
         self.assertEqual(Result.OKEY, result)
-        message = self.get_message()
         self.assertNotEqual(len(message), 0)
         map01 = Map()
         map01.from_json_str(message)
@@ -127,9 +115,8 @@ class TestClient(unittest.TestCase):
         """
         simple test client connection
         """
-        result = self.do_action(Action.MAP, {'layer': 1})
+        result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
-        message = self.get_message()
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertIn('idx', data.keys())
@@ -140,17 +127,15 @@ class TestClient(unittest.TestCase):
 
 
     def get_train_pos(self, train_id):
-        result = self.do_action(Action.MAP, {'layer': 1})
+        result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
-        message = self.get_message()
         data = json.loads(message)
         train = data['train'][train_id]
         return train['position']
 
     def get_train_line(self, train_id):
-        result = self.do_action(Action.MAP, {'layer': 1})
+        result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
-        message = self.get_message()
         data = json.loads(message)
         train = data['train'][train_id]
         return train['line_idx']
@@ -161,13 +146,12 @@ class TestClient(unittest.TestCase):
         get train belongs to the Player
         """
         # login for get player id
-        self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
-        data = json.loads(self.get_message())
+        _, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        data = json.loads(message)
         player_id = data['idx']
 
-        result = self.do_action(Action.MAP, {'layer': 1})
+        result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
-        message = self.get_message()
         data = json.loads(message)
         self.assertIn('train', data)
         trains = data['train']
@@ -175,12 +159,12 @@ class TestClient(unittest.TestCase):
         train = trains[0]
         self.assertEqual(train['player_id'], player_id)
         # begin moving
-        result = self.do_action(Action.MOVE, {
+        result, _ = self.do_action(Action.MOVE, {
             'train_idx': train['idx'],
             'speed': 1,
             'line_idx': 1})
         self.assertEqual(Result.OKEY, result)
-        result = self.do_action(Action.TURN, {})
+        result, _ = self.do_action(Action.TURN, {})
         self.assertEqual(Result.OKEY, result)
         self.assertGreater(self.get_train_pos(0), 0)
 
@@ -193,20 +177,20 @@ class TestClient(unittest.TestCase):
         self.move_to_next_line(1, train['idx'], -1)
         self.move_to_next_line(1, train['idx'], 0)
         for _ in range(self.get_train_pos(0)):
-            result = self.do_action(Action.TURN, {})
+            result, _ = self.do_action(Action.TURN, {})
             self.assertEqual(Result.OKEY, result)
         self.assertEqual(self.get_train_pos(0), 0)
         self.assertEqual(self.get_train_line(0), 1)
 
 
     def move_to_next_line(self, next_line_id, train_idx, speed):
-        result = self.do_action(Action.MOVE, {
+        result, _ = self.do_action(Action.MOVE, {
             'train_idx': train_idx,
             'speed': speed,
             'line_idx': next_line_id})
         self.assertEqual(Result.OKEY, result)
         for _ in range(11):
-            result = self.do_action(Action.TURN, {})
+            result, _ = self.do_action(Action.TURN, {})
             self.assertEqual(Result.OKEY, result)
             if next_line_id == self.get_train_line(train_idx):
                 break
