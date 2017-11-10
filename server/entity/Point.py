@@ -11,5 +11,4 @@ class Point(object):
     """
     def __init__(self, idx, post_id=None):
         self.idx = idx
-        if not post_id is None:
-            self.post_id = post_id
+        self.post_id = post_id

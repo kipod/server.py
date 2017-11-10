@@ -126,18 +126,31 @@ class TestClient(unittest.TestCase):
         self.assertNotIn('point', data.keys())
 
 
-    def get_train_pos(self, train_id):
+    def get_train(self, train_id):
+        """ get train by id """
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         data = json.loads(message)
-        train = data['train'][train_id]
+        return data['train'][train_id]
+
+
+    def get_post(self, post_id):
+        """ get train by id """
+        result, message = self.do_action(Action.MAP, {'layer': 1})
+        self.assertEqual(Result.OKEY, result)
+        data = json.loads(message)
+        return data['post'][post_id]
+
+
+    def get_train_pos(self, train_id):
+        """ get train's position """
+        train = self.get_train(train_id)
         return train['position']
 
+
     def get_train_line(self, train_id):
-        result, message = self.do_action(Action.MAP, {'layer': 1})
-        self.assertEqual(Result.OKEY, result)
-        data = json.loads(message)
-        train = data['train'][train_id]
+        """ get train's current line index """
+        train = self.get_train(train_id)
         return train['line_idx']
 
 
@@ -184,6 +197,7 @@ class TestClient(unittest.TestCase):
 
 
     def move_to_next_line(self, next_line_id, train_idx, speed):
+        """ move train to the next line """
         result, _ = self.do_action(Action.MOVE, {
             'train_idx': train_idx,
             'speed': speed,
@@ -196,3 +210,48 @@ class TestClient(unittest.TestCase):
                 break
         else:
             self.assertTrue(False, "Cant arrive to line:{}".format(next_line_id))
+
+
+    def test_4_transport_product(self):
+        """
+        transport product from shop_one to town_one
+        """
+        # login for get player id
+        _, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        data = json.loads(message)
+        player_id = data['idx']
+        post = self.get_post(0)
+        start_product = int(post['product'])
+
+        train = self.get_train(0)
+        self.assertEqual(train['player_id'], player_id)
+        self.assertEqual(int(train['position']), 0)
+        self.assertNotEqual(int(train['capacity']), 0)
+        self.assertEqual(int(train['product']), 0)
+        self.assertEqual(int(train['speed']), 0)
+        self.move_to_next_line(1, train['idx'], 1)
+
+        train = self.get_train(0)
+        while int(train['speed']) != 0:
+            result, _ = self.do_action(Action.TURN, {})
+            self.assertEqual(Result.OKEY, result)
+            train = self.get_train(0)
+
+        self.assertEqual(int(train['line_idx']), 1)
+        self.assertEqual(int(train['position']), 10)
+        self.assertEqual(int(train['product']), int(train['capacity']))
+
+        self.move_to_next_line(1, train['idx'], -1)
+        train = self.get_train(0)
+        while int(train['speed']) != 0:
+            result, _ = self.do_action(Action.TURN, {})
+            self.assertEqual(Result.OKEY, result)
+            train = self.get_train(0)
+
+        self.assertEqual(int(train['line_idx']), 1)
+        self.assertEqual(int(train['position']), 0)
+        self.assertEqual(int(train['product']), 0)
+        post = self.get_post(0)
+        self.assertEqual(int(post['product']), start_product+15)
+
+

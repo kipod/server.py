@@ -6,6 +6,7 @@ from entity.Player import Player
 from entity.Train import Train
 from log import LOG
 from defs import Result
+from entity.Post import Type as PostType
 
 # all registered games
 game_map = {}
@@ -97,6 +98,11 @@ class Game(Thread):
     def train_in_point(self, train, point):
         LOG(LOG.INFO, "Train:%d arrive to point:%d pos:%d",
             train.idx, point, train.position)
+
+        post_id = self.map.point[point].post_id
+        if post_id is not None:
+            self.train_in_post(train, self.map.post[post_id])
+
         if train.idx in self.__next_train_move:
             next_move = self.__next_train_move[train.idx]
             train.speed = next_move["speed"]
@@ -139,3 +145,15 @@ class Game(Thread):
                     return Result.PATH_NOT_FOUND
             self.__next_train_move[train_idx] = {"speed": speed, "line_idx": line_idx}
         return Result.OKEY
+
+
+    def train_in_post(self, train, post):
+        """ depends of post type train will be loaded or unloaded """
+        if post.type == PostType.TOWN:
+            # unload product from train to town
+            post.product += train.product
+            train.product = 0
+        elif post.type == PostType.MARKET:
+            # load product
+            train.product += min(post.product, train.capacity)
+

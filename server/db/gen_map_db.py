@@ -108,13 +108,13 @@ with DbMap() as db:
     map_id = db.add_map('map01')
     post_id = db.add_post('town-one', 1, 10) # town, population=10
     p1 = db.add_point(post_id)
-    post_id = db.add_post('market-one', 2, product=20) # market, product=20
     p2 = db.add_point()
     p3 = db.add_point()
     p4 = db.add_point()
     p5 = db.add_point()
     p6 = db.add_point()
-    p7 = db.add_point()
+    post_id = db.add_post('market-one', 2, product=20) # market, product=20
+    p7 = db.add_point(post_id)
     p8 = db.add_point()
     p9 = db.add_point()
     p10 = db.add_point()
