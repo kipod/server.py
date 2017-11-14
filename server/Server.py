@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import asyncio
 import json
 from log import LOG
-from defs import SERVER_PORT, Action, Result
+from defs import SERVER_PORT, Action, Result, SERVER_ADDR
 from entity.Player import Player
 from entity.Game import Game
 
@@ -129,7 +129,7 @@ class GameServerProtocol(asyncio.Protocol):
 
 loop = asyncio.get_event_loop()
 # Each client connection will create a new protocol instance
-coro = loop.create_server(GameServerProtocol, '0.0.0.0', SERVER_PORT)
+coro = loop.create_server(GameServerProtocol, SERVER_ADDR, SERVER_PORT)
 SERVER = loop.run_until_complete(coro)
 
 # Serve requests until Ctrl+C is pressed

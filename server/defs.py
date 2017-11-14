@@ -2,6 +2,7 @@
 """
 from enum import IntEnum
 SERVER_PORT = 2000
+SERVER_ADDR = '0.0.0.0'
 
 
 class Action(IntEnum):
