@@ -7,6 +7,10 @@ import time
 from server.defs import SERVER_PORT, Action, Result
 from server.entity.Map import Map
 
+SERVER_ADDR = '127.0.0.1'
+#SERVER_ADDR = 'wgforge-srv.wargaming.net'
+#SERVER_PORT = 80
+
 
 def run_in_foreground(task, *, loop=None):
     """Runs event loop in current thread until the given task completes
@@ -53,7 +57,7 @@ class ServerConnection(object):
     @asyncio.coroutine
     def connect_to_server(self):
         self._loop = asyncio.get_event_loop()
-        self._reader, self._writer = yield from asyncio.open_connection('127.0.0.1', SERVER_PORT,
+        self._reader, self._writer = yield from asyncio.open_connection(SERVER_ADDR, SERVER_PORT,
                                                                         loop=self._loop)
 
 
