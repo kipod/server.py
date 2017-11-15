@@ -22,8 +22,10 @@ class Map(Serializable):
         try:
             connection = sqlite3.connect(PATH_MAP_DB)
             cur = connection.cursor()
-            cur.execute('select id from map where name=?', (name, ))
-            self.idx = cur.fetchone()[0]
+            cur.execute('select id, size_x, size_y from map where name=?', (name, ))
+            row = cur.fetchone()
+            self.idx = row[0]
+            self.size = (row[1], row[2])
             self.name = name
             self.line = {}
             cur.execute('select id, len, p0, p1'
@@ -33,12 +35,14 @@ class Map(Serializable):
             for row in cur.fetchall():
                 self.line[row[0]] = Line(row[0], row[1], row[2], row[3])
             self.point = {}
-            cur.execute('select id, post_id'
+            self.coordinate = {}
+            cur.execute('select id, post_id, x, y'
                         ' from point'
                         ' where map_id=?'
                         ' order by id', (self.idx,))
             for row in cur.fetchall():
                 post_id = row[1]
+                self.coordinate[row[0]] = {'x':row[2], 'y':row[3]}
                 if post_id == 0:
                     self.point[row[0]] = Point(row[0])
                 else:
@@ -95,6 +99,8 @@ class Map(Serializable):
             choise_list = ('idx', 'name', 'point', 'line')
         elif layer == 1:
             choise_list = ('idx', 'post', 'train')
+        elif layer == 10:
+            choise_list = ('idx', 'size', 'coordinate')
         for key in self.__dict__.keys():
             if key in choise_list:
                 attribute = self.__dict__[key]

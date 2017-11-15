@@ -101,9 +101,12 @@ class GameServerProtocol(asyncio.Protocol):
         data = json.loads(json_string_data)
         if 'layer' in data.keys():
             layer = data['layer']
-            LOG(LOG.INFO, "Load map layer=%d", layer)
-            message = self._game.map.layer_to_json_str(layer)
-            self._write_respose(Result.OKEY, message)
+            if layer in (0,1,10):
+                LOG(LOG.INFO, "Load map layer=%d", layer)
+                message = self._game.map.layer_to_json_str(layer)
+                self._write_respose(Result.OKEY, message)
+            else:
+                self._write_respose(Result.RESOURCE_NOT_FOUND)
         else:
             self._write_respose(Result.BAD_COMMAND)
 
