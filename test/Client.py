@@ -258,4 +258,16 @@ class TestClient(unittest.TestCase):
         post = self.get_post(0)
         self.assertEqual(int(post['product']), start_product+15)
 
-
+    def test_5_read_coordinates(self):
+        """ get coordinates of points
+            using layer 10
+        """
+        result, message = self.do_action(Action.MAP, {'layer': 10})
+        self.assertEqual(Result.OKEY, result)
+        self.assertNotEqual(len(message), 0)
+        data = json.loads(message)
+        self.assertIn('idx', data.keys())
+        self.assertIn('coordinate', data.keys())
+        self.assertIn('size', data.keys())
+        self.assertNotIn('line', data.keys())
+        self.assertNotIn('point', data.keys())
