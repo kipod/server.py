@@ -42,7 +42,7 @@ class Map(Serializable):
                         ' order by id', (self.idx,))
             for row in cur.fetchall():
                 post_id = row[1]
-                self.coordinate[row[0]] = {'x':row[2], 'y':row[3]}
+                self.coordinate[row[0]] = {'idx': row[0], 'x':row[2], 'y':row[3]}
                 if post_id == 0:
                     self.point[row[0]] = Point(row[0])
                 else:
