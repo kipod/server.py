@@ -20,6 +20,7 @@ class GameServerProtocol(asyncio.Protocol):
         self.data = None
         self._player = None
         self._game = None
+        self._replay = None
 
     def connection_made(self, transport):
         self.peername = transport.get_extra_info('peername')
@@ -39,6 +40,8 @@ class GameServerProtocol(asyncio.Protocol):
             method = self.COMMAND_MAP[self._action]
             if method:
                 method(self, self.message)
+            if self._replay:
+                self._replay.add_action(self._action, self.message)
             self._action = None
 
     def _process_data(self, data):
@@ -80,7 +83,9 @@ class GameServerProtocol(asyncio.Protocol):
     def _on_login(self, json_string_data):
         data = json.loads(json_string_data)
         if 'name' in data:
-            self._game = Game.create('Game of {}'.format(data['name']))
+            game_name = 'Game of {}'.format(data['name'])
+            self._game = Game.create(game_name)
+            self._replay = self._game.replay()
             self._player = Player(data['name'])
             self._game.add_player(self._player)
             LOG(LOG.INFO, "Login player: %s", data['name'])

@@ -1,9 +1,9 @@
 import sqlite3
 import os
-import datetime
+from datetime import datetime
 DEF_PATH_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'replay.db')
 
-TIME_FORMAT = '%b %d %Y %I:%M%p'
+TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
 class DbReplay(object):
     """
@@ -32,7 +32,7 @@ class DbReplay(object):
             'create table game (id integer primary key, name text,\
                                 date text)',
             'create table action (id integer primary key, game_id integer,\
-                                    code integer, message text)',
+                                    code integer, message text, date text)',
         )
 
         for sql in sql_set:
@@ -43,7 +43,9 @@ class DbReplay(object):
         cursor = self._connection.execute('select max(id) from game')
         return int(cursor.fetchall()[0])
 
-    def add_game(self, name, date):
+    def add_game(self, name, date=None):
+        if date is None:
+            date=datetime.now().strftime(TIME_FORMAT)
         self._connection.execute('insert into game (name, date) values (?, ?)',
                                  (name, date))
         self._connection.commit()
@@ -51,17 +53,24 @@ class DbReplay(object):
         self._current_game_id = int(cursor.fetchone()[0])
         return self._current_game_id
 
+    async def add_game_async(self, name):
+        return await self.add_game(name)
 
-    def add_action(self, action, message, game_id=None):
+    def add_action(self, action, message, game_id=None, date=None):
+        if date is None:
+            date=datetime.now().strftime(TIME_FORMAT)
         if game_id is None:
             game_id = self._current_game_id
         self._connection.execute('insert into action \
-                                  (game_id, code, message)\
-                                  values (?, ?, ?)',
-                                 (game_id, action, message))
+                                  (game_id, code, message, date)\
+                                  values (?, ?, ?, ?)',
+                                 (game_id, action, message, date))
         self._connection.commit()
-        cursor = self._connection.execute('select max(id) from action')
-        return int(cursor.fetchone()[0])
+        #cursor = self._connection.execute('select max(id) from action')
+        #return int(cursor.fetchone()[0])
+
+    async def add_action_async(self, action, message):
+        return await self.add_action(action, message)
 
     def __enter__(self):
         return self
@@ -78,7 +87,7 @@ class DbReplay(object):
 def main():
     with DbReplay() as db:
         db.reset_db()
-        game_id = db.add_game('Test', datetime.datetime.now().strftime(TIME_FORMAT))
+        game_id = db.add_game('Test')
 
 
 if __name__ == '__main__':

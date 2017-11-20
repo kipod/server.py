@@ -8,9 +8,9 @@ from server.entity.Map import Map
 from datetime import datetime
 
 SERVER_ADDR = '127.0.0.1'
-SERVER_ADDR = 'wgforge-srv.wargaming.net'
+#SERVER_ADDR = 'wgforge-srv.wargaming.net'
 #SERVER_ADDR = '10.128.106.149'
-SERVER_PORT = 443
+#SERVER_PORT = 443
 
 
 def run_in_foreground(task):

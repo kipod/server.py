@@ -7,6 +7,8 @@ from entity.Train import Train
 from log import LOG
 from defs import Result
 from entity.Post import Type as PostType
+from db.replay import DbReplay
+import asyncio
 
 # all registered games
 game_map = {}
@@ -34,6 +36,9 @@ class Game(Thread):
         Thread.start(self)
         self.__pass_next_tick = False
         self.__next_train_move = {}
+        self.__replay = DbReplay()
+        self.__replay.add_game(name)
+
 
 
     @staticmethod
@@ -157,3 +162,6 @@ class Game(Thread):
             # load product
             train.product += min(post.product, train.capacity)
 
+    def replay(self):
+        """ obtain the replay object """
+        return self.__replay
