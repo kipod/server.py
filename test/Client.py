@@ -3,29 +3,29 @@
 import asyncio
 import unittest
 import json
-import time
 from server.defs import SERVER_PORT, Action, Result
 from server.entity.Map import Map
+from datetime import datetime
 
 SERVER_ADDR = '127.0.0.1'
-#SERVER_ADDR = 'wgforge-srv.wargaming.net'
+SERVER_ADDR = 'wgforge-srv.wargaming.net'
 #SERVER_ADDR = '10.128.106.149'
-#SERVER_PORT = 443
+SERVER_PORT = 443
 
 
-def run_in_foreground(task, *, loop=None):
+def run_in_foreground(task):
     """Runs event loop in current thread until the given task completes
 
     Returns the result of the task.
     For more complex conditions, combine with asyncio.wait()
     To include a timeout, combine with asyncio.wait_for()
     """
-    if loop is None:
-        loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
     return loop.run_until_complete(asyncio.ensure_future(task, loop=loop))
 
 
 class ServerConnection(object):
+    """ connection object """
     def __init__(self):
         self._loop = None
         self._reader = None
@@ -36,44 +36,46 @@ class ServerConnection(object):
         self._writer.close()
         self._loop.close()
 
-    @asyncio.coroutine
-    def send_action(self, action, data, loop=asyncio.get_event_loop()):
+    async def send_action(self, action, data):
+        """ send action command and returns result and message in string"""
         self._writer.write(action.to_bytes(4, byteorder='little'))
         if not data is None:
             message = json.dumps(data, sort_keys=True, indent=4)
             self._writer.write(len(message).to_bytes(4, byteorder='little'))
             self._writer.write(message.encode('utf-8'))
 
-        data = yield from self._reader.read(4)
+        data = await self._reader.read(4)
         result = Result(int.from_bytes(data[0:4], byteorder='little'))
-        data = yield from self._reader.read(4)
+        data = await self._reader.read(4)
         msg_len = int.from_bytes(data[0:4], byteorder='little')
         message = str()
         if msg_len != 0:
-            data = yield from self._reader.read(msg_len)
+            data = await self._reader.read(msg_len)
+            while len(data) < msg_len:
+                data += await self._reader.read(msg_len - len(data))
             message = data.decode('utf-8')
         return result, message
 
 
-    @asyncio.coroutine
-    def connect_to_server(self):
+    async def connect_to_server(self):
+        """ get reader and writer """
         self._loop = asyncio.get_event_loop()
-        self._reader, self._writer = yield from asyncio.open_connection(SERVER_ADDR, SERVER_PORT,
-                                                                        loop=self._loop)
+        self._reader, self._writer = await asyncio.open_connection(SERVER_ADDR, SERVER_PORT,
+                                                                   loop=self._loop)
 
 
 class TestClient(unittest.TestCase):
-
-    PLAYER_NAME = 'Test Player Name'
-
-    @classmethod
-    def setUpClass(self):
-        self._conn = ServerConnection()
+    """ Test class """
+    PLAYER_NAME = 'Test Player Name ' + datetime.now().strftime('%H:%M:%S.%f')
 
     @classmethod
-    def tearDownClass(self):
+    def setUpClass(cls):
+        cls._conn = ServerConnection()
+
+    @classmethod
+    def tearDownClass(cls):
         #print('Close the socket')
-        del self._conn
+        del cls._conn
 
     def test_0_connection(self):
         """ test connection """
@@ -214,7 +216,7 @@ class TestClient(unittest.TestCase):
             if next_line_id == self.get_train_line(train_idx):
                 break
         else:
-            self.assertTrue(False, "Cant arrive to line:{}".format(next_line_id))
+            self.fail("Cant arrive to line:{}".format(next_line_id))
 
 
     def test_4_transport_product(self):
