@@ -125,7 +125,7 @@ with DbMap() as db:
     db.add_line(10, p9, p3) #3: 9-3
     db.add_line(10, p10, p4) #4: 10-4
     db.add_line(10, p11, p5) #5: 11-5
-    db.add_line(10, p7, p8) #6: 12-6
+    db.add_line(10, p12, p6) #6: 12-6
     db.add_line(10, p7, p8) #7: 7-8
     db.add_line(10, p8, p9) #8: 8-9
     db.add_line(10, p9, p10) #9: 9-10
