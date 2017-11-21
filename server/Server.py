@@ -40,7 +40,7 @@ class GameServerProtocol(asyncio.Protocol):
             method = self.COMMAND_MAP[self._action]
             if method:
                 method(self, self.message)
-            if self._replay:
+            if self._replay and self._action in (Action.MOVE, Action.TURN):
                 self._replay.add_action(self._action, self.message)
             self._action = None
 
