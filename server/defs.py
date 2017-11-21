@@ -15,6 +15,8 @@ class Action(IntEnum):
     MOVE = 3
     TURN = 5
     MAP = 10
+    OBSERVER = 100
+    GAME = 101
 
 
 class Result(IntEnum):

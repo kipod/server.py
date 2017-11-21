@@ -10,6 +10,7 @@ from log import LOG
 from defs import SERVER_PORT, Action, Result, SERVER_ADDR
 from entity.Player import Player
 from entity.Game import Game
+from entity.Observer import Observer
 
 class GameServerProtocol(asyncio.Protocol):
     def __init__(self):
@@ -21,6 +22,7 @@ class GameServerProtocol(asyncio.Protocol):
         self._player = None
         self._game = None
         self._replay = None
+        self._observer = None
 
     def connection_made(self, transport):
         self.peername = transport.get_extra_info('peername')
@@ -36,12 +38,16 @@ class GameServerProtocol(asyncio.Protocol):
             data = self.data + data
             self.data = b""
         if self._process_data(data):
-            LOG(LOG.INFO, str(Action(self._action)))
-            method = self.COMMAND_MAP[self._action]
-            if method:
-                method(self, self.message)
-            if self._replay and self._action in (Action.MOVE, Action.TURN):
-                self._replay.add_action(self._action, self.message, with_commit=False)
+            if self._observer:
+                result, message = self._observer.action(self._action, json.loads(self.message))
+                self._write_respose(result, message)
+            else:
+                LOG(LOG.INFO, str(Action(self._action)))
+                method = self.COMMAND_MAP[self._action]
+                if method:
+                    method(self, json.loads(self.message))
+                if self._replay and self._action in (Action.MOVE, ):
+                    self._replay.add_action(self._action, self.message, with_commit=False)
             self._action = None
 
     def _process_data(self, data):
@@ -57,8 +63,9 @@ class GameServerProtocol(asyncio.Protocol):
             self._action = Action(int.from_bytes(data[0:4], byteorder = 'little'))
             self.message_len = 0
             data = data[4:]
-            if self._action in (Action.LOGOUT, ): # commands without data
+            if self._action in (Action.LOGOUT, Action.OBSERVER): # commands without data
                 self.data = data
+                self.message = "{}"
                 return True
         # read size of message
         if not self.message_len:
@@ -75,13 +82,14 @@ class GameServerProtocol(asyncio.Protocol):
         self.data = data[self.message_len:]
         return True
 
-    def _write_respose(self, result, message=""):
+    def _write_respose(self, result, message=None):
+        if message is None:
+            message = ""
         self.transport.write(result.to_bytes(4, byteorder='little'))
         self.transport.write(len(message).to_bytes(4, byteorder='little'))
         self.transport.write(message.encode('utf-8'))
 
-    def _on_login(self, json_string_data):
-        data = json.loads(json_string_data)
+    def _on_login(self, data):
         if 'name' in data:
             game_name = 'Game of {}'.format(data['name'])
             self._game = Game.create(game_name)
@@ -102,8 +110,7 @@ class GameServerProtocol(asyncio.Protocol):
         del self._game
         self._game = None
 
-    def _on_get_map(self, json_string_data):
-        data = json.loads(json_string_data)
+    def _on_get_map(self, data):
         if 'layer' in data.keys():
             layer = data['layer']
             if layer in (0,1,10):
@@ -115,8 +122,7 @@ class GameServerProtocol(asyncio.Protocol):
         else:
             self._write_respose(Result.BAD_COMMAND)
 
-    def _on_move(self, json_string_data):
-        data = json.loads(json_string_data)
+    def _on_move(self, data):
         res = self._game.move_train(data['train_idx'],
                                     data['speed'],
                                     data['line_idx'])
@@ -126,12 +132,20 @@ class GameServerProtocol(asyncio.Protocol):
         self._game.turn()
         self._write_respose(Result.OKEY)
 
+    def _on_observer(self, _):
+        if self._game or self._observer:
+            self._write_respose(Result.BAD_COMMAND)
+        else:
+            self._observer = Observer()
+            self._write_respose(Result.OKEY, json.dumps(self._observer.games()))
+
     COMMAND_MAP = {
         Action.LOGIN : _on_login,
         Action.LOGOUT : _on_logout,
         Action.MAP : _on_get_map,
         Action.MOVE : _on_move,
-        Action.TURN : _on_turn
+        Action.TURN : _on_turn,
+        Action.OBSERVER: _on_observer
     }
 
 

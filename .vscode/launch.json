@@ -37,7 +37,7 @@
             ]
         },
         {
-            "name": "Test",
+            "name": "Local Tests",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
@@ -56,7 +56,7 @@
             ]
         },
         {
-            "name": "TestClient",
+            "name": "Client-Server Tests",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
@@ -71,7 +71,8 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.Client"
+                "test.Client",
+                "test.Observer"
             ]
         },
         {

@@ -1,14 +1,13 @@
 """ Game entity
 """
-from threading import Thread,Event
+from threading import Thread, Event
 from entity.Map import Map
 from entity.Player import Player
 from entity.Train import Train
 from log import LOG
-from defs import Result
+from defs import Result, Action
 from entity.Post import Type as PostType
 from db.replay import DbReplay
-import asyncio
 
 # all registered games
 game_map = {}
@@ -25,19 +24,23 @@ class Game(Thread):
           trains - one train per player
 
     """
-    def __init__(self, name):
+    def __init__(self, name, map_name='map01', observed=False):
         Thread.__init__(self, name=name)
         self.__players = {}
-        self.map = Map('map01')
+        self.map = Map(map_name)
         self.name = name
         LOG(LOG.INFO, "Create game: %s", self.name)
         self.__trains = []
         self.__stop_event = Event()
-        Thread.start(self)
+        if not observed:
+            Thread.start(self)
         self.__pass_next_tick = False
         self.__next_train_move = {}
-        self.__replay = DbReplay()
-        self.__replay.add_game(name, map_name=self.map.name)
+        if not observed:
+            self.__replay = DbReplay()
+            self.__replay.add_game(name, map_name=self.map.name)
+        else:
+            self.__replay = None
 
 
     @staticmethod
@@ -72,7 +75,8 @@ class Game(Thread):
         LOG(LOG.INFO, "Game Stopped")
         self.__stop_event.set()
         del game_map[self.name]
-        self.__replay.commit()
+        if self.__replay:
+            self.__replay.commit()
 
 
     def run(self):
@@ -98,6 +102,8 @@ class Game(Thread):
                         train.position -= 1
                     if train.position == 0:
                         self.train_in_point(train, line.point[0])
+        if self.__replay:
+            self.__replay.add_action(Action.TURN, None, with_commit=False)
 
 
     def train_in_point(self, train, point):

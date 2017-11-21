@@ -72,6 +72,24 @@ class DbReplay(object):
         if self._connection:
             self._connection.commit()
 
+    def get_all_games(self):
+        games = []
+        cur = self._connection.cursor()
+        cur.execute('select id, name, date, map from game order by id')
+        for row in cur.fetchall():
+            cur.execute('select count(id) from action where action.game_id=? and action.code=5',
+                        (row[0], ))
+            game_length = cur.fetchone()[0]
+            game = {
+                'idx': row[0],
+                'name': row[1],
+                'date': row[2],
+                'map': row[3],
+                'length': game_length
+            }
+            games.append(game)
+        return games
+
     def __enter__(self):
         return self
 
