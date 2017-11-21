@@ -41,7 +41,7 @@ class GameServerProtocol(asyncio.Protocol):
             if method:
                 method(self, self.message)
             if self._replay and self._action in (Action.MOVE, Action.TURN):
-                self._replay.add_action(self._action, self.message)
+                self._replay.add_action(self._action, self.message, with_commit=False)
             self._action = None
 
     def _process_data(self, data):
