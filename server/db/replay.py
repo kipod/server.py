@@ -30,7 +30,7 @@ class DbReplay(object):
 
         sql_set = (
             'create table game (id integer primary key, name text,\
-                                date text)',
+                                date text, map text)',
             'create table action (id integer primary key, game_id integer,\
                                     code integer, message text, date text)',
         )
@@ -43,20 +43,17 @@ class DbReplay(object):
         cursor = self._connection.execute('select max(id) from game')
         return int(cursor.fetchall()[0])
 
-    def add_game(self, name, date=None):
+    def add_game(self, name, map_name, date=None):
         if date is None:
-            date=datetime.now().strftime(TIME_FORMAT)
-        self._connection.execute('insert into game (name, date) values (?, ?)',
-                                 (name, date))
+            date = datetime.now().strftime(TIME_FORMAT)
+        self._connection.execute('insert into game (name, date, map) values (?, ?, ?)',
+                                 (name, date, map_name))
         self._connection.commit()
         cursor = self._connection.execute('select max(id) from game')
         self._current_game_id = int(cursor.fetchone()[0])
         return self._current_game_id
 
-    async def add_game_async(self, name):
-        return await self.add_game(name)
-
-    def add_action(self, action, message, game_id=None, date=None):
+    def add_action(self, action, message, game_id=None, date=None, with_commit=True):
         if date is None:
             date=datetime.now().strftime(TIME_FORMAT)
         if game_id is None:
@@ -65,12 +62,15 @@ class DbReplay(object):
                                   (game_id, code, message, date)\
                                   values (?, ?, ?, ?)',
                                  (game_id, action, message, date))
-        self._connection.commit()
+        if with_commit:
+            self._connection.commit()
         #cursor = self._connection.execute('select max(id) from action')
         #return int(cursor.fetchone()[0])
 
-    async def add_action_async(self, action, message):
-        return await self.add_action(action, message)
+    def commit(self):
+        """ commit to db """
+        if self._connection:
+            self._connection.commit()
 
     def __enter__(self):
         return self
@@ -87,7 +87,7 @@ class DbReplay(object):
 def main():
     with DbReplay() as db:
         db.reset_db()
-        game_id = db.add_game('Test')
+        db.add_game('Test', 'map01')
 
 
 if __name__ == '__main__':

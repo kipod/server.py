@@ -37,8 +37,7 @@ class Game(Thread):
         self.__pass_next_tick = False
         self.__next_train_move = {}
         self.__replay = DbReplay()
-        self.__replay.add_game(name)
-
+        self.__replay.add_game(name, map_name=self.map.name)
 
 
     @staticmethod
@@ -73,6 +72,7 @@ class Game(Thread):
         LOG(LOG.INFO, "Game Stopped")
         self.__stop_event.set()
         del game_map[self.name]
+        self.__replay.commit()
 
 
     def run(self):
