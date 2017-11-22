@@ -5,14 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Consoled",
+            "name": "Python Script",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
             "program": "${file}",
             "cwd": "",
-            "console": "externalTerminal",
+            "console": "none",
             "env": {},
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [

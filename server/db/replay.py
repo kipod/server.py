@@ -1,7 +1,10 @@
 import sqlite3
 import os
 from datetime import datetime
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 DEF_PATH_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'replay.db')
+from defs import Action
 
 TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
@@ -73,6 +76,7 @@ class DbReplay(object):
             self._connection.commit()
 
     def get_all_games(self):
+        """ retrieve all games """
         games = []
         cur = self._connection.cursor()
         cur.execute('select id, name, date, map from game order by id')
@@ -90,6 +94,22 @@ class DbReplay(object):
             games.append(game)
         return games
 
+    def get_all_actions(self, game_id):
+        """ retrieve all actions for the game """
+        actions = []
+        cur = self._connection.cursor()
+        cur.execute('select code, message, date from action where game_id=? order by id',
+                    (game_id,))
+        for row in cur.fetchall():
+            action = {
+                'code': row[0],
+                'message': row[1],
+                'date': row[2]
+            }
+            actions.append(action)
+        return actions
+
+
     def __enter__(self):
         return self
 
@@ -106,6 +126,13 @@ def main():
     with DbReplay() as db:
         db.reset_db()
         db.add_game('Test', 'map01')
+        db.add_action(Action.MOVE, "{" +
+                      '\n  "line_idx": 1,' +
+                      '\n  "speed": 1,' +
+                      '\n  "train_idx": 0' +
+                      '\n}')
+        for _ in range(10):
+            db.add_action(Action.TURN, None)
 
 
 if __name__ == '__main__':

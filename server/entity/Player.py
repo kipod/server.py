@@ -45,4 +45,3 @@ class Player(Serializable):
         data = json.loads(string_data)
         self.idx = data["idx"]
         self.name = data["name"]
-	
