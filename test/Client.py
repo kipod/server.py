@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ simple client for echo-server
 """
 import unittest
@@ -81,7 +82,9 @@ class TestClient(unittest.TestCase):
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         data = json.loads(message)
-        return data['train'][train_id]
+        train = {x['idx']: x for x in data['train']}
+        self.assertIn(train_id, train)
+        return train[train_id]
 
 
     def get_post(self, post_id):
@@ -145,17 +148,24 @@ class TestClient(unittest.TestCase):
         self.assertEqual(self.get_train_pos(0), 0)
         self.assertEqual(self.get_train_line(0), 1)
 
-
-    def move_to_next_line(self, next_line_id, train_idx, speed):
-        """ move train to the next line """
+    def move_train(self, next_line_id, train_idx, speed):
+        """ send move action """
         result, _ = self.do_action(Action.MOVE, {
             'train_idx': train_idx,
             'speed': speed,
             'line_idx': next_line_id})
         self.assertEqual(Result.OKEY, result)
+
+    def turn(self):
+        """ TURN action """
+        result, _ = self.do_action(Action.TURN, {})
+        self.assertEqual(Result.OKEY, result)
+
+    def move_to_next_line(self, next_line_id, train_idx, speed):
+        """ move train to the next line """
+        self.move_train(next_line_id, train_idx, speed)
         for _ in range(11):
-            result, _ = self.do_action(Action.TURN, {})
-            self.assertEqual(Result.OKEY, result)
+            self.turn()
             if next_line_id == self.get_train_line(train_idx):
                 break
         else:
@@ -217,4 +227,28 @@ class TestClient(unittest.TestCase):
         self.assertIn('size', data.keys())
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
+
+    def test_7_train_come_to_shop_map_l1_check_train_pos(self):
+        """
+        когда train приезжает в shop, и снова спрашивается layer1, train меняет position =0
+        """
+        # login for get player id
+        result, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        self.assertEqual(Result.OKEY, result)
+        data = json.loads(message)
+        player_id = data['idx']
+        post = self.get_post(0)
+        start_product = int(post['product'])
+        train = self.get_train(0)
+        self.assertEqual(train['player_id'], player_id)
+        self.move_train(1, 0, 1)
+        for _ in range(11):
+            position = self.get_train(0)['position']
+            if position == 10:
+                break
+            self.turn()
+        self.assertEqual(position, 10)
+        position = self.get_train(0)['position']
+        self.assertEqual(position, 10)
+
 
