@@ -39,8 +39,7 @@ class GameServerProtocol(asyncio.Protocol):
             self.data = b""
         if self._process_data(data):
             if self._observer:
-                result, message = self._observer.action(self._action, json.loads(self.message))
-                self._write_respose(result, message)
+                self._write_respose(*self._observer.action(self._action, json.loads(self.message)))
             else:
                 LOG(LOG.INFO, str(Action(self._action)))
                 method = self.COMMAND_MAP[self._action]

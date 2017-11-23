@@ -6,6 +6,7 @@ from server.defs import Action, Result
 from server.entity.Map import Map
 from datetime import datetime
 from .ServerConnection import run_in_foreground, ServerConnection
+import time
 
 
 def dict_items(sequence):
@@ -14,6 +15,7 @@ def dict_items(sequence):
 
 class TestObserver(unittest.TestCase):
     """ Test class """
+    PLAYER_NAME = '-=TEST OBSERVER=-'
 
     @classmethod
     def setUpClass(cls):
@@ -26,14 +28,10 @@ class TestObserver(unittest.TestCase):
 
     def test_0_connection(self):
         """ test connection """
-        self.assertIsNotNone(self._conn._loop)
-        self.assertIsNotNone(self._conn._reader)
-        self.assertIsNotNone(self._conn._writer)
+        self._conn.verify()
 
     def do_action(self, action, data):
-        return run_in_foreground(
-            self._conn.send_action(action, data)
-            )
+        return self._conn.do_action(action, data)
 
     def test_1_observer_get_game_list(self):
         """ connect as observer
@@ -127,5 +125,22 @@ class TestObserver(unittest.TestCase):
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
 
-
-
+    def test_7_game_writes_turns_on_ticks(self):
+        """ verify if game on server writes to replay.db
+            on game's tick
+        """
+        conn = ServerConnection()
+        result, _ = conn.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        self.assertEqual(Result.OKEY, result)
+        time.sleep(1)
+        result, _ = conn.do_action(Action.LOGOUT, None)
+        self.assertEqual(Result.OKEY, result)
+        result, message = self.do_action(Action.OBSERVER, None)
+        self.assertEqual(Result.OKEY, result)
+        games = json.loads(message)
+        self.assertIsNotNone(games)
+        my_games = [g for g in games if g['name'].count(self.PLAYER_NAME) != 0]
+        self.assertGreater(len(my_games), 0)
+        # get last my game
+        game = my_games[-1]
+        self.assertGreater(game['length'], 0)

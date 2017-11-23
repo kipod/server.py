@@ -116,13 +116,7 @@ class TestClient(unittest.TestCase):
         data = json.loads(message)
         player_id = data['idx']
 
-        result, message = self.do_action(Action.MAP, {'layer': 1})
-        self.assertEqual(Result.OKEY, result)
-        data = json.loads(message)
-        self.assertIn('train', data)
-        trains = data['train']
-        self.assertNotEqual(0, len(trains))
-        train = trains[0]
+        train = self.get_train(0)
         self.assertEqual(train['player_id'], player_id)
         # begin moving
         result, _ = self.do_action(Action.MOVE, {

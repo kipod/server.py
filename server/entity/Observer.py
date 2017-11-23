@@ -15,7 +15,6 @@ class Observer(object):
 
     def __init__(self):
         self._db = DbReplay()
-        self._games = self._db.get_all_games()
         self._game = None
         self._actions = []
         self._map_name = None
@@ -26,7 +25,7 @@ class Observer(object):
 
     def games(self):
         """ retrive list of games """
-        return self._games
+        return self._db.get_all_games()
 
     def reset_game(self):
         """ reset the game to init state """
@@ -40,7 +39,7 @@ class Observer(object):
         if action in self.COMMAND_MAP:
             method = self.COMMAND_MAP[action]
             return method(self, data)
-        return Result.RESOURCE_NOT_FOUND, None
+        return Result.BAD_COMMAND, None
 
     def _on_get_map(self, data):
         if self._game is None:
@@ -102,7 +101,7 @@ class Observer(object):
             return Result.BAD_COMMAND, None
         self._game = None
         game_id = data['idx']
-        for game in self._games:
+        for game in self._db.get_all_games():
             game_name = game['name']
             if game['idx'] == game_id:
                 self._game_name = game_name
@@ -116,8 +115,12 @@ class Observer(object):
             return Result.RESOURCE_NOT_FOUND, None
         return Result.OKEY, None
 
+    def _on_observer(self, _):
+        return Result.OKEY, json.dumps(self.games())
+
     COMMAND_MAP = {
         Action.MAP : _on_get_map,
         Action.TURN : _on_turn,
-        Action.GAME : _on_game
+        Action.GAME : _on_game,
+        Action.OBSERVER : _on_observer
     }

@@ -1,7 +1,8 @@
 """ TCP client connection """
 import asyncio
-from server.defs import SERVER_PORT, Result
 import json
+import unittest
+from server.defs import SERVER_PORT, Result
 
 SERVER_ADDR = '127.0.0.1'
 
@@ -16,7 +17,7 @@ def run_in_foreground(task):
     return loop.run_until_complete(asyncio.ensure_future(task, loop=loop))
 
 
-class ServerConnection(object):
+class ServerConnection(unittest.TestCase):
     """ connection object """
     def __init__(self):
         self._loop = None
@@ -27,6 +28,11 @@ class ServerConnection(object):
     def __del__(self):
         self._writer.close()
         #self._loop.close()
+
+    def verify(self):
+        self.assertIsNotNone(self._loop)
+        self.assertIsNotNone(self._reader)
+        self.assertIsNotNone(self._writer)
 
     async def send_action(self, action, data):
         """ send action command and returns result and message in string"""
@@ -54,3 +60,8 @@ class ServerConnection(object):
         self._loop = asyncio.get_event_loop()
         self._reader, self._writer = await asyncio.open_connection(SERVER_ADDR, SERVER_PORT,
                                                                    loop=self._loop)
+
+    def do_action(self, action, data):
+        return run_in_foreground(
+            self.send_action(action, data)
+            )

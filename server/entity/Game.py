@@ -2,15 +2,11 @@
 """
 from threading import Thread, Event
 from entity.Map import Map
-from entity.Player import Player
 from entity.Train import Train
 from log import LOG
 from defs import Result, Action
 from entity.Post import Type as PostType
 from db.replay import DbReplay
-
-# all registered games
-game_map = {}
 
 class Game(Thread):
     """ game
@@ -24,8 +20,16 @@ class Game(Thread):
           trains - one train per player
 
     """
+
+    # all registered games
+    _map = {}
+
     def __init__(self, name, map_name='map01', observed=False):
         Thread.__init__(self, name=name)
+        self.__replay = None
+        if not observed:
+            self.__replay = DbReplay()
+        self.__current_game_id = 0
         self.__players = {}
         self.map = Map(map_name)
         self.name = name
@@ -37,24 +41,26 @@ class Game(Thread):
         self.__pass_next_tick = False
         self.__next_train_move = {}
         if not observed:
-            self.__replay = DbReplay()
-            self.__replay.add_game(name, map_name=self.map.name)
-        else:
-            self.__replay = None
+            self.__current_game_id = self.__replay.add_game(name, map_name=self.map.name)
+
 
 
     @staticmethod
     def create(name):
+        """ returns instance of class Game
+        """
         game = None
-        if name in game_map.keys():
-            game = game_map[name]
+        if name in Game._map.keys():
+            game = Game._map[name]
         else:
             game = Game(name)
-            game_map[name] = game
+            Game._map[name] = game
         return game
 
 
     def add_player(self, player):
+        """ added player to the game
+        """
         if not player.idx in self.__players:
             LOG(LOG.INFO, "Game: Add player [%s]", player.name)
             player.set_home(self.map.point[1])
@@ -66,28 +72,45 @@ class Game(Thread):
 
 
     def turn(self):
+        """ next turn
+        """
         self.__pass_next_tick = True
         self.tick()
+        if self.__replay:
+            self.__replay.add_action(Action.TURN, None, with_commit=False)
         pass
 
 
     def stop(self):
+        """ stop ticks """
         LOG(LOG.INFO, "Game Stopped")
         self.__stop_event.set()
-        del game_map[self.name]
+        del Game._map[self.name]
         if self.__replay:
             self.__replay.commit()
 
 
     def run(self):
+        """
+        Thread proc
+        """
+        replay = None
+        if self.__replay:
+            # create db connection object for this thread
+            replay = DbReplay()
         while not self.__stop_event.wait(1):
             if self.__pass_next_tick:
                 self.__pass_next_tick = False
             else:
                 self.tick()
+                if replay:
+                    replay.add_action(Action.TURN, None, with_commit=False, game_id=self.__current_game_id)
+        if replay:
+            replay.commit()
 
 
     def tick(self):
+        """ tick - update dynamic game entities """
         LOG(LOG.INFO, "Game Tick")
         for train in self.__trains:
             if train.line_idx in self.map.line:
@@ -102,11 +125,10 @@ class Game(Thread):
                         train.position -= 1
                     if train.position == 0:
                         self.train_in_point(train, line.point[0])
-        if self.__replay:
-            self.__replay.add_action(Action.TURN, None, with_commit=False)
 
 
     def train_in_point(self, train, point):
+        """ the train arrived to point """
         LOG(LOG.INFO, "Train:%d arrive to point:%d pos:%d",
             train.idx, point, train.position)
 
@@ -127,6 +149,7 @@ class Game(Thread):
 
 
     def move_train(self, train_idx, speed, line_idx):
+        """ process action MOVE """
         train = self.__trains[train_idx]
         player = self.__players[train.player_id]
         if train.speed == 0: # initial move action
