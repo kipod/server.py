@@ -68,6 +68,8 @@ class Game(Thread):
             player.add_train(train)
             self.__trains.append(train)
             self.map.add_train(train)
+            train.line_idx=1
+            train.position=0
             self.__players[player.idx] = player
 
 
