@@ -58,7 +58,7 @@ class TestClient(unittest.TestCase):
         self.assertNotEqual(len(message), 0)
         map01 = Map()
         map01.from_json_str(message)
-        self.assertEqual(len(map01.line), 12)
+        self.assertEqual(len(map01.line), 18)
         self.assertEqual(len(map01.point), 12)
 
 
@@ -106,7 +106,6 @@ class TestClient(unittest.TestCase):
         train = self.get_train(train_id)
         return train['line_idx']
 
-
     def test_3_move_train(self):
         """
         get train belongs to the Player
@@ -115,6 +114,7 @@ class TestClient(unittest.TestCase):
         _, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
         data = json.loads(message)
         player_id = data['idx']
+        N = 0
 
         train = self.get_train(0)
         self.assertEqual(train['player_id'], player_id)
@@ -122,20 +122,20 @@ class TestClient(unittest.TestCase):
         result, _ = self.do_action(Action.MOVE, {
             'train_idx': train['idx'],
             'speed': 1,
-            'line_idx': 1})
+            'line_idx': 1+N})
         self.assertEqual(Result.OKEY, result)
         result, _ = self.do_action(Action.TURN, {})
         self.assertEqual(Result.OKEY, result)
         self.assertGreater(self.get_train_pos(0), 0)
 
-        self.move_to_next_line(7, train['idx'], 1)
-        self.move_to_next_line(8, train['idx'], 1)
-        self.move_to_next_line(9, train['idx'], 1)
-        self.move_to_next_line(10, train['idx'], 1)
-        self.move_to_next_line(11, train['idx'], 1)
-        self.move_to_next_line(12, train['idx'], 1)
-        self.move_to_next_line(1, train['idx'], -1)
-        self.move_to_next_line(1, train['idx'], 0)
+        self.move_to_next_line(7+N, train['idx'], 1)
+        self.move_to_next_line(8+N, train['idx'], 1)
+        self.move_to_next_line(9+N, train['idx'], 1)
+        self.move_to_next_line(10+N, train['idx'], 1)
+        self.move_to_next_line(11+N, train['idx'], 1)
+        self.move_to_next_line(12+N, train['idx'], 1)
+        self.move_to_next_line(1+N, train['idx'], -1)
+        self.move_to_next_line(1+N, train['idx'], 0)
         for _ in range(self.get_train_pos(0)):
             result, _ = self.do_action(Action.TURN, {})
             self.assertEqual(Result.OKEY, result)
@@ -157,6 +157,7 @@ class TestClient(unittest.TestCase):
 
     def move_to_next_line(self, next_line_id, train_idx, speed):
         """ move train to the next line """
+        line = self.get_train_line(train_idx)
         self.move_train(next_line_id, train_idx, speed)
         for _ in range(11):
             self.turn()
@@ -165,7 +166,7 @@ class TestClient(unittest.TestCase):
         else:
             self.fail("Cant arrive to line:{}".format(next_line_id))
 
-
+    @unittest.skip('disabled')
     def test_4_transport_product(self):
         """
         transport product from shop_one to town_one
@@ -183,7 +184,7 @@ class TestClient(unittest.TestCase):
         self.assertNotEqual(int(train['capacity']), 0)
         self.assertEqual(int(train['product']), 0)
         self.assertEqual(int(train['speed']), 0)
-        self.move_to_next_line(1, train['idx'], 1)
+        self.move_to_next_line(1, train['idx'], 13)
 
         train = self.get_train(0)
         while int(train['speed']) != 0:
@@ -191,7 +192,7 @@ class TestClient(unittest.TestCase):
             self.assertEqual(Result.OKEY, result)
             train = self.get_train(0)
 
-        self.assertEqual(int(train['line_idx']), 1)
+        self.assertEqual(int(train['line_idx']), 13)
         self.assertEqual(int(train['position']), 10)
         self.assertEqual(int(train['product']), int(train['capacity']))
 
@@ -208,6 +209,7 @@ class TestClient(unittest.TestCase):
         post = self.get_post(0)
         self.assertEqual(int(post['product']), start_product+15)
 
+    @unittest.skip('disabled')
     def test_5_read_coordinates(self):
         """ get coordinates of points
             using layer 10
@@ -222,6 +224,7 @@ class TestClient(unittest.TestCase):
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
 
+    @unittest.skip('disabled')
     def test_7_train_come_to_shop_map_l1_check_train_pos(self):
         """
         когда train приезжает в shop, и снова спрашивается layer1, train меняет position =0

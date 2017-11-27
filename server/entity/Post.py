@@ -28,6 +28,7 @@ class Post(object):
             self.population = population
             self.armor = armor
         self.product = product
+        if self.type == Type.MARKET:
+            self.product_capacity = product
         if player is not None:
             self.player = player
-        

@@ -1,6 +1,6 @@
 """ Game entity
 """
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 from entity.Map import Map
 from entity.Train import Train
 from log import LOG
@@ -24,11 +24,13 @@ class Game(Thread):
     # all registered games
     _map = {}
 
-    def __init__(self, name, map_name='map01', observed=False):
+    def __init__(self, name, map_name='map02', observed=False):
         Thread.__init__(self, name=name)
         self.__replay = None
+        self.__observed = observed
         if not observed:
             self.__replay = DbReplay()
+            self.__lock = Lock()
         self.__current_game_id = 0
         self.__players = {}
         self.map = Map(map_name)
@@ -36,13 +38,11 @@ class Game(Thread):
         LOG(LOG.INFO, "Create game: %s", self.name)
         self.__trains = []
         self.__stop_event = Event()
-        if not observed:
-            Thread.start(self)
         self.__pass_next_tick = False
         self.__next_train_move = {}
         if not observed:
             self.__current_game_id = self.__replay.add_game(name, map_name=self.map.name)
-
+        self.market = [m for m in self.map.post.values() if m.type == PostType.MARKET]
 
 
     @staticmethod
@@ -63,14 +63,18 @@ class Game(Thread):
         """
         if not player.idx in self.__players:
             LOG(LOG.INFO, "Game: Add player [%s]", player.name)
-            player.set_home(self.map.point[1])
+            home = [point for point in self.map.point.values() if point.post_id is not None][0]
+            player.set_home(home, level=self.map)
             train = Train(idx=len(self.__trains))
             player.add_train(train)
             self.__trains.append(train)
             self.map.add_train(train)
-            train.line_idx=1
-            train.position=0
+            line = [line for line in self.map.line.values()][0]
+            train.line_idx = line.idx
+            train.position = 0
             self.__players[player.idx] = player
+            if not self.__observed:
+                Thread.start(self)
 
 
     def turn(self):
@@ -103,15 +107,19 @@ class Game(Thread):
             replay = DbReplay()
         try:
             while not self.__stop_event.wait(1):
-                if self.__pass_next_tick:
-                    self.__pass_next_tick = False
-                else:
-                    self.tick()
-                    if replay:
-                        replay.add_action(Action.TURN,
-                                          None,
-                                          with_commit=False,
-                                          game_id=self.__current_game_id)
+                self.__lock.acquire()
+                try:
+                    if self.__pass_next_tick:
+                        self.__pass_next_tick = False
+                    else:
+                        self.tick()
+                        if replay:
+                            replay.add_action(Action.TURN,
+                                              None,
+                                              with_commit=False,
+                                              game_id=self.__current_game_id)
+                finally:
+                    self.__lock.release()
             if replay:
                 replay.commit()
         finally:
@@ -123,6 +131,17 @@ class Game(Thread):
     def tick(self):
         """ tick - update dynamic game entities """
         LOG(LOG.INFO, "Game Tick")
+        # update population and products in towns:
+        for player_id in self.__players.keys():
+            player = self.__players[player_id]
+            if player.town.product > player.town.population:
+                player.town.product -= player.town.population
+            else:
+                player.town.population -= 1
+        # update all markets:
+        for market in self.market:
+            if market.product < market.product_capacity:
+                market.product += 1
         for train in self.__trains:
             if train.line_idx in self.map.line:
                 line = self.map.line[train.line_idx]
@@ -136,6 +155,8 @@ class Game(Thread):
                         train.position -= 1
                     if train.position == 0:
                         self.train_in_point(train, line.point[0])
+            else:
+                LOG(LOG.ERROR, "Wrong train.line_idx: %d", train.line_idx)
 
 
     def train_in_point(self, train, point):
@@ -149,46 +170,75 @@ class Game(Thread):
 
         if train.idx in self.__next_train_move:
             next_move = self.__next_train_move[train.idx]
-            train.speed = next_move["speed"]
-            train.line_idx = next_move["line_idx"]
-            if train.speed > 0:
-                train.position = 0
-            elif train.speed < 0:
-                train.position = self.map.line[train.line_idx].length
+            if next_move["line_idx"] == train.line_idx: # if no next line
+                if train.speed > 0 and train.position == self.map.line[train.line_idx].length:
+                    train.speed = 0
+                elif train.speed < 0 and train.position == 0:
+                    train.speed = 0
+            else:
+                train.speed = next_move["speed"]
+                train.line_idx = next_move["line_idx"]
+                if train.speed > 0:
+                    train.position = 0
+                elif train.speed < 0:
+                    train.position = self.map.line[train.line_idx].length
         else:
             train.speed = 0 # has not next move data
 
 
     def move_train(self, train_idx, speed, line_idx):
         """ process action MOVE """
-        train = self.__trains[train_idx]
-        player = self.__players[train.player_id]
-        if train.speed == 0: # initial move action
-            train.speed = speed
-            train.line_idx = line_idx
-            line = self.map.line[line_idx]
-            if line.point[0] == player.home.idx:
-                train.position = 0
-            elif line.point[1] == player.home.idx:
-                train.position = line.length
-            else:
+        self.__lock.acquire()
+        try:
+            if train_idx >= len(self.__trains):
                 return Result.RESOURCE_NOT_FOUND
-        else:
-            if speed != 0:
+            train = self.__trains[train_idx]
+            player = self.__players[train.player_id]
+            if line_idx not in self.map.line:
+                return Result.RESOURCE_NOT_FOUND
+            if speed == 0: # stop train!
+                train.speed = speed
+            elif train.speed == 0:
+                if train.line_idx == line_idx: # continue run train
+                    train.speed = speed
+                elif self.map.line[train.line_idx].length == train.position:
+                    line_from = self.map.line[train.line_idx]
+                    line_to = self.map.line[line_idx]
+                    if line_from.point[1] in line_to.point:
+                        train.line_idx = line_idx
+                        train.speed = speed
+                        if line_from.point[1] == line_to.point[0]:
+                            train.position = 0
+                        else:
+                            train.position = line_to.length
+                elif train.position == 0:
+                    line_from = self.map.line[train.line_idx]
+                    line_to = self.map.line[line_idx]
+                    if line_from.point[0] in line_to.point:
+                        train.line_idx = line_idx
+                        train.speed = speed
+                        if line_from.point[0] == line_to.point[0]:
+                            train.position = 0
+                        else:
+                            train.position = line_to.length
+
+            if train.speed != 0 and train.line_idx != line_idx: # train in moving
                 switch_line_possible = False
-                line0 = self.map.line[train.line_idx]
-                line1 = self.map.line[line_idx]
+                line_from = self.map.line[train.line_idx]
+                line_to = self.map.line[line_idx]
                 if train.speed > 0 and speed > 0:
-                    switch_line_possible = (line0.point[1] == line1.point[0])
+                    switch_line_possible = (line_from.point[1] == line_to.point[0])
                 elif train.speed > 0 and speed < 0:
-                    switch_line_possible = (line0.point[1] == line1.point[1])
+                    switch_line_possible = (line_from.point[1] == line_to.point[1])
                 elif train.speed < 0 and speed > 0:
-                    switch_line_possible = (line0.point[0] == line1.point[0])
+                    switch_line_possible = (line_from.point[0] == line_to.point[0])
                 elif train.speed < 0 and speed < 0:
-                    switch_line_possible = (line0.point[0] == line1.point[1])
+                    switch_line_possible = (line_from.point[0] == line_to.point[1])
                 if not switch_line_possible:
                     return Result.PATH_NOT_FOUND
-            self.__next_train_move[train_idx] = {"speed": speed, "line_idx": line_idx}
+                self.__next_train_move[train_idx] = {"speed": speed, "line_idx": line_idx}
+        finally:
+            self.__lock.release()
         return Result.OKEY
 
 
@@ -200,7 +250,9 @@ class Game(Thread):
             train.product = 0
         elif post.type == PostType.MARKET:
             # load product
-            train.product += min(post.product, train.capacity)
+            product = min(post.product, train.capacity)
+            post.product -= product
+            train.product += product
 
     def replay(self):
         """ obtain the replay object """

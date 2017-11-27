@@ -4,6 +4,8 @@ Entity Player
 import uuid
 import json
 from .Serializable import Serializable
+from entity.Map import Map
+from entity.Point import Point
 
 # all registered players
 PLAYER_LIST = list()
@@ -28,6 +30,7 @@ class Player(Serializable):
             PLAYER_LIST.append(self)
         self.train = []
         self.home = None
+        self.town = None
 
     def __eq__(self, other):
         return self.idx == other.idx
@@ -37,9 +40,10 @@ class Player(Serializable):
         train.player_id = self.idx
         self.train.append(train)
 
-    def set_home(self, point):
+    def set_home(self, point: Point, level: Map):
         """ set home point """
         self.home = point
+        self.town = level.post[point.post_id]
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)

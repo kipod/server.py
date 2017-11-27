@@ -19,5 +19,5 @@ class Train(object):
         self.player_id = None
         if player is not None:
             self.player_id = player.idx
-        self.capacity = 15
+        self.capacity = 200
         self.product = 0

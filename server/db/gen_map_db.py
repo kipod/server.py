@@ -176,6 +176,6 @@ def genaration_map02(db):
 
 if __name__ == '__main__':
     with DbMap() as db:
-        genaration_map01(db)
+        #genaration_map01(db)
         genaration_map02(db)
     print('OK')
