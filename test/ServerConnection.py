@@ -5,6 +5,9 @@ import unittest
 from server.defs import SERVER_PORT, Result
 
 SERVER_ADDR = '127.0.0.1'
+#SERVER_ADDR = 'wgforge-srv.wargaming.net'
+#SERVER_ADDR = '10.128.106.149'
+#SERVER_PORT = 443
 
 def run_in_foreground(task):
     """Runs event loop in current thread until the given task completes
