@@ -30,7 +30,7 @@ class Game(Thread):
         self.__observed = observed
         if not observed:
             self.__replay = DbReplay()
-            self.__lock = Lock()
+        self.__lock = Lock()
         self.__current_game_id = 0
         self.__players = {}
         self.map = Map(map_name)

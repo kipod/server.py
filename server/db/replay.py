@@ -146,14 +146,13 @@ class DbReplay(object):
 def main():
     with DbReplay() as db:
         db.reset_db()
-        db.add_game('Test', 'map01')
+        db.add_game('Test', 'map02')
         db.add_action(Action.MOVE, "{" +
                       '\n  "line_idx": 1,' +
                       '\n  "speed": 1,' +
                       '\n  "train_idx": 0' +
                       '\n}')
-        for _ in range(10):
-            db.add_action(Action.TURN, None)
+        db.add_action(Action.TURN, None)
 
 
 if __name__ == '__main__':
