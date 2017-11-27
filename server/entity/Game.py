@@ -81,10 +81,13 @@ class Game(Thread):
         """ next turn
         """
         self.__pass_next_tick = True
-        self.tick()
-        if self.__replay:
-            self.__replay.add_action(Action.TURN, None, with_commit=False)
-        pass
+        self.__lock.acquire()
+        try:
+            self.tick()
+            if self.__replay:
+                self.__replay.add_action(Action.TURN, None, with_commit=False)
+        finally:
+            self.__lock.release()
 
 
     def stop(self):
@@ -130,7 +133,7 @@ class Game(Thread):
 
     def tick(self):
         """ tick - update dynamic game entities """
-        LOG(LOG.INFO, "Game Tick")
+        #LOG(LOG.INFO, "Game Tick")
         # update population and products in towns:
         for player_id in self.__players.keys():
             player = self.__players[player_id]
@@ -150,7 +153,7 @@ class Game(Thread):
                         train.position += 1
                     if train.position == line.length:
                         self.train_in_point(train, line.point[1])
-                if train.speed < 0:
+                elif train.speed < 0:
                     if train.position > 0:
                         train.position -= 1
                     if train.position == 0:
@@ -161,8 +164,8 @@ class Game(Thread):
 
     def train_in_point(self, train, point):
         """ the train arrived to point """
-        LOG(LOG.INFO, "Train:%d arrive to point:%d pos:%d",
-            train.idx, point, train.position)
+        LOG(LOG.INFO, "Train:%d arrive to point:%d pos:%d line:%d",
+            train.idx, point, train.position, train.line_idx)
 
         post_id = self.map.point[point].post_id
         if post_id is not None:
@@ -192,6 +195,8 @@ class Game(Thread):
         try:
             if train_idx >= len(self.__trains):
                 return Result.RESOURCE_NOT_FOUND
+            if train_idx in self.__next_train_move:
+                del self.__next_train_move[train_idx]
             train = self.__trains[train_idx]
             player = self.__players[train.player_id]
             if line_idx not in self.map.line:
@@ -222,7 +227,7 @@ class Game(Thread):
                         else:
                             train.position = line_to.length
 
-            if train.speed != 0 and train.line_idx != line_idx: # train in moving
+            elif train.speed != 0 and train.line_idx != line_idx: # train in moving
                 switch_line_possible = False
                 line_from = self.map.line[train.line_idx]
                 line_to = self.map.line[line_idx]

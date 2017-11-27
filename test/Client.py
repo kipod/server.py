@@ -135,7 +135,6 @@ class TestClient(unittest.TestCase):
         self.move_to_next_line(11+N, train['idx'], 1)
         self.move_to_next_line(12+N, train['idx'], 1)
         self.move_to_next_line(1+N, train['idx'], -1)
-        self.move_to_next_line(1+N, train['idx'], 0)
         for _ in range(self.get_train_pos(0)):
             result, _ = self.do_action(Action.TURN, {})
             self.assertEqual(Result.OKEY, result)
@@ -157,7 +156,7 @@ class TestClient(unittest.TestCase):
 
     def move_to_next_line(self, next_line_id, train_idx, speed):
         """ move train to the next line """
-        line = self.get_train_line(train_idx)
+        # line = self.get_train_line(train_idx)
         self.move_train(next_line_id, train_idx, speed)
         for _ in range(11):
             self.turn()
@@ -166,7 +165,6 @@ class TestClient(unittest.TestCase):
         else:
             self.fail("Cant arrive to line:{}".format(next_line_id))
 
-    @unittest.skip('disabled')
     def test_4_transport_product(self):
         """
         transport product from shop_one to town_one
@@ -184,7 +182,7 @@ class TestClient(unittest.TestCase):
         self.assertNotEqual(int(train['capacity']), 0)
         self.assertEqual(int(train['product']), 0)
         self.assertEqual(int(train['speed']), 0)
-        self.move_to_next_line(1, train['idx'], 13)
+        self.move_to_next_line(1, train['idx'], 1)
 
         train = self.get_train(0)
         while int(train['speed']) != 0:
@@ -192,9 +190,9 @@ class TestClient(unittest.TestCase):
             self.assertEqual(Result.OKEY, result)
             train = self.get_train(0)
 
-        self.assertEqual(int(train['line_idx']), 13)
-        self.assertEqual(int(train['position']), 10)
-        self.assertEqual(int(train['product']), int(train['capacity']))
+        self.assertEqual(int(train['line_idx']), 1)
+        self.assertEqual(int(train['position']), 1)
+        self.assertEqual(int(train['product']), 2)
 
         self.move_to_next_line(1, train['idx'], -1)
         train = self.get_train(0)
@@ -207,9 +205,8 @@ class TestClient(unittest.TestCase):
         self.assertEqual(int(train['position']), 0)
         self.assertEqual(int(train['product']), 0)
         post = self.get_post(0)
-        self.assertEqual(int(post['product']), start_product+15)
+        self.assertEqual(int(post['product']), start_product-2)
 
-    @unittest.skip('disabled')
     def test_5_read_coordinates(self):
         """ get coordinates of points
             using layer 10
@@ -224,7 +221,6 @@ class TestClient(unittest.TestCase):
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
 
-    @unittest.skip('disabled')
     def test_7_train_come_to_shop_map_l1_check_train_pos(self):
         """
         когда train приезжает в shop, и снова спрашивается layer1, train меняет position =0
@@ -241,11 +237,10 @@ class TestClient(unittest.TestCase):
         self.move_train(1, 0, 1)
         for _ in range(11):
             position = self.get_train(0)['position']
-            if position == 10:
+            if position == 1:
                 break
             self.turn()
-        self.assertEqual(position, 10)
+        self.assertEqual(position, 1)
         position = self.get_train(0)['position']
-        self.assertEqual(position, 10)
-
+        self.assertEqual(position, 1)
 
