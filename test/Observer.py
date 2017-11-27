@@ -75,8 +75,8 @@ class TestObserver(unittest.TestCase):
         self.assertEqual(line[1]["point"][1], 7)
         train = self.getTrain(0)
         self.assertEqual(train['speed'], 0)
-        self.assertIsNone(train['line_idx'])
-        self.assertIsNone(train['position'])
+        self.assertEqual(train['line_idx'], 1)
+        self.assertEqual(train['position'], 0)
 
     def set_turn(self, n):
         result, message = self.do_action(Action.TURN, {'idx': n})
@@ -100,7 +100,7 @@ class TestObserver(unittest.TestCase):
         self.set_turn(0)
         train = self.getTrain(0)
         self.assertEqual(train['speed'], 0)
-        self.assertIsNone(train['position'])
+        self.assertEqual(train['position'], 0)
         self.set_turn(100)
         train = self.getTrain(0)
         self.assertEqual(train['speed'], 0)
@@ -108,7 +108,7 @@ class TestObserver(unittest.TestCase):
         self.set_turn(-1)
         train = self.getTrain(0)
         self.assertEqual(train['speed'], 0)
-        self.assertIsNone(train['position'])
+        self.assertEqual(train['position'], 0)
 
 
     def test_5_read_coordinates(self):

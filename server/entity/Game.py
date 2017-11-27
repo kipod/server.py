@@ -87,7 +87,8 @@ class Game(Thread):
         """ stop ticks """
         LOG(LOG.INFO, "Game Stopped")
         self.__stop_event.set()
-        del Game._map[self.name]
+        if self.name in Game._map:
+            del Game._map[self.name]
         if self.__replay:
             self.__replay.commit()
 
@@ -100,15 +101,20 @@ class Game(Thread):
         if self.__replay:
             # create db connection object for this thread
             replay = DbReplay()
-        while not self.__stop_event.wait(1):
-            if self.__pass_next_tick:
-                self.__pass_next_tick = False
-            else:
-                self.tick()
-                if replay:
-                    replay.add_action(Action.TURN, None, with_commit=False, game_id=self.__current_game_id)
-        if replay:
-            replay.commit()
+        try:
+            while not self.__stop_event.wait(1):
+                if self.__pass_next_tick:
+                    self.__pass_next_tick = False
+                else:
+                    self.tick()
+                    if replay:
+                        replay.add_action(Action.TURN, None, with_commit=True, game_id=self.__current_game_id)
+            if replay:
+                replay.commit()
+        finally:
+            if replay:
+                replay.close()
+
 
 
     def tick(self):

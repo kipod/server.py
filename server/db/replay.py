@@ -5,6 +5,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 DEF_PATH_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'replay.db')
 from defs import Action
+from log import LOG
 
 TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
@@ -14,7 +15,8 @@ class DbReplay(object):
     """
     def __init__(self, db_path=DEF_PATH_DB):
         self._connection = sqlite3.connect(db_path)
-
+        self._current_game_id = 0
+        self.post_queries = []
 
     def drop_table(self, table):
         """ drop table by name with ignore error
@@ -47,28 +49,40 @@ class DbReplay(object):
         return int(cursor.fetchall()[0])
 
     def add_game(self, name, map_name, date=None):
-        if date is None:
-            date = datetime.now().strftime(TIME_FORMAT)
-        self._connection.execute('insert into game (name, date, map) values (?, ?, ?)',
-                                 (name, date, map_name))
-        self._connection.commit()
-        cursor = self._connection.execute('select max(id) from game')
-        self._current_game_id = int(cursor.fetchone()[0])
-        return self._current_game_id
+        try:
+            if date is None:
+                date = datetime.now().strftime(TIME_FORMAT)
+            self._connection.execute('insert into game (name, date, map) values (?, ?, ?)',
+                                    (name, date, map_name))
+            self._connection.commit()
+            cursor = self._connection.execute('select max(id) from game')
+            self._current_game_id = int(cursor.fetchone()[0])
+            return self._current_game_id
+        except sqlite3.Error as error:
+            LOG(LOG.ERROR, "Cannot write game: %s into replay.db", name)
+            LOG(LOG.ERROR, "Error: %s", error.args[0])
+            return None
 
     def add_action(self, action, message, game_id=None, date=None, with_commit=True):
-        if date is None:
-            date=datetime.now().strftime(TIME_FORMAT)
-        if game_id is None:
-            game_id = self._current_game_id
-        self._connection.execute('insert into action \
-                                  (game_id, code, message, date)\
-                                  values (?, ?, ?, ?)',
-                                 (game_id, action, message, date))
-        if with_commit:
-            self._connection.commit()
-        #cursor = self._connection.execute('select max(id) from action')
-        #return int(cursor.fetchone()[0])
+        try:
+            if date is None:
+                date = datetime.now().strftime(TIME_FORMAT)
+            if game_id is None:
+                game_id = self._current_game_id
+            sql = {"sql": 'insert into action \
+                                     (game_id, code, message, date)\
+                                     values (?, ?, ?, ?)',
+                   "args": (game_id, action, message, date)
+                  }
+            if with_commit:
+                self._connection.execute(sql['sql'], sql['args'])
+                self._connection.commit()
+            else:
+                self.post_queries.append(sql)
+
+        except sqlite3.Error as error:
+            LOG(LOG.ERROR, "Cannot write action: %d into replay.db", action)
+            LOG(LOG.ERROR, "Error: %s", error.args[0])
 
     def commit(self):
         """ commit to db """
@@ -119,6 +133,13 @@ class DbReplay(object):
 
 
     def close(self):
+        try:
+            for sql in self.post_queries:
+                self._connection.execute(sql['sql'], sql['args'])
+            self._connection.commit()
+        except sqlite3.Error as error:
+            LOG(LOG.ERROR, "Cannot execute post queries in replay.db")
+            LOG(LOG.ERROR, "Error: %s", error.args[0])
         self._connection.close()
 
 
