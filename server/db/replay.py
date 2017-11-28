@@ -148,10 +148,46 @@ def main():
         db.reset_db()
         db.add_game('Test', 'map02')
         db.add_action(Action.MOVE, "{" +
-                      '\n  "line_idx": 1,' +
+                      '\n  "line_idx": 13,' +
                       '\n  "speed": 1,' +
                       '\n  "train_idx": 0' +
                       '\n}')
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.MOVE, "{" +
+                      '\n  "line_idx": 14,' +
+                      '\n  "speed": 1,' +
+                      '\n  "train_idx": 0' +
+                      '\n}')
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.MOVE, "{" +
+                      '\n  "line_idx": 15,' +
+                      '\n  "speed": 1,' +
+                      '\n  "train_idx": 0' +
+                      '\n}')
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.MOVE, "{" +
+                      '\n  "line_idx": 16,' +
+                      '\n  "speed": 1,' +
+                      '\n  "train_idx": 0' +
+                      '\n}')
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.MOVE, "{" +
+                      '\n  "line_idx": 17,' +
+                      '\n  "speed": 1,' +
+                      '\n  "train_idx": 0' +
+                      '\n}')
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.MOVE, "{" +
+                      '\n  "line_idx": 18,' +
+                      '\n  "speed": 1,' +
+                      '\n  "train_idx": 0' +
+                      '\n}')
+        db.add_action(Action.TURN, None)
+        db.add_action(Action.TURN, None)
         db.add_action(Action.TURN, None)
 
 

@@ -21,6 +21,8 @@ class Game(Thread):
 
     """
 
+    TICK_TIME = 10
+
     # all registered games
     _map = {}
 
@@ -109,7 +111,7 @@ class Game(Thread):
             # create db connection object for this thread
             replay = DbReplay()
         try:
-            while not self.__stop_event.wait(1):
+            while not self.__stop_event.wait(Game.TICK_TIME):
                 self.__lock.acquire()
                 try:
                     if self.__pass_next_tick:
