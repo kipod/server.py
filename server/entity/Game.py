@@ -132,7 +132,6 @@ class Game(Thread):
                 replay.close()
 
 
-
     def tick(self):
         """ tick - update dynamic game entities """
         #LOG(LOG.INFO, "Game Tick")
@@ -146,7 +145,7 @@ class Game(Thread):
         # update all markets:
         for market in self.market:
             if market.product < market.product_capacity:
-                market.product += 1
+                market.product += market.replenishment
         for train in self.__trains:
             if train.line_idx in self.map.line:
                 line = self.map.line[train.line_idx]

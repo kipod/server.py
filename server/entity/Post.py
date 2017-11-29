@@ -20,7 +20,7 @@ class Post(object):
     * armor - defend points (only for TOWN)
     * product - production points (for TOWN and SHOP)
     """
-    def __init__(self, idx, name, post_type, population, armor, product, player=None):
+    def __init__(self, idx, name, post_type, population, armor, product, player=None, replenishment = 1):
         self.idx = idx
         self.name = name
         self.type = Type(post_type)
@@ -30,5 +30,6 @@ class Post(object):
         self.product = product
         if self.type == Type.MARKET:
             self.product_capacity = product
+            self.replenishment = replenishment
         if player is not None:
             self.player = player

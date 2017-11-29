@@ -49,7 +49,7 @@ class Map(Serializable):
                     self.point[row[0]] = Point(row[0], post_id=post_id)
 
             self.post = {}
-            cur.execute('select id, name, type, population, armor, product'
+            cur.execute('select id, name, type, population, armor, product, replenishment'
                         ' from post'
                         ' where map_id=?'
                         ' order by id', (self.idx,))
@@ -60,7 +60,8 @@ class Map(Serializable):
                     post_type=row[2],
                     population=row[3],
                     armor=row[4],
-                    product=row[5])
+                    product=row[5],
+                    replenishment=row[6])
             connection.close()
             self.okey = True
         except sqlite3.Error as exception:

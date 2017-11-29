@@ -37,7 +37,7 @@ class DbMap(object):
             'create table post (id integer primary key, name text,\
                                 type integer, population integer,\
                                 armor integer, product integer,\
-                                map_id integer)'
+                                replenishment integer, map_id integer)'
         )
         for sql in sqls:
             self._connection.execute(sql)
@@ -78,13 +78,13 @@ class DbMap(object):
         return int(cursor.fetchone()[0])
 
 
-    def add_post(self, name, type_p, population=0, armor=0, product=0, map_id=None):
+    def add_post(self, name, type_p, population=0, armor=0, product=0, replenishment=1, map_id=None):
         if map_id is None:
             map_id = self._current_map_id
         self._connection.execute('insert into post \
-                                  (name, map_id, type, population, armor, product)\
-                                  values (?, ?, ?, ?, ?, ?)',
-                                 (name, map_id, type_p, population, armor, product))
+                                  (name, map_id, type, population, armor, product, replenishment)\
+                                  values (?, ?, ?, ?, ?, ?, ?)',
+                                 (name, map_id, type_p, population, armor, product, replenishment))
         self._connection.commit()
         cursor = self._connection.execute('select max(id) from post')
         return int(cursor.fetchone()[0])
@@ -143,7 +143,7 @@ def genaration_map02(db):
     p1 = db.add_point(post_id, x=75, y=16)
     p2 = db.add_point(x=250, y=16)
     p3 = db.add_point(x=312, y=120)
-    post_id = db.add_post('market-big', 2, product=36) # market, product=36
+    post_id = db.add_post('market-big', 2, product=36, replenishment=2) # market, product=36
     p4 = db.add_point(post_id, x=250, y=220)
     post_id = db.add_post('market-medium', 2, product=28) # market, product=28
     p5 = db.add_point(post_id, x=100, y=220)
