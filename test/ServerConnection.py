@@ -57,6 +57,25 @@ class ServerConnection(unittest.TestCase):
             message = data.decode('utf-8')
         return result, message
 
+    async def send_action_json(self, action, json_str):
+        """ send action command and returns result and message in string"""
+        self._writer.write(action.to_bytes(4, byteorder='little'))
+        if not json_str is None:
+            self._writer.write(len(json_str).to_bytes(4, byteorder='little'))
+            self._writer.write(json_str.encode('utf-8'))
+
+        data = await self._reader.read(4)
+        result = Result(int.from_bytes(data[0:4], byteorder='little'))
+        data = await self._reader.read(4)
+        msg_len = int.from_bytes(data[0:4], byteorder='little')
+        message = str()
+        if msg_len != 0:
+            data = await self._reader.read(msg_len)
+            while len(data) < msg_len:
+                data += await self._reader.read(msg_len - len(data))
+            message = data.decode('utf-8')
+        return result, message
+
 
     async def connect_to_server(self):
         """ get reader and writer """
@@ -67,4 +86,9 @@ class ServerConnection(unittest.TestCase):
     def do_action(self, action, data):
         return run_in_foreground(
             self.send_action(action, data)
+            )
+
+    def do_action_json(self, action, json_str: str):
+        return run_in_foreground(
+            self.send_action_json(action, json_str)
             )

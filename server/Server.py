@@ -38,17 +38,20 @@ class GameServerProtocol(asyncio.Protocol):
             data = self.data + data
             self.data = b""
         if self._process_data(data):
-            if self._observer:
-                self._write_respose(*self._observer.action(self._action, json.loads(self.message)))
-            else:
-                LOG(LOG.INFO, str(Action(self._action)))
-                LOG(LOG.INFO, json.loads(self.message))
-                method = self.COMMAND_MAP[self._action]
-                if method:
-                    method(self, json.loads(self.message))
-                if self._replay and self._action in (Action.MOVE, ):
-                    self._replay.add_action(self._action, self.message, with_commit=False)
-            self._action = None
+            try:
+                if self._observer:
+                    self._write_respose(*self._observer.action(self._action, json.loads(self.message)))
+                else:
+                    LOG(LOG.INFO, str(Action(self._action)))
+                    LOG(LOG.INFO, json.loads(self.message))
+                    method = self.COMMAND_MAP[self._action]
+                    if method:
+                        method(self, json.loads(self.message))
+                    if self._replay and self._action in (Action.MOVE, ):
+                        self._replay.add_action(self._action, self.message, with_commit=False)
+                self._action = None
+            except json.decoder.JSONDecodeError:
+                self._write_respose(Result.BAD_COMMAND)
 
     def _process_data(self, data):
         """

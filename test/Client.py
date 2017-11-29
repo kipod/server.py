@@ -6,7 +6,7 @@ import json
 from server.defs import Action, Result
 from server.entity.Map import Map
 from datetime import datetime
-from .ServerConnection import run_in_foreground, ServerConnection
+from .ServerConnection import ServerConnection
 
 class TestClient(unittest.TestCase):
     """ Test class for a Game Player"""
@@ -21,16 +21,21 @@ class TestClient(unittest.TestCase):
         #print('Close the socket')
         del cls._conn
 
+    @classmethod
+    def do_action(cls, action, data):
+        """ send action """
+        return cls._conn.do_action(action, data)
+
+    @classmethod
+    def do_action_json(cls, action, json_str):
+        """ send action with raw string data"""
+        return cls._conn.do_action_json(action, json_str)
+
     def test_0_connection(self):
         """ test connection """
         self.assertIsNotNone(self._conn._loop)
         self.assertIsNotNone(self._conn._reader)
         self.assertIsNotNone(self._conn._writer)
-
-    def do_action(self, action, data):
-        return run_in_foreground(
-            self._conn.send_action(action, data)
-            )
 
     def test_1_login(self):
         result, message = self.do_action(
@@ -221,26 +226,10 @@ class TestClient(unittest.TestCase):
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
 
-    def test_7_train_come_to_shop_map_l1_check_train_pos(self):
-        """
-        когда train приезжает в shop, и снова спрашивается layer1, train меняет position =0
-        """
-        # login for get player id
-        result, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
-        self.assertEqual(Result.OKEY, result)
-        data = json.loads(message)
-        player_id = data['idx']
-        post = self.get_post(0)
-        start_product = int(post['product'])
-        train = self.get_train(0)
-        self.assertEqual(train['player_id'], player_id)
-        self.move_train(1, 0, 1)
-        for _ in range(11):
-            position = self.get_train(0)['position']
-            if position == 1:
-                break
-            self.turn()
-        self.assertEqual(position, 1)
-        position = self.get_train(0)['position']
-        self.assertEqual(position, 1)
+    def test_8_wrong_actions(self):
+        """ test error codes on wrong action messages """
+        result, _ = self.do_action(Action.LOGIN, {'layer': 10})
+        self.assertEqual(Result.BAD_COMMAND, result)
+        result, _ = self.do_action_json(Action.LOGIN, 'no so JSON')
+        self.assertEqual(Result.BAD_COMMAND, result)
 
