@@ -44,14 +44,22 @@ class GameServerProtocol(asyncio.Protocol):
                 else:
                     LOG(LOG.INFO, str(Action(self._action)))
                     LOG(LOG.INFO, json.loads(self.message))
-                    method = self.COMMAND_MAP[self._action]
-                    if method:
-                        method(self, json.loads(self.message))
-                    if self._replay and self._action in (Action.MOVE, ):
-                        self._replay.add_action(self._action, self.message, with_commit=False)
-                self._action = None
+                    if self._action in self.COMMAND_MAP:
+                        method = self.COMMAND_MAP[self._action]
+                        if method:
+                            data = json.loads(self.message)
+                            if type(data) is dict:
+                                method(self, data)
+                            else:
+                                self._write_respose(Result.BAD_COMMAND)
+                        if self._replay and self._action in (Action.MOVE, ):
+                            self._replay.add_action(self._action, self.message, with_commit=False)
+                    else:
+                        self._write_respose(Result.BAD_COMMAND)
             except json.decoder.JSONDecodeError:
                 self._write_respose(Result.BAD_COMMAND)
+            finally:
+                self._action = None
 
     def _process_data(self, data):
         """
@@ -92,7 +100,7 @@ class GameServerProtocol(asyncio.Protocol):
         self.transport.write(len(message).to_bytes(4, byteorder='little'))
         self.transport.write(message.encode('utf-8'))
 
-    def _on_login(self, data):
+    def _on_login(self, data: dict):
         if 'name' in data:
             game_name = 'Game of {}'.format(data['name'])
             self._game = Game.create(game_name)

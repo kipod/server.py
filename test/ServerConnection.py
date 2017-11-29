@@ -57,7 +57,7 @@ class ServerConnection(unittest.TestCase):
             message = data.decode('utf-8')
         return result, message
 
-    async def send_action_json(self, action, json_str):
+    async def send_action_raw(self, action: int, json_str):
         """ send action command and returns result and message in string"""
         self._writer.write(action.to_bytes(4, byteorder='little'))
         if not json_str is None:
@@ -88,7 +88,7 @@ class ServerConnection(unittest.TestCase):
             self.send_action(action, data)
             )
 
-    def do_action_json(self, action, json_str: str):
+    def do_action_raw(self, action: int, json_str: str):
         return run_in_foreground(
-            self.send_action_json(action, json_str)
+            self.send_action_raw(action, json_str)
             )

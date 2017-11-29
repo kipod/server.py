@@ -27,9 +27,9 @@ class TestClient(unittest.TestCase):
         return cls._conn.do_action(action, data)
 
     @classmethod
-    def do_action_json(cls, action, json_str):
+    def do_action_raw(cls, action: int, json_str: str):
         """ send action with raw string data"""
-        return cls._conn.do_action_json(action, json_str)
+        return cls._conn.do_action_raw(action, json_str)
 
     def test_0_connection(self):
         """ test connection """
@@ -116,7 +116,8 @@ class TestClient(unittest.TestCase):
         get train belongs to the Player
         """
         # login for get player id
-        _, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        result, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        self.assertEqual(Result.OKEY, result)
         data = json.loads(message)
         player_id = data['idx']
         N = 0
@@ -230,6 +231,6 @@ class TestClient(unittest.TestCase):
         """ test error codes on wrong action messages """
         result, _ = self.do_action(Action.LOGIN, {'layer': 10})
         self.assertEqual(Result.BAD_COMMAND, result)
-        result, _ = self.do_action_json(Action.LOGIN, 'no so JSON')
+        result, _ = self.do_action_raw(Action.LOGIN, '1234567890')
         self.assertEqual(Result.BAD_COMMAND, result)
 
