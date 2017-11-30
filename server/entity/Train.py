@@ -1,5 +1,6 @@
-""" Train entity
+""" Train entity.
 """
+
 
 class Train(object):
     """ train

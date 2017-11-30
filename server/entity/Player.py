@@ -1,51 +1,52 @@
+""" Entity Player.
 """
-Entity Player
-"""
-import uuid
 import json
-from .Serializable import Serializable
+import uuid
+
 from entity.Map import Map
 from entity.Point import Point
+from entity.Serializable import Serializable
 
-# all registered players
-PLAYER_LIST = list()
 
 class Player(Serializable):
-    """
-    Player
+    """ Player
     * name - player name
     * id - player id
-    * trains - list of trains
+    * train - list of trains
     * home - point of the home town
     """
+
+    # All indexes of registered players
+    PLAYERS = {}
+
     def __init__(self, name):
         self.name = name
         self.idx = None
-        for player in PLAYER_LIST:
-            if player.name == name:
-                self.idx = player.idx
-                break
-        if not self.idx:
-            self.idx = str(uuid.uuid4())
-            PLAYER_LIST.append(self)
         self.train = []
         self.home = None
         self.town = None
+
+        if name in Player.PLAYERS:
+            self.idx = Player.PLAYERS[name]
+        else:
+            Player.PLAYERS[name] = self.idx = str(uuid.uuid4())
 
     def __eq__(self, other):
         return self.idx == other.idx
 
     def add_train(self, train):
-        """ add train to the player """
+        """ Adds train to the player.
+        """
         train.player_id = self.idx
         self.train.append(train)
 
     def set_home(self, point: Point, level: Map):
-        """ set home point """
+        """ Sets home point.
+        """
         self.home = point
         self.town = level.post[point.post_id]
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)
-        self.idx = data["idx"]
-        self.name = data["name"]
+        self.idx = data['idx']
+        self.name = data['name']

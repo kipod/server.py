@@ -1,4 +1,4 @@
-""" server definitions
+""" Server definitions.
 """
 from os import getenv
 from enum import IntEnum
@@ -8,7 +8,7 @@ SERVER_ADDR = getenv('WG_FORGE_SERVER_ADDR', '0.0.0.0')
 
 
 class Action(IntEnum):
-    """ client commands
+    """ Client commands.
     """
     LOGIN = 1
     LOGOUT = 2
@@ -20,10 +20,21 @@ class Action(IntEnum):
 
 
 class Result(IntEnum):
-    """ server response code
+    """ Server response codes.
     """
     OKEY = 0
     BAD_COMMAND = 1
     RESOURCE_NOT_FOUND = 2
     PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
+
+
+# Server errors:
+
+
+class WgForgeServerError(Exception):
+    pass
+
+
+class BadCommandError(WgForgeServerError):
+    pass
