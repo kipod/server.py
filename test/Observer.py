@@ -51,9 +51,9 @@ class TestObserver(unittest.TestCase):
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
-        self.assertIn('trains', data)
-        self.assertGreater(len(data['trains']), 0)
-        trains = {x['idx']: x for x in data['trains']}
+        self.assertIn('train', data)
+        self.assertGreater(len(data['train']), 0)
+        trains = {x['idx']: x for x in data['train']}
         self.assertIn(idx, trains)
         return trains[idx]
 
@@ -67,9 +67,9 @@ class TestObserver(unittest.TestCase):
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertNotEqual(len(data), 0)
-        self.assertIn('lines', data)
+        self.assertIn('line', data)
 
-        lines = {key: value for (key, value) in dict_items(data['lines'])}
+        lines = {key: value for (key, value) in dict_items(data['line'])}
         self.assertEqual(lines[1]['point'][0], 1)
         self.assertEqual(lines[1]['point'][1], 7)
         train = self.get_train(0)
@@ -120,10 +120,10 @@ class TestObserver(unittest.TestCase):
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertIn('idx', data.keys())
-        self.assertIn('coordinates', data.keys())
+        self.assertIn('coordinate', data.keys())
         self.assertIn('size', data.keys())
-        self.assertNotIn('lines', data.keys())
-        self.assertNotIn('points', data.keys())
+        self.assertNotIn('line', data.keys())
+        self.assertNotIn('point', data.keys())
 
     def test_7_game_writes_turns_on_ticks(self):
         """ Verify if game on server writes to replay.db on game's tick.

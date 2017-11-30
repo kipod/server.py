@@ -18,7 +18,7 @@ class Map(Serializable):
     """
     def __init__(self, name=None):
         self.okey = False
-        self.trains = []
+        self.train = []
         if name is None:
             return  # Empty map.
         try:
@@ -37,7 +37,7 @@ class Map(Serializable):
             self.idx = row[0]
             self.size = (row[1], row[2])
 
-            self.lines = {}
+            self.line = {}
             cur.execute(
                 """SELECT id, len, p0, p1
                    FROM line
@@ -46,10 +46,10 @@ class Map(Serializable):
                 (self.idx,)
             )
             for row in cur.fetchall():
-                self.lines[row[0]] = Line(row[0], row[1], row[2], row[3])
+                self.line[row[0]] = Line(row[0], row[1], row[2], row[3])
 
-            self.points = {}
-            self.coordinates = {}
+            self.point = {}
+            self.coordinate = {}
             cur.execute(
                 """SELECT id, post_id, x, y
                    FROM point
@@ -59,13 +59,13 @@ class Map(Serializable):
             )
             for row in cur.fetchall():
                 post_id = row[1]
-                self.coordinates[row[0]] = {'idx': row[0], 'x': row[2], 'y': row[3]}
+                self.coordinate[row[0]] = {'idx': row[0], 'x': row[2], 'y': row[3]}
                 if post_id == 0:
-                    self.points[row[0]] = Point(row[0])
+                    self.point[row[0]] = Point(row[0])
                 else:
-                    self.points[row[0]] = Point(row[0], post_id=post_id if post_id != 0 else None)
+                    self.point[row[0]] = Point(row[0], post_id=post_id if post_id != 0 else None)
 
-            self.posts = {}
+            self.post = {}
             cur.execute(
                 """SELECT id, name, type, population, armor, product
                    FROM post
@@ -74,7 +74,7 @@ class Map(Serializable):
                 (self.idx,)
             )
             for row in cur.fetchall():
-                self.posts[row[0]] = Post(
+                self.post[row[0]] = Post(
                     idx=row[0], name=row[1], post_type=row[2], population=row[3], armor=row[4], product=row[5])
 
             connection.close()
@@ -84,20 +84,20 @@ class Map(Serializable):
             log(log.Error, "An error occurred: {}".format(exception.args[0]))
 
     def add_train(self, train):
-        self.trains.append(train)
+        self.train.append(train)
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)
         self.idx = data['idx']
         self.name = data['name']
 
-        self.lines = {}
-        for line in data['lines']:
-            self.lines[line['idx']] = Line(line['idx'], line['length'], line['point'][0], line['point'][1])
+        self.line = {}
+        for line in data['line']:
+            self.line[line['idx']] = Line(line['idx'], line['length'], line['point'][0], line['point'][1])
 
-        self.points = {}
-        for p in data['points']:
-            self.points[p['idx']] = Point(p['idx'], post_id=p[u'post_id'] if 'post_id' in p else None)
+        self.point = {}
+        for p in data['point']:
+            self.point[p['idx']] = Point(p['idx'], post_id=p[u'post_id'] if 'post_id' in p else None)
 
         self.okey = True
 
@@ -105,11 +105,11 @@ class Map(Serializable):
         data = {}
         choice_list = ()
         if layer == 0:
-            choice_list = ('idx', 'name', 'points', 'lines')
+            choice_list = ('idx', 'name', 'point', 'line')
         elif layer == 1:
-            choice_list = ('idx', 'posts', 'trains')
+            choice_list = ('idx', 'post', 'train')
         elif layer == 10:
-            choice_list = ('idx', 'size', 'coordinates')
+            choice_list = ('idx', 'size', 'coordinate')
         for key in self.__dict__:
             if key in choice_list:
                 attribute = self.__dict__[key]

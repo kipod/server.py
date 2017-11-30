@@ -12,7 +12,7 @@ class Player(Serializable):
     """ Player
     * name - player name
     * id - player id
-    * trains - list of trains
+    * train - list of trains
     * home - point of the home town
     """
 
@@ -22,7 +22,7 @@ class Player(Serializable):
     def __init__(self, name):
         self.name = name
         self.idx = None
-        self.trains = []
+        self.train = []
         self.home = None
         self.town = None
 
@@ -38,13 +38,13 @@ class Player(Serializable):
         """ Adds train to the player.
         """
         train.player_id = self.idx
-        self.trains.append(train)
+        self.train.append(train)
 
     def set_home(self, point: Point, level: Map):
         """ Sets home point.
         """
         self.home = point
-        self.town = level.posts[point.post_id]
+        self.town = level.post[point.post_id]
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)

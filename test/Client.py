@@ -66,8 +66,8 @@ class TestClient(unittest.TestCase):
         self.assertNotEqual(len(message), 0)
         map02 = Map()
         map02.from_json_str(message)
-        self.assertEqual(len(map02.lines), 18)
-        self.assertEqual(len(map02.points), 12)
+        self.assertEqual(len(map02.line), 18)
+        self.assertEqual(len(map02.point), 12)
 
     def test_2_get_map_layer_1(self):
         """ Simple test client connection.
@@ -77,11 +77,11 @@ class TestClient(unittest.TestCase):
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertIn('idx', data.keys())
-        self.assertIn('posts', data.keys())
-        self.assertIn('trains', data.keys())
+        self.assertIn('post', data.keys())
+        self.assertIn('train', data.keys())
         self.assertNotIn('name', data.keys())
-        self.assertNotIn('lines', data.keys())
-        self.assertNotIn('points', data.keys())
+        self.assertNotIn('line', data.keys())
+        self.assertNotIn('point', data.keys())
 
     def get_train(self, train_id):
         """ Get train by id.
@@ -89,7 +89,7 @@ class TestClient(unittest.TestCase):
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         data = json.loads(message)
-        trains = {x['idx']: x for x in data['trains']}
+        trains = {x['idx']: x for x in data['train']}
         self.assertIn(train_id, trains)
         return trains[train_id]
 
@@ -99,7 +99,7 @@ class TestClient(unittest.TestCase):
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         data = json.loads(message)
-        posts = {x['idx']: x for x in data['posts']}
+        posts = {x['idx']: x for x in data['post']}
         self.assertIn(post_id, posts)
         return posts[post_id]
 
@@ -222,10 +222,10 @@ class TestClient(unittest.TestCase):
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertIn('idx', data.keys())
-        self.assertIn('coordinates', data.keys())
+        self.assertIn('coordinate', data.keys())
         self.assertIn('size', data.keys())
-        self.assertNotIn('lines', data.keys())
-        self.assertNotIn('points', data.keys())
+        self.assertNotIn('line', data.keys())
+        self.assertNotIn('point', data.keys())
 
     def test_8_wrong_actions(self):
         """ Test error codes on wrong action messages.
