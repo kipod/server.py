@@ -1,10 +1,10 @@
-"""
-entity network session
+""" Entity network session.
 """
 import uuid
 
+
 class Session(object):
-    """ Network session
+    """ Network session.
     """
     def __init__(self, player, sid=None):
         self.player = player

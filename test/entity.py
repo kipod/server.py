@@ -1,13 +1,13 @@
+""" Test server entities.
 """
-Test server entities
-"""
-import unittest
 import json
-from server.entity.Map import Map
+import unittest
+
+from server.entity.map import Map
+
 
 class TestJsonSerializable(unittest.TestCase):
-    """
-    Test-fixture
+    """ Test-fixture.
     """
     def setUp(self):
         pass
@@ -15,36 +15,57 @@ class TestJsonSerializable(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.skip("demo - simple testcase")
+    @unittest.skip("Demo - simple test case")
     def test_upper(self):
-        """ simple tast case """
+        """ Simple test case.
+        """
         self.assertEqual('foo'.upper(), 'FOO')
 
     def test_map(self):
-        """ test create map entity """
-        map01 = Map("map01")
-        self.assertTrue(map01.okey)
-        self.assertEqual(len(map01.line), 12)
-        self.assertEqual(len(map01.point), 12)
+        """ Test create map entity.
+        """
+        map02 = Map('map02')
+        self.assertTrue(map02.okey)
+        self.assertEqual(len(map02.lines), 18)
+        self.assertEqual(len(map02.points), 12)
 
-    
     def test_dump_map(self):
-        """ test JSON conversion """
-        m = Map("map01")
+        """ Test JSON conversion.
+        """
+        m = Map('map02')
         str_json = m.to_json_str()
         data = json.loads(str_json)
         self.assertIn('name', data)
+
         str_json = m.layer_to_json_str(0)
         data = json.loads(str_json)
         self.assertIn('name', data)
-        self.assertIn('line', data)
-        self.assertIn('point', data)
+        self.assertIn('lines', data)
+        self.assertIn('points', data)
         self.assertIn('idx', data)
-        self.assertNotIn('post', data)
+        self.assertNotIn('posts', data)
+        self.assertNotIn('trains', data)
+        self.assertNotIn('size', data)
+        self.assertNotIn('coordinates', data)
+
         str_json = m.layer_to_json_str(1)
         data = json.loads(str_json)
         self.assertNotIn('name', data)
-        self.assertNotIn('line', data)
-        self.assertNotIn('point', data)
+        self.assertNotIn('lines', data)
+        self.assertNotIn('points', data)
+        self.assertNotIn('size', data)
+        self.assertNotIn('coordinates', data)
         self.assertIn('idx', data)
-        self.assertIn('post', data)
+        self.assertIn('posts', data)
+        self.assertIn('trains', data)
+
+        str_json = m.layer_to_json_str(10)
+        data = json.loads(str_json)
+        self.assertNotIn('name', data)
+        self.assertNotIn('lines', data)
+        self.assertNotIn('points', data)
+        self.assertNotIn('posts', data)
+        self.assertNotIn('trains', data)
+        self.assertIn('idx', data)
+        self.assertIn('size', data)
+        self.assertIn('coordinates', data)

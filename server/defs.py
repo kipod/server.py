@@ -8,7 +8,7 @@ SERVER_ADDR = getenv('WG_FORGE_SERVER_ADDR', '0.0.0.0')
 
 
 class Action(IntEnum):
-    """ client commands
+    """ Client commands.
     """
     LOGIN = 1
     LOGOUT = 2
@@ -20,7 +20,7 @@ class Action(IntEnum):
 
 
 class Result(IntEnum):
-    """ server response code
+    """ Server response codes.
     """
     OKEY = 0
     BAD_COMMAND = 1

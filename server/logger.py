@@ -1,6 +1,8 @@
 import logging
 
+
 class Logger(object):
+
     CRITICAL = 50
     ERROR = 40
     WARNING = 30
@@ -20,9 +22,10 @@ class Logger(object):
         }
 
     def __call__(self, lvl, msg, *args, **kwargs):
-        if lvl in self._methods_map.keys():
+        if lvl in self._methods_map:
             self._methods_map[lvl](msg, *args, **kwargs)
         else:
             self._log.log(lvl, msg, *args, **kwargs)
 
-LOG = Logger()
+
+log = Logger()

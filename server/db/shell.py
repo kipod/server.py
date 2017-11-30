@@ -1,5 +1,5 @@
-# A minimal SQLite shell for experiments
-
+"""A minimal SQLite shell for experiments
+"""
 import sqlite3
 
 con = sqlite3.connect("map.db")
@@ -8,8 +8,8 @@ cur = con.cursor()
 
 buffer = ""
 
-print("Enter your SQL commands to execute in sqlite3.")
-print("Enter a blank line to exit.")
+print("""Enter your SQL commands to execute in sqlite3.
+         Enter a blank line to exit.""")
 
 while True:
     line = input()
@@ -25,7 +25,7 @@ while True:
                 for line in cur.fetchall():
                     print(line)
         except sqlite3.Error as e:
-            print("An error occurred:", e.args[0])
+            print("An error occurred: {}".format(e.args[0]))
         buffer = ""
 
 con.close()

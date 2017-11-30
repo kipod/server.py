@@ -71,7 +71,7 @@ Hex: |01 00 00 00|17 00 00 00|"{\n    "name": "Boris"\n}"
     },
     "idx": "dd87709a-91bf-4e99-8b5e-49b3fd5776ac",
     "name": "Boris",
-    "train": [
+    "trains": [
         {
             "idx": 0,
             "line_idx": 1,
@@ -114,7 +114,7 @@ Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
 ``` JSON
 {
     "idx": 1,
-    "line": [
+    "lines": [
       {
          "idx": 1,
          "length": 10,
@@ -142,7 +142,7 @@ Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
         ...
     ],
     "name": "map01",
-    "point": [
+    "points": [
         {
             "idx": 1,
             "post_id": 1
@@ -163,7 +163,7 @@ Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
 ``` JSON
 {
     "idx": 1,
-    "post": [
+    "posts": [
         {
             "armor": 0,
             "idx": 1,
@@ -173,7 +173,7 @@ Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
             "type": 1
         }
     ],
-    "train": [
+    "trains": [
         {
             "idx": 0,
             "line_idx": 1,
