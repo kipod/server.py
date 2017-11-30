@@ -1,4 +1,4 @@
-""" server definitions
+""" Server definitions.
 """
 from os import getenv
 from enum import IntEnum
@@ -27,3 +27,14 @@ class Result(IntEnum):
     RESOURCE_NOT_FOUND = 2
     PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
+
+
+# Server errors:
+
+
+class WgForgeServerError(Exception):
+    pass
+
+
+class BadCommandError(WgForgeServerError):
+    pass

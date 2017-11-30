@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
-from defs import SERVER_ADDR, SERVER_PORT, Action, Result
+from defs import SERVER_ADDR, SERVER_PORT, Action, Result, BadCommandError
 from entity.Game import Game
 from entity.Observer import Observer
 from entity.Player import Player
@@ -45,21 +45,21 @@ class GameServerProtocol(asyncio.Protocol):
             log(log.INFO, self.message)
             try:
                 data = json.loads(self.message)
-            except json.decoder.JSONDecodeError:
-                self._write_response(Result.BAD_COMMAND)
-            if not isinstance(data, dict):
-                self._write_response(Result.BAD_COMMAND)
-            if self._observer:
-                self._write_response(*self._observer.action(self._action, data))
-            else:
-                if self._action in self.COMMAND_MAP:
+                if not isinstance(data, dict):
+                    raise BadCommandError
+                if self._observer:
+                    self._write_response(*self._observer.action(self._action, data))
+                else:
+                    if self._action not in self.COMMAND_MAP:
+                        raise BadCommandError
                     method = self.COMMAND_MAP[self._action]
                     method(self, data)
                     if self._replay and self._action in (Action.MOVE, ):
                         self._replay.add_action(self._action, self.message, with_commit=False)
-                else:
-                    self._write_respose(Result.BAD_COMMAND)
-            self._action = None
+            except (json.decoder.JSONDecodeError, BadCommandError):
+                self._write_response(Result.BAD_COMMAND)
+            finally:
+                self._action = None
 
     def _process_data(self, data):
         """ Parses input command.
