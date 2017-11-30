@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime
 
 from server.defs import Action, Result
-from server.entity.Map import Map
+from server.entity.map import Map
 from test.ServerConnection import ServerConnection
 
 
