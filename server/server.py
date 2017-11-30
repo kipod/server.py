@@ -8,9 +8,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 from defs import SERVER_ADDR, SERVER_PORT, Action, Result, BadCommandError
-from entity.Game import Game
-from entity.Observer import Observer
-from entity.Player import Player
+from entity.game import Game
+from entity.observer import Observer
+from entity.player import Player
 from logger import log
 
 

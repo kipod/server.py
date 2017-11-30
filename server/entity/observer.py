@@ -4,8 +4,8 @@ import json
 
 from db.replay import DbReplay
 from defs import Action, Result
-from entity.Game import Game
-from entity.Player import Player
+from entity.game import Game
+from entity.player import Player
 from logger import log
 
 
