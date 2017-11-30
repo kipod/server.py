@@ -2,7 +2,7 @@
 """
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import func, and_
 
 from db.models import ReplayBase, Game, Action
 from db.session import ReplaySession, replay_engine
@@ -47,7 +47,7 @@ class DbReplay(object):
         """
         games = []
         rows = self.session.query(Game, func.count(Action.id)).outerjoin(
-            Action, Game.id == Action.game_id).filter(Action.code == ActionCodes.TURN).group_by(
+            Action, and_(Game.id == Action.game_id, Action.code == ActionCodes.TURN)).group_by(
             Game.id).order_by(Game.id).all()
         for row in rows:
             game_data, game_length = row

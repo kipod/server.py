@@ -128,3 +128,20 @@ class TestReplayDb(unittest.TestCase):
         self.assertEqual(action['code'], code)
         self.assertEqual(action['message'], message)
         self.assertEqual(action['date'], date)
+
+    def test_get_all_games_when_game_have_no_actions(self):
+        length = 0
+        game_name = 'TestGame1'
+        date = datetime.now()
+        map_name = 'FakeMap1'
+
+        self.db.add_game(game_name, map_name, date=date)
+
+        games = self.db.get_all_games()
+        self.assertEqual(len(games), 1)
+        game = games[0]
+
+        self.assertEqual(game['name'], game_name)
+        self.assertEqual(game['date'], date)
+        self.assertEqual(game['map'], map_name)
+        self.assertEqual(game['length'], length)
