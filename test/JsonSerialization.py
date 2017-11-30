@@ -3,7 +3,7 @@ Test serialization in json format
 """
 import unittest
 
-from server.entity.player import Player
+from server.entity.Player import Player
 
 
 class TestJsonSerializable(unittest.TestCase):

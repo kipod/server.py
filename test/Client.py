@@ -6,8 +6,8 @@ import unittest
 from datetime import datetime
 
 from server.defs import Action, Result
-from server.entity.map import Map
-from test.server_connection import ServerConnection
+from server.entity.Map import Map
+from test.ServerConnection import ServerConnection
 
 
 class TestClient(unittest.TestCase):

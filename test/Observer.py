@@ -3,9 +3,9 @@
 import unittest
 import json
 from server.defs import Action, Result
-from server.entity.map import Map
+from server.entity.Map import Map
 from datetime import datetime
-from test.server_connection import run_in_foreground, ServerConnection
+from test.ServerConnection import run_in_foreground, ServerConnection
 import time
 
 
