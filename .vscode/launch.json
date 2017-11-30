@@ -71,8 +71,8 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.Client",
-                "test.Observer"
+                "test.client",
+                "test.observer"
             ]
         },
         {

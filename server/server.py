@@ -5,8 +5,6 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
-
 from defs import SERVER_ADDR, SERVER_PORT, Action, Result, BadCommandError
 from entity.game import Game
 from entity.observer import Observer
