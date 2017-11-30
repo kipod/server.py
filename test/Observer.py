@@ -5,7 +5,7 @@ import time
 import unittest
 
 from server.defs import Action, Result
-from server.entity.game import Game
+from server.entity.Game import Game
 from test.ServerConnection import ServerConnection
 
 

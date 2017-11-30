@@ -3,9 +3,9 @@
 import json
 import uuid
 
-from entity.map import Map
-from entity.point import Point
-from entity.serializable import Serializable
+from entity.Map import Map
+from entity.Point import Point
+from entity.Serializable import Serializable
 
 
 class Player(Serializable):

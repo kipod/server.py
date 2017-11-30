@@ -3,7 +3,7 @@
 import json
 import unittest
 
-from server.entity.map import Map
+from server.entity.Map import Map
 
 
 class TestJsonSerializable(unittest.TestCase):

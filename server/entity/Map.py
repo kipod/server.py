@@ -4,10 +4,10 @@ import json
 import os
 import sqlite3
 
-from entity.line import Line
-from entity.point import Point
-from entity.post import Post
-from entity.serializable import Serializable
+from entity.Line import Line
+from entity.Point import Point
+from entity.Post import Post
+from entity.Serializable import Serializable
 from logger import log
 
 PATH_MAP_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'db', 'map.db')
