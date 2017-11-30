@@ -1,10 +1,11 @@
 """ DB models.
 """
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 MapBase = declarative_base()
+ReplayBase = declarative_base()
 
 
 class Map(MapBase):
@@ -76,3 +77,33 @@ class Post(MapBase):
                 self.product, self.replenishment, self.map_id, self.point_id
             )
         )
+
+
+class Game(ReplayBase):
+
+    __tablename__ = 'game'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    date = Column(DateTime)
+    map_name = Column(String)
+    actions = relationship('Action', backref='game', lazy='dynamic')
+
+    def __repr__(self):
+        return "<Game(id='{}', name='{}', date='{}', map_name='{}')>".format(
+           self.id, self.name, self.date, self.map_name)
+
+
+class Action(ReplayBase):
+
+    __tablename__ = 'action'
+
+    id = Column(Integer, primary_key=True)
+    game_id = Column(Integer, ForeignKey('game.id'))
+    code = Column(Integer)
+    message = Column(String)
+    date = Column(DateTime)
+
+    def __repr__(self):
+        return "<Action(id='{}', game_id='{}', code='{}', message='{}', date='{}')>".format(
+           self.id, self.game_id, self.code, self.message, self.date)

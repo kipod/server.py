@@ -49,6 +49,8 @@ class DbMap(object):
         return new_point.id
 
     def add_post(self, point_id, name, type_p, population=0, armor=0, product=0, replenishment=1, map_id=None):
+        """ Creates new Post in DB.
+        """
         _map_id = self.current_map_id if map_id is None else map_id
         new_post = Post(name=name, type=type_p, population=population, armor=armor, product=product,
                         replenishment=replenishment, map_id=_map_id, point_id=point_id)
@@ -56,12 +58,17 @@ class DbMap(object):
         self.session.commit()  # Commit to get post's id.
         return new_post.id
 
+    def close(self):
+        """ Closes and commits session.
+        """
+        self.session.commit()
+        self.session.close()
+
     def __enter__(self):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self.session.commit()
-        self.session.close()
+        self.close()
 
 
 def generate_map01(db):
