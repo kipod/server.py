@@ -157,8 +157,10 @@ MAP_GENERATORS = {
 
 
 @task
-def generate_map(ctx, map_name):
+def generate_map(ctx, map_name=None):
     with DbMap() as db:
-        map_generator = MAP_GENERATORS[map_name]
-        map_generator(db)
-    print('Done')
+        maps_to_generate = MAP_GENERATORS.keys() if map_name is None else [map_name, ]
+        for curr_map in maps_to_generate:
+            map_generator = MAP_GENERATORS[curr_map]
+            map_generator(db)
+            print("Map '{}' has been generated.".format(curr_map))

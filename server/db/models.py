@@ -71,8 +71,8 @@ class Post(MapBase):
     def __repr__(self):
         return (
             "<Post(id='{}', name='{}', type='{}', population='{}', armor='{}', "
-            "product='{}', replenishment='{}', map_id='{}')>".format(
+            "product='{}', replenishment='{}', map_id='{}', point_id='{}')>".format(
                 self.id, self.name, self.type, self.population, self.armor,
-                self.product, self.replenishment, self.map_id
+                self.product, self.replenishment, self.map_id, self.point_id
             )
         )
