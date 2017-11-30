@@ -72,7 +72,7 @@ class GameServerProtocol(asyncio.Protocol):
             self.message_len = 0
             data = data[4:]
             if self._action in (Action.LOGOUT, Action.OBSERVER):  # Commands without data.
-                self.data = data
+                self.data = b''
                 self.message = '{}'
                 return True
         # Read size of message:
