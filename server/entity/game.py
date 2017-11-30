@@ -4,9 +4,9 @@ from threading import Thread, Event, Lock
 
 from db.replay import DbReplay
 from defs import Result, Action
-from entity.Map import Map
-from entity.Post import PostType
-from entity.Train import Train
+from entity.map import Map
+from entity.post import PostType
+from entity.train import Train
 from logger import log
 
 
