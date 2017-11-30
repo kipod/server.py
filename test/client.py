@@ -204,15 +204,13 @@ class TestClient(unittest.TestCase):
 
         self.move_to_next_line(1, train['idx'], -1)
         train = self.get_train(0)
-        while int(train['speed']) != 0:
-            self.turn()
-            train = self.get_train(0)
+        self.assertEqual(int(train['speed']), 0)
 
         self.assertEqual(int(train['line_idx']), 1)
         self.assertEqual(int(train['position']), 0)
         self.assertEqual(int(train['product']), 0)
         post = self.get_post(1)
-        self.assertEqual(int(post['product']), start_product-2)
+        self.assertEqual(int(post['product']), start_product-4)
 
     def test_5_read_coordinates(self):
         """ Get coordinates of points using layer 10.

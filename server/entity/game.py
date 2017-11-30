@@ -117,17 +117,13 @@ class Game(Thread):
     def tick(self):
         """ Updates dynamic game entities.
         """
-        # log(log.INFO, "Game Tick")
-        # Update population and products in towns:
-        for player in self._players.values():
-            if player.town.product > player.town.population:
-                player.town.product -= player.town.population
-            else:
-                player.town.population -= 1
+        # log(log.INFO, "Game Tick")        
         # Update all markets:
         for market in self.markets:
             if market.product < market.product_capacity:
-                market.product += 1
+                market.product += market.replenishment
+                if market.product > market.product_capacity:
+                    market.product = market.product_capacity
         # Update trains positions:
         for train in self._trains:
             if train.line_idx in self.map.line:
@@ -144,6 +140,12 @@ class Game(Thread):
                         self.train_in_point(train, line.point[0])
             else:
                 log(log.ERROR, "Wrong train.line_idx: {}".format(train.line_idx))
+        # Update population and products in towns:
+        for player in self._players.values():
+            if player.town.product > player.town.population:
+                player.town.product -= player.town.population
+            else:
+                player.town.population -= 1
 
     def train_in_point(self, train, point):
         """ The train arrived to point.
