@@ -41,6 +41,8 @@ class GameServerProtocol(asyncio.Protocol):
             data = self.data + data
             self.data = None
         if self._process_data(data):
+            log(log.INFO, Action(self._action))
+            log(log.INFO, self.message)
             try:
                 data = json.loads(self.message)
             except json.decoder.JSONDecodeError:
@@ -50,8 +52,6 @@ class GameServerProtocol(asyncio.Protocol):
             if self._observer:
                 self._write_response(*self._observer.action(self._action, data))
             else:
-                log(log.INFO, Action(self._action))
-                log(log.INFO, self.message)
                 if self._action in self.COMMAND_MAP:
                     method = self.COMMAND_MAP[self._action]
                     method(self, data)

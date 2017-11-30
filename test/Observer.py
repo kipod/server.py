@@ -1,12 +1,12 @@
 """ Test Observer client-server protocol.
 """
-import unittest
 import json
-from server.defs import Action, Result
-from server.entity.Map import Map
-from datetime import datetime
-from test.ServerConnection import run_in_foreground, ServerConnection
 import time
+import unittest
+
+from server.defs import Action, Result
+from server.entity.Game import Game
+from test.ServerConnection import ServerConnection
 
 
 def dict_items(sequence):
@@ -46,15 +46,14 @@ class TestObserver(unittest.TestCase):
         data = json.loads(message)
         self.assertNotEqual(len(data), 0)
 
-    def getTrain(self, idx):
+    def get_train(self, idx):
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
         data = json.loads(message)
         self.assertIn('trains', data)
         self.assertGreater(len(data['trains']), 0)
-        #trains = {x['idx']: x for x in data['trains']}
-        trains = {key: value for (key, value) in dict_items(data['trains'])}
+        trains = {x['idx']: x for x in data['trains']}
         self.assertIn(idx, trains)
         return trains[idx]
 
@@ -73,7 +72,7 @@ class TestObserver(unittest.TestCase):
         lines = {key: value for (key, value) in dict_items(data['lines'])}
         self.assertEqual(lines[1]['point'][0], 1)
         self.assertEqual(lines[1]['point'][1], 7)
-        train = self.getTrain(0)
+        train = self.get_train(0)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['line_idx'], 1)
         self.assertEqual(train['position'], 0)
@@ -90,26 +89,26 @@ class TestObserver(unittest.TestCase):
         set turn -1 and check position.
         """
         self.set_turn(3)
-        train = self.getTrain(0)
+        train = self.get_train(0)
         self.assertEqual(train['speed'], 1)
         self.assertEqual(train['position'], 1)
         self.assertEqual(train['line_idx'], 14)
         self.set_turn(10)
-        train = self.getTrain(0)
+        train = self.get_train(0)
         self.assertEqual(train['speed'], 1)
         self.assertEqual(train['position'], 1)
         self.assertEqual(train['line_idx'], 18)
         self.set_turn(0)
-        train = self.getTrain(0)
+        train = self.get_train(0)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['position'], 0)
         self.set_turn(100)
-        train = self.getTrain(0)
+        train = self.get_train(0)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['position'], 3)
         self.assertEqual(train['line_idx'], 18)
         self.set_turn(-1)
-        train = self.getTrain(0)
+        train = self.get_train(0)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['position'], 0)
 
@@ -132,9 +131,10 @@ class TestObserver(unittest.TestCase):
         conn = ServerConnection()
         result, _ = conn.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
-        time.sleep(11)  # Wait for game tick (tick_time + 1).
+        time.sleep(Game.TICK_TIME + 1)  # Wait for game tick.
         result, _ = conn.do_action(Action.LOGOUT, None)
         self.assertEqual(Result.OKEY, result)
+        time.sleep(1)  # Wait for DB commit.
         result, message = self.do_action(Action.OBSERVER, None)
         self.assertEqual(Result.OKEY, result)
         games = json.loads(message)

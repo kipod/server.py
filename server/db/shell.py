@@ -8,8 +8,8 @@ cur = con.cursor()
 
 buffer = ""
 
-print("""Enter your SQL commands to execute in sqlite3.
-         Enter a blank line to exit.""")
+print("Enter your SQL commands to execute in sqlite3.\n"
+      "Enter a blank line to exit.")
 
 while True:
     line = input()
