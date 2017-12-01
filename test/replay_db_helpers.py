@@ -3,9 +3,9 @@
 import unittest
 from datetime import datetime
 
-from db.models import Game, Action
-from db.session import ReplaySession
-from server.db.replay import DbReplay
+from server.db.models import Game, Action
+from server.db.replay import DbReplay, TIME_FORMAT
+from server.db.session import ReplaySession
 from server.defs import Action as ActionCodes
 
 
@@ -21,6 +21,7 @@ class TestReplayDb(unittest.TestCase):
         self.db.reset_db()
 
     def tearDown(self):
+        self.db.reset_db()
         self.db.close()
         self.session.close()
 
@@ -107,7 +108,7 @@ class TestReplayDb(unittest.TestCase):
         game = games[0]
 
         self.assertEqual(game['name'], game_name)
-        self.assertEqual(game['date'], date)
+        self.assertEqual(game['date'], date.strftime(TIME_FORMAT))
         self.assertEqual(game['map'], map_name)
         self.assertEqual(game['length'], length)
 
@@ -127,7 +128,7 @@ class TestReplayDb(unittest.TestCase):
 
         self.assertEqual(action['code'], code)
         self.assertEqual(action['message'], message)
-        self.assertEqual(action['date'], date)
+        self.assertEqual(action['date'], date.strftime(TIME_FORMAT))
 
     def test_get_all_games_when_game_have_no_actions(self):
         length = 0
@@ -142,6 +143,6 @@ class TestReplayDb(unittest.TestCase):
         game = games[0]
 
         self.assertEqual(game['name'], game_name)
-        self.assertEqual(game['date'], date)
+        self.assertEqual(game['date'], date.strftime(TIME_FORMAT))
         self.assertEqual(game['map'], map_name)
         self.assertEqual(game['length'], length)

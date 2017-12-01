@@ -3,7 +3,7 @@
 from threading import Thread, Event, Lock
 
 from db.replay import DbReplay
-from defs import Result, Action
+from defs import Result, Action, MAP_NAME
 from entity.map import Map
 from entity.post import PostType
 from entity.train import Train
@@ -27,7 +27,7 @@ class Game(Thread):
     # All registered games.
     GAMES = {}
 
-    def __init__(self, name, map_name='map02', observed=False):
+    def __init__(self, name, map_name=MAP_NAME, observed=False):
         super(Game, self).__init__(name=name)
         log(log.INFO, "Create game: {}".format(self.name))
         self.replay = None

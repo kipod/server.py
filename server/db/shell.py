@@ -4,17 +4,12 @@ import sqlite3
 
 from invoke import task
 
-from defs import MAP_DB_URI, REPLAY_DB_URI
-
-DATABASES = {
-    'map': MAP_DB_URI,
-    'replay': REPLAY_DB_URI,
-}
+from defs import DB_URI
 
 
 @task
 def dbshell(ctx, db_name='map'):
-    con = sqlite3.connect(DATABASES[db_name].replace('sqlite:///', 'file:'), uri=True)
+    con = sqlite3.connect(DB_URI[db_name].replace('sqlite:///', 'file:'), uri=True)
     con.isolation_level = None
     cur = con.cursor()
     buffer = ""

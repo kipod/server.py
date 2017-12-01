@@ -7,19 +7,12 @@ from server.entity.map import Map
 
 
 class TestJsonSerializable(unittest.TestCase):
-    """ Test-fixture.
-    """
+
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
-
-    @unittest.skip("Demo - simple test case")
-    def test_upper(self):
-        """ Simple test case.
-        """
-        self.assertEqual('foo'.upper(), 'FOO')
 
     def test_map(self):
         """ Test create map entity.

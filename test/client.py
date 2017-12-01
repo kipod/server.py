@@ -21,7 +21,6 @@ class TestClient(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # print('Close the socket')
         del cls._conn
 
     @classmethod
@@ -44,6 +43,8 @@ class TestClient(unittest.TestCase):
         self.assertIsNotNone(self._conn._writer)
 
     def test_1_login(self):
+        """ Test login.
+        """
         result, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
@@ -53,24 +54,34 @@ class TestClient(unittest.TestCase):
         self.assertIsNotNone(player_id)
 
     def test_9_logout(self):
-        """ Game over.
+        """ Test logout.
         """
         result, _ = self.do_action(Action.LOGOUT, None)
         self.assertEqual(Result.OKEY, result)
 
     def test_2_get_map_layer_0(self):
-        """ Simple test client connection.
+        """ Test layer_to_json_str and from_json_str for layer 0.
         """
         result, message = self.do_action(Action.MAP, {'layer': 0})
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
+        data = json.loads(message)
+        self.assertIn('idx', data.keys())
+        self.assertIn('name', data.keys())
+        self.assertIn('line', data.keys())
+        self.assertIn('point', data.keys())
+        self.assertNotIn('post', data.keys())
+        self.assertNotIn('train', data.keys())
+        self.assertNotIn('size', data.keys())
+        self.assertNotIn('coordinate', data.keys())
+
         map02 = Map()
         map02.from_json_str(message)
         self.assertEqual(len(map02.line), 18)
         self.assertEqual(len(map02.point), 12)
 
     def test_2_get_map_layer_1(self):
-        """ Simple test client connection.
+        """ Test layer_to_json_str and from_json_str for layer 1.
         """
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
@@ -82,6 +93,34 @@ class TestClient(unittest.TestCase):
         self.assertNotIn('name', data.keys())
         self.assertNotIn('line', data.keys())
         self.assertNotIn('point', data.keys())
+        self.assertNotIn('size', data.keys())
+        self.assertNotIn('coordinate', data.keys())
+
+        map02 = Map()
+        map02.from_json_str(message)
+        self.assertEqual(len(map02.post), 4)
+        self.assertEqual(len(map02.train), 1)
+
+    def test_2_get_map_layer_10(self):
+        """ Test layer_to_json_str and from_json_str for layer 10.
+        """
+        result, message = self.do_action(Action.MAP, {'layer': 10})
+        self.assertEqual(Result.OKEY, result)
+        self.assertNotEqual(len(message), 0)
+        data = json.loads(message)
+        self.assertIn('idx', data.keys())
+        self.assertIn('size', data.keys())
+        self.assertIn('coordinate', data.keys())
+        self.assertNotIn('post', data.keys())
+        self.assertNotIn('train', data.keys())
+        self.assertNotIn('name', data.keys())
+        self.assertNotIn('line', data.keys())
+        self.assertNotIn('point', data.keys())
+
+        map02 = Map()
+        map02.from_json_str(message)
+        self.assertEqual(len(map02.size), 2)
+        self.assertEqual(len(map02.coordinate), 12)
 
     def get_train(self, train_id):
         """ Get train by id.

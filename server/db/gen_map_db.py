@@ -3,7 +3,7 @@
 from invoke import task
 
 from db.models import MapBase, Map, Line, Point, Post
-from db.session import MapSession, map_engine
+from db.session import MapSession
 from entity.post import PostType
 
 
@@ -18,8 +18,8 @@ class DbMap(object):
     def reset_db(self):
         """ Re-applies DB schema.
         """
-        MapBase.metadata.drop_all(map_engine)
-        MapBase.metadata.create_all(map_engine)
+        MapBase.metadata.drop_all()
+        MapBase.metadata.create_all()
 
     def add_map(self, size_x, size_y, name=''):
         """ Creates new Map in DB.

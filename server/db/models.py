@@ -4,8 +4,10 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-MapBase = declarative_base()
-ReplayBase = declarative_base()
+from db.session import map_engine, replay_engine
+
+MapBase = declarative_base(bind=map_engine)
+ReplayBase = declarative_base(bind=replay_engine)
 
 
 class Map(MapBase):

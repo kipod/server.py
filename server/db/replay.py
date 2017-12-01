@@ -5,8 +5,10 @@ from datetime import datetime
 from sqlalchemy import func, and_
 
 from db.models import ReplayBase, Game, Action
-from db.session import ReplaySession, replay_engine
+from db.session import ReplaySession
 from defs import Action as ActionCodes
+
+TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
 
 class DbReplay(object):
@@ -19,8 +21,8 @@ class DbReplay(object):
     def reset_db(self):
         """ Re-applies DB schema.
         """
-        ReplayBase.metadata.drop_all(replay_engine)
-        ReplayBase.metadata.create_all(replay_engine)
+        ReplayBase.metadata.drop_all()
+        ReplayBase.metadata.create_all()
 
     def add_game(self, name, map_name, date=None):
         """ Creates new Game in DB.
@@ -54,7 +56,7 @@ class DbReplay(object):
             game = {
                 'idx': game_data.id,
                 'name': game_data.name,
-                'date': game_data.date,
+                'date': game_data.date.strftime(TIME_FORMAT),
                 'map': game_data.map_name,
                 'length': game_length,
             }
@@ -70,7 +72,7 @@ class DbReplay(object):
             action = {
                 'code': row.code,
                 'message': row.message,
-                'date': row.date,
+                'date': row.date.strftime(TIME_FORMAT),
             }
             actions.append(action)
         return actions
