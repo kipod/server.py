@@ -1,1 +1,2 @@
-TBD
+invoke==0.22.0
+SQLAlchemy==1.1.15

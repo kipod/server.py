@@ -6,6 +6,7 @@ import unittest
 
 from server.defs import Action, Result
 from server.entity.game import Game
+from server.db.replay import DbReplay
 from test.server_connection import ServerConnection
 
 
@@ -23,11 +24,45 @@ class TestObserver(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._conn = ServerConnection()
+        cls.prepare_db()
 
     @classmethod
     def tearDownClass(cls):
-        # print('Close the socket')
         del cls._conn
+        cls.reset_db()
+
+    @staticmethod
+    def prepare_db():
+        """ Prepare replay DB for tests.
+        """
+        with DbReplay() as db:
+            db.reset_db()
+            db.add_game('Test', 'map02')
+            db.add_action(Action.MOVE, '{"line_idx": 13, "speed": 1, "train_idx": 0}')
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.MOVE, '{"line_idx": 14, "speed": 1, "train_idx": 0}')
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.MOVE, '{"line_idx": 15, "speed": 1, "train_idx": 0}')
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.MOVE, '{"line_idx": 16, "speed": 1, "train_idx": 0}')
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.MOVE, '{"line_idx": 17, "speed": 1, "train_idx": 0}')
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.MOVE, '{"line_idx": 18, "speed": 1, "train_idx": 0}')
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.TURN, None)
+            db.add_action(Action.TURN, None)
+
+    @staticmethod
+    def reset_db():
+        """ Resets replay DB after tests.
+        """
+        with DbReplay() as db:
+            db.reset_db()
 
     def test_0_connection(self):
         """ Test connection.

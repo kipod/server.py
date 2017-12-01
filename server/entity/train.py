@@ -12,13 +12,11 @@ class Train(object):
          capacity - maximum product that train can transport
          product - quantity of product transports by train
     """
-    def __init__(self, idx=None, line_idx=None, pos=None, speed=0, player=None):
+    def __init__(self, idx=None, line_idx=None, pos=None, speed=0, player_id=None):
         self.idx = idx if idx else 0
         self.line_idx = line_idx
         self.position = pos
         self.speed = speed
-        self.player_id = None
-        if player is not None:
-            self.player_id = player.idx
+        self.player_id = player_id
         self.capacity = 200
         self.product = 0

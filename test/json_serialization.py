@@ -1,5 +1,4 @@
-"""
-Test serialization in json format
+""" Test serialization in json format.
 """
 import unittest
 
@@ -7,19 +6,12 @@ from server.entity.player import Player
 
 
 class TestJsonSerializable(unittest.TestCase):
-    """ Test-fixture.
-    """
+
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
-
-    @unittest.skip("Demo - simple test case")
-    def test_upper(self):
-        """ Simple test case.
-        """
-        self.assertEqual('foo'.upper(), 'FOO')
 
     def test_map(self):
         """ Test serialization of Map entity to json string.
