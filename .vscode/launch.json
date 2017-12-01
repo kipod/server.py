@@ -52,7 +52,8 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.entity"
+                "test.entity",
+                "test.replay_db_helpers"
             ]
         },
         {
