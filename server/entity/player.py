@@ -22,7 +22,7 @@ class Player(Serializable):
     def __init__(self, name):
         self.name = name
         self.idx = None
-        self.train = []
+        self.train = {}
         self.home = None
         self.town = None
 
@@ -38,7 +38,7 @@ class Player(Serializable):
         """ Adds train to the player.
         """
         train.player_id = self.idx
-        self.train.append(train)
+        self.train[train.idx] = train
 
     def set_home(self, point: Point, level: Map):
         """ Sets home point.
@@ -50,3 +50,13 @@ class Player(Serializable):
         data = json.loads(string_data)
         self.idx = data['idx']
         self.name = data['name']
+
+    def to_json_str(self):
+        data = {}
+        for key in self.__dict__:
+            attribute = self.__dict__[key]
+            if isinstance(attribute, dict):
+                data[key] = [i for i in attribute.values()]
+            else:
+                data[key] = attribute
+        return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)

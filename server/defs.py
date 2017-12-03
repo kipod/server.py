@@ -11,7 +11,6 @@ DB_URI = {
     'map': MAP_DB_URI,
     'replay': REPLAY_DB_URI,
 }
-MAP_NAME = 'map02'
 
 
 class Action(IntEnum):

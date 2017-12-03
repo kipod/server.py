@@ -172,12 +172,12 @@ class TestClient(unittest.TestCase):
         player_id = data['idx']
         n = 0
 
-        train = self.get_train(0)
+        train = self.get_train(1)
         self.assertEqual(train['player_id'], player_id)
         # Begin moving.
         self.move_train(1+n, train['idx'], 1)
         self.turn()
-        self.assertGreater(self.get_train_pos(0), 0)
+        self.assertGreater(self.get_train_pos(1), 0)
 
         self.move_to_next_line(7+n, train['idx'], 1)
         self.move_to_next_line(8+n, train['idx'], 1)
@@ -186,10 +186,10 @@ class TestClient(unittest.TestCase):
         self.move_to_next_line(11+n, train['idx'], 1)
         self.move_to_next_line(12+n, train['idx'], 1)
         self.move_to_next_line(1+n, train['idx'], -1)
-        for _ in range(self.get_train_pos(0)):
+        for _ in range(self.get_train_pos(1)):
             self.turn()
-        self.assertEqual(self.get_train_pos(0), 0)
-        self.assertEqual(self.get_train_line(0), 1)
+        self.assertEqual(self.get_train_pos(1), 0)
+        self.assertEqual(self.get_train_line(1), 1)
 
     def move_train(self, next_line_id, train_idx, speed):
         """ Sends MOVE action.
@@ -232,30 +232,30 @@ class TestClient(unittest.TestCase):
         post = self.get_post(1)
         start_product = int(post['product'])
 
-        train = self.get_train(0)
+        train = self.get_train(1)
         self.assertEqual(train['player_id'], player_id)
         self.assertEqual(int(train['position']), 0)
-        self.assertNotEqual(int(train['capacity']), 0)
-        self.assertEqual(int(train['product']), 0)
+        self.assertNotEqual(int(train['goods_capacity']), 0)
+        self.assertEqual(int(train['goods']), 0)
         self.assertEqual(int(train['speed']), 0)
         self.move_to_next_line(1, train['idx'], 1)
 
-        train = self.get_train(0)
+        train = self.get_train(1)
         while int(train['speed']) != 0:
             self.turn()
-            train = self.get_train(0)
+            train = self.get_train(1)
 
         self.assertEqual(int(train['line_idx']), 1)
         self.assertEqual(int(train['position']), 1)
-        self.assertEqual(int(train['product']), 2)
+        self.assertEqual(int(train['goods']), 2)
 
         self.move_to_next_line(1, train['idx'], -1)
-        train = self.get_train(0)
+        train = self.get_train(1)
         self.assertEqual(int(train['speed']), 0)
 
         self.assertEqual(int(train['line_idx']), 1)
         self.assertEqual(int(train['position']), 0)
-        self.assertEqual(int(train['product']), 0)
+        self.assertEqual(int(train['goods']), 0)
         post = self.get_post(1)
         self.assertEqual(int(post['product']), start_product-4)
 
