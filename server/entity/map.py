@@ -67,7 +67,7 @@ class Map(Serializable):
 
             self.post = {}
             cur.execute(
-                """SELECT id, name, type, population, armor, product
+                """SELECT id, name, type, population, armor, product, replenishment
                    FROM post
                    WHERE map_id=?
                    ORDER BY id""",
@@ -75,7 +75,8 @@ class Map(Serializable):
             )
             for row in cur.fetchall():
                 self.post[row[0]] = Post(
-                    idx=row[0], name=row[1], post_type=row[2], population=row[3], armor=row[4], product=row[5])
+                    idx=row[0], name=row[1], post_type=row[2], population=row[3],
+                    armor=row[4], product=row[5], replenishment=row[6])
 
             connection.close()
             self.okey = True
