@@ -43,6 +43,7 @@ class Player(Serializable):
     def set_home(self, point: Point, post: Post):
         """ Sets home point.
         """
+        post.player_id = self.idx
         self.home = point
         self.town = post
 
@@ -60,3 +61,8 @@ class Player(Serializable):
             else:
                 data[key] = attribute
         return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    def __str__(self):
+        return "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, trains_idx=[{}])>".format(
+            self.idx, self.name, self.home.idx, self.town.idx, ', '.join([str(idx) for idx in self.train])
+        )

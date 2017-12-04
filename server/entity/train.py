@@ -39,3 +39,8 @@ class Train(object):
         # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
         self.goods = 0
         self.post_type = None
+
+    def __str__(self):
+        return "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, level={})>".format(
+            self.idx, self.line_idx, self.position, self.speed, self.player_id, self.level
+        )

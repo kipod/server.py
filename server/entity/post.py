@@ -71,3 +71,8 @@ class Post(object):
             self.armor_capacity = armor
             self.armor = armor
             self.replenishment = replenishment
+
+    def __str__(self):
+        return "<Post(idx={}, name='{}', type={!r}, point_id={})>".format(
+            self.idx, self.name, self.type, self.point_id
+        )
