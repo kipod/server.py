@@ -4,7 +4,7 @@ import json
 import time
 import unittest
 
-from server.db.replay import DbReplay
+from server.db.replay import DbReplay, generate_replay01
 from server.defs import Action, Result
 from server.game_config import TICK_TIME
 from test.server_connection import ServerConnection
@@ -37,25 +37,7 @@ class TestObserver(unittest.TestCase):
         """
         with DbReplay() as db:
             db.reset_db()
-            db.add_game('Test', 'map02')
-            db.add_action(Action.MOVE, '{"line_idx": 13, "speed": 1, "train_idx": 1}')
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.MOVE, '{"line_idx": 14, "speed": 1, "train_idx": 1}')
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.MOVE, '{"line_idx": 15, "speed": 1, "train_idx": 1}')
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.MOVE, '{"line_idx": 16, "speed": 1, "train_idx": 1}')
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.MOVE, '{"line_idx": 17, "speed": 1, "train_idx": 1}')
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.MOVE, '{"line_idx": 18, "speed": 1, "train_idx": 1}')
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.TURN, None)
-            db.add_action(Action.TURN, None)
+            generate_replay01(db)
 
     @staticmethod
     def reset_db():

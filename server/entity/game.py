@@ -45,8 +45,6 @@ class Game(Thread):
         self._next_train_moves = {}
         if not observed:
             self._current_game_id = self.replay.add_game(name, map_name=self.map.name)
-        self.markets = [m for m in self.map.post.values() if m.type == PostType.MARKET]
-        self.storages = [s for s in self.map.post.values() if s.type == PostType.STORAGE]
         random.seed()
 
     @staticmethod
@@ -64,18 +62,19 @@ class Game(Thread):
         """
         if player.idx not in self._players:
             log(log.INFO, "Game: Add player '{}'".format(player.name))
-            # Use first Post on the map as Tows:
-            home_point = [point for point in self.map.point.values() if point.post_id is not None][0]
-            player.set_home(home_point, level=self.map)
+            # Use first Town on the map as player's Town:
+            player_town = self.map.towns[0]
+            player_home_point = self.map.point[player_town.point_id]
+            player.set_home(player_home_point, player_town)
             # Add trains for the player:
             for _ in range(game_config.DEFAULT_TRAINS_COUNT):
                 # Create Train:
                 train = Train(idx=len(self._trains) + 1)
                 # Use first Line connected to the Town as default train's line:
-                line = [line for line in self.map.line.values() if home_point.idx in line.point][0]
+                line = [line for line in self.map.line.values() if player_home_point.idx in line.point][0]
                 train.line_idx = line.idx
                 # Set Train's position at the Town:
-                if home_point.idx == line.point[0]:
+                if player_home_point.idx == line.point[0]:
                     train.position = 0
                 else:
                     train.position = line.length
@@ -132,14 +131,14 @@ class Game(Thread):
         log(log.DEBUG, "Game Tick")
 
         # Update all markets and storages:
-        for market in self.markets:
+        for market in self.map.markets:
             if market.product < market.product_capacity:
                 market.product = min(market.product + market.replenishment, market.product_capacity)
-        for storage in self.storages:
+        for storage in self.map.storages:
             if storage.armor < storage.armor_capacity:
                 storage.armor = min(storage.armor + storage.replenishment, storage.armor_capacity)
 
-        # Update trains positions:
+        # Update trains positions, process points:
         for train in self._trains.values():
             if train.line_idx in self.map.line:
                 line = self.map.line[train.line_idx]
@@ -152,6 +151,12 @@ class Game(Thread):
                     if train.position > 0:
                         train.position -= 1
                     if train.position == 0:
+                        self.train_in_point(train, line.point[0])
+                # If train.speed == 0:
+                else:
+                    if train.position == line.length:
+                        self.train_in_point(train, line.point[1])
+                    elif train.position == 0:
                         self.train_in_point(train, line.point[0])
             else:
                 log(log.ERROR, "Wrong train.line_idx: {}".format(train.line_idx))
@@ -284,7 +289,6 @@ class Game(Thread):
 
             train.goods = 0
             train.post_type = None
-            train.fuel = train.fuel_capacity
 
         elif post.type == PostType.MARKET:
             # Load product from market to train.
@@ -303,18 +307,22 @@ class Game(Thread):
                 train.post_type = post.type
 
     def hijackers_assault(self):
+        """ Makes hijackers assault which decreases quantity of Town's armor and population.
+        """
         rand_percent = random.randint(1, 100)
         if rand_percent <= game_config.HIJACKERS_ASSAULT_PROBABILITY:
-            hijackers_power = random.randint(*game_config.HIJACKERS_POWER)
+            hijackers_power = random.randint(*game_config.HIJACKERS_POWER_RANGE)
             log(log.INFO, "Hijackers assault happened, hijackers_power={}".format(hijackers_power))
             for player in self._players.values():
                 player.town.population = max(player.town.population - max(hijackers_power - player.town.armor, 0), 0)
                 player.town.armor = max(player.town.armor - hijackers_power, 0)
 
     def parasites_assault(self):
+        """ Makes parasites assault which decreases quantity of Town's product.
+        """
         rand_percent = random.randint(1, 100)
         if rand_percent <= game_config.PARASITES_ASSAULT_PROBABILITY:
-            parasites_power = random.randint(*game_config.PARASITES_POWER)
+            parasites_power = random.randint(*game_config.PARASITES_POWER_RANGE)
             log(log.INFO, "Parasites assault happened, parasites_power={}".format(parasites_power))
             for player in self._players.values():
                 player.town.product = max(player.town.product - parasites_power, 0)

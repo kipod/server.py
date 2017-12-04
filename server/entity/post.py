@@ -28,11 +28,13 @@ class Post(object):
         replenishment: replenishment of the resource per game tick (for MARKET and STORAGE)
         level: current level of the Town (only for TOWN)
         player_id: unique index of the Player which is owner of the Town (only for TOWN)
+        point_id: unique index of the Point where the Post is placed
 
     Has attributes:
         idx: unique index of the Post
         name: unique name of the Post
         type: type of the Post (PostType)
+        point_id: unique index of the Point where the Post is placed
         level: current level of the Town (only for TOWN)
         population: population in the Town (only for TOWN)
         product: production points (for TOWN and MARKET)
@@ -45,10 +47,11 @@ class Post(object):
         replenishment: replenishment of the resource per game tick (for MARKET and STORAGE)
     """
     def __init__(self, idx, name, post_type, population=0, armor=0, product=0, replenishment=1, level=1,
-                 player_id=None):
+                 player_id=None, point_id=None):
         self.idx = idx
         self.name = name
         self.type = PostType(post_type)
+        self.point_id = point_id
 
         if self.type == PostType.TOWN:
             self.level = level
