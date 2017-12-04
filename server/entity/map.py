@@ -8,7 +8,7 @@ from db.models import Map as MapModel, Line as LineModel, Point as PointModel, P
 from db.session import map_session_ctx
 from entity.line import Line
 from entity.point import Point
-from entity.post import Post
+from entity.post import Post, PostType
 from entity.serializable import Serializable
 from entity.train import Train
 
@@ -17,7 +17,6 @@ class Map(Serializable):
     """ Map of game space.
     """
     def __init__(self, name=None):
-        self.okey = False
         self.name = name
         self.idx = None
         self.size = (None, None)
@@ -26,6 +25,12 @@ class Map(Serializable):
         self.coordinate = {}
         self.post = {}
         self.train = {}
+
+        # Attributes not included into json representation:
+        self.okey = False
+        self.markets = []
+        self.storages = []
+        self.towns = []
 
         if self.name is not None:
             self.init_map()
@@ -49,8 +54,14 @@ class Map(Serializable):
             posts = _map.posts.order_by(PostModel.id).all()
             self.post = {
                 p.id: Post(
-                    p.id, p.name, p.type, p.population, p.armor, p.product, replenishment=p.replenishment
-                ) for p in posts}
+                    p.id, p.name, p.type, p.population, p.armor, p.product,
+                    replenishment=p.replenishment, point_id=p.point_id
+                ) for p in posts
+            }
+
+            self.markets = [m for m in self.post.values() if m.type == PostType.MARKET]
+            self.storages = [s for s in self.post.values() if s.type == PostType.STORAGE]
+            self.towns = [t for t in self.post.values() if t.type == PostType.TOWN]
 
         self.okey = True
 

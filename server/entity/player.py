@@ -3,8 +3,8 @@
 import json
 import uuid
 
-from entity.map import Map
 from entity.point import Point
+from entity.post import Post
 from entity.serializable import Serializable
 
 
@@ -22,7 +22,7 @@ class Player(Serializable):
     def __init__(self, name):
         self.name = name
         self.idx = None
-        self.train = []
+        self.train = {}
         self.home = None
         self.town = None
 
@@ -38,15 +38,25 @@ class Player(Serializable):
         """ Adds train to the player.
         """
         train.player_id = self.idx
-        self.train.append(train)
+        self.train[train.idx] = train
 
-    def set_home(self, point: Point, level: Map):
+    def set_home(self, point: Point, post: Post):
         """ Sets home point.
         """
         self.home = point
-        self.town = level.post[point.post_id]
+        self.town = post
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)
         self.idx = data['idx']
         self.name = data['name']
+
+    def to_json_str(self):
+        data = {}
+        for key in self.__dict__:
+            attribute = self.__dict__[key]
+            if isinstance(attribute, dict):
+                data[key] = [i for i in attribute.values()]
+            else:
+                data[key] = attribute
+        return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)

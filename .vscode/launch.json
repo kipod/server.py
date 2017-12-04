@@ -82,7 +82,7 @@
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/server/Server.py",
+            "program": "${workspaceRoot}/server/server.py",
             "cwd": "${workspaceRoot}/server",
             "env": {},
             "envFile": "${workspaceRoot}/.env",

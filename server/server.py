@@ -2,8 +2,6 @@
 """
 import asyncio
 import json
-import os
-import sys
 
 from defs import SERVER_ADDR, SERVER_PORT, Action, Result, BadCommandError
 from entity.game import Game
