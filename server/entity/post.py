@@ -72,6 +72,11 @@ class Post(object):
             self.armor = armor
             self.replenishment = replenishment
 
+    def set_level(self, next_lvl):
+        self.level = next_lvl
+        for key, value in TOWN_LEVELS[self.level].items():
+            setattr(self, key, value)
+
     def __str__(self):
         return "<Post(idx={}, name='{}', type={!r}, point_id={})>".format(
             self.idx, self.name, self.type, self.point_id

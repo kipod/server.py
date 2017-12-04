@@ -6,9 +6,11 @@ from threading import Thread, Event, Lock
 
 import game_config
 from db.replay import DbReplay
+from defs import BadCommandError
 from defs import Result, Action
 from entity.map import Map
-from entity.post import PostType
+from entity.player import Player
+from entity.post import PostType, Post
 from entity.train import Train
 from logger import log
 
@@ -59,26 +61,27 @@ class Game(Thread):
             Game.GAMES[name] = game = Game(name)
         return game
 
-    def add_player(self, player):
+    def add_player(self, player: Player):
         """ Adds player to the game.
         """
         if player.idx not in self.players:
-            # Use first Town on the map as player's Town:
-            player_town = self.map.towns[0]
-            player_home_point = self.map.point[player_town.point_id]
-            player.set_home(player_home_point, player_town)
-            self.players[player.idx] = player
-            # Add trains for the player:
-            for _ in range(game_config.DEFAULT_TRAINS_COUNT):
-                # Create Train:
-                train = Train(idx=len(self.trains) + 1)
-                # Add Train:
-                player.add_train(train)
-                self.map.add_train(train)
-                self.trains[train.idx] = train
-                # Put the Train into Town:
-                self.put_train_into_town(train)
-            log(log.INFO, "Add new player to the game, player: {}".format(player))
+            with self._lock:
+                # Use first Town on the map as player's Town:
+                player_town = self.map.towns[0]
+                player_home_point = self.map.point[player_town.point_id]
+                player.set_home(player_home_point, player_town)
+                self.players[player.idx] = player
+                # Add trains for the player:
+                for _ in range(game_config.DEFAULT_TRAINS_COUNT):
+                    # Create Train:
+                    train = Train(idx=len(self.trains) + 1)
+                    # Add Train:
+                    player.add_train(train)
+                    self.map.add_train(train)
+                    self.trains[train.idx] = train
+                    # Put the Train into Town:
+                    self.put_train_into_town(train)
+                log(log.INFO, "Add new player to the game, player: {}".format(player))
             if not self._observed:
                 Thread.start(self)
 
@@ -134,7 +137,7 @@ class Game(Thread):
         self.hijackers_assault_on_tick()
         self.parasites_assault_on_tick()
 
-    def train_in_point(self, train, point_id):
+    def train_in_point(self, train: Train, point_id: int):
         """ Makes all needed actions when Train arrives to Point.
         Applies next Train move if it exist, processes Post if exist in the Point.
         """
@@ -149,7 +152,7 @@ class Game(Thread):
 
         self.apply_next_train_move(train)
 
-    def apply_next_train_move(self, train):
+    def apply_next_train_move(self, train: Train):
         """ Applies postponed Train MOVE if it exist.
         """
         if train.idx in self._next_train_moves:
@@ -246,7 +249,7 @@ class Game(Thread):
 
         return Result.OKEY
 
-    def train_in_post(self, train, post):
+    def train_in_post(self, train: Train, post: Post):
         """ Makes all needed actions when Train arrives to Post.
         Behavior depends on PostType, train can be loaded or unloaded.
         """
@@ -279,7 +282,7 @@ class Game(Thread):
                 train.goods += armor
                 train.post_type = post.type
 
-    def put_train_into_town(self, train, with_unload=True):
+    def put_train_into_town(self, train: Train, with_unload=True):
         # Get Train owner's home point:
         player_home_point = self.players[train.player_id].home
         # Use first Line connected to the home point as default train's line:
@@ -363,18 +366,20 @@ class Game(Thread):
         """
         return variable and (1, -1)[variable < 0]
 
-    def is_train_at_post(self, train):
-        """ Returns Post if the Train at some Post now, else returns None.
+    def is_train_at_post(self, train: Train, post_to_check: Post = None):
+        """ Returns Post if the Train at some Post now, else returns False.
         """
         line = self.map.line[train.line_idx]
         if train.position == line.length or train.position == 0:
             point_id = line.point[self.get_sign(train.position)]
             point = self.map.point[point_id]
             if point.post_id:
-                return self.map.post[point.post_id]
-        return None
+                post = self.map.post[point.post_id]
+                if post_to_check is None or post_to_check.idx == post.idx:
+                    return post
+        return False
 
-    def make_collision(self, train_1, train_2):
+    def make_collision(self, train_1: Train, train_2: Train):
         """ Makes collision between two trains.
         """
         log(log.INFO, "Trains collision happened, trains: [{}, {}]".format(train_1, train_2))
@@ -420,3 +425,52 @@ class Game(Thread):
                         continue
         for pair in collision_pairs:
             self.make_collision(*pair)
+
+    def make_upgrade(self, player: Player, post_ids=(), train_ids=()):
+        """ Upgrades given Posts and Trains to next level.
+        """
+        with self._lock:
+            # Get posts from request:
+            posts = []
+            for post_id in post_ids:
+                if post_id not in self.map.post:
+                    raise BadCommandError
+                post = self.map.post[post_id]
+                if post.type != PostType.TOWN:
+                    raise BadCommandError
+                posts.append(post)
+
+            # Get trains from request:
+            trains = []
+            for train_id in train_ids:
+                if train_id not in self.trains:
+                    raise BadCommandError
+                train = self.trains[train_id]
+                trains.append(train)
+
+            # Check existence of next level for each entity:
+            posts_has_next_lvl = all([p.level + 1 in game_config.TOWN_LEVELS for p in posts])
+            trains_has_next_lvl = all([t.level + 1 in game_config.TRAIN_LEVELS for t in trains])
+            if not all([posts_has_next_lvl, trains_has_next_lvl]):
+                raise BadCommandError
+
+            # Check armor quantity for upgrade:
+            armor_to_up_posts = sum([p.next_level_price for p in posts])
+            armor_to_up_trains = sum([t.next_level_price for t in trains])
+            if player.town.armor < sum([armor_to_up_posts, armor_to_up_trains]):
+                raise BadCommandError
+
+            # Check that trains are in town now:
+            for train in trains:
+                if not self.is_train_at_post(train, post_to_check=player.town):
+                    raise BadCommandError
+
+            # Upgrade entities:
+            for post in posts:
+                player.town.armor -= post.next_level_price
+                post.set_level(post.level + 1)
+            for train in trains:
+                player.town.armor -= train.next_level_price
+                train.set_level(train.level + 1)
+
+        return Result.OKEY

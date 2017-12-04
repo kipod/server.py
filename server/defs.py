@@ -19,6 +19,7 @@ class Action(IntEnum):
     LOGIN = 1
     LOGOUT = 2
     MOVE = 3
+    UPGRADE = 4
     TURN = 5
     MAP = 10
     OBSERVER = 100

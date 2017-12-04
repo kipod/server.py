@@ -40,6 +40,11 @@ class Train(object):
         self.goods = 0
         self.post_type = None
 
+    def set_level(self, next_lvl):
+        self.level = next_lvl
+        for key, value in TRAIN_LEVELS[self.level].items():
+            setattr(self, key, value)
+
     def __str__(self):
         return "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, level={})>".format(
             self.idx, self.line_idx, self.position, self.speed, self.player_id, self.level

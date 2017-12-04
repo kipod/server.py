@@ -94,18 +94,22 @@ class GameServerProtocol(asyncio.Protocol):
         self.transport.write(len(resp_message).to_bytes(4, byteorder='little'))
         self.transport.write(resp_message.encode('utf-8'))
 
-    def _on_login(self, data: dict):
-        if 'name' in data:
-            game_name = 'Game of {}'.format(data['name'])
-            self._game = Game.create(game_name)
-            self._replay = self._game.replay
-            self._player = Player(data['name'])
-            self._game.add_player(self._player)
-            log(log.INFO, "Login player: {}".format(data['name']))
-            message = self._player.to_json_str()
-            self._write_response(Result.OKEY, message)
+    def _check_keys(self, data, keys, agg_func=all):
+        if not agg_func([k in data for k in keys]):
+            raise BadCommandError
         else:
-            self._write_response(Result.BAD_COMMAND)
+            return True
+
+    def _on_login(self, data: dict):
+        self._check_keys(data, ['name'])
+        game_name = 'Game of {}'.format(data['name'])
+        self._game = Game.create(game_name)
+        self._replay = self._game.replay
+        self._player = Player(data['name'])
+        self._game.add_player(self._player)
+        log(log.INFO, "Login player: {}".format(data['name']))
+        message = self._player.to_json_str()
+        self._write_response(Result.OKEY, message)
 
     def _on_logout(self, _):
         self._write_response(Result.OKEY)
@@ -116,24 +120,30 @@ class GameServerProtocol(asyncio.Protocol):
         self._game = None
 
     def _on_get_map(self, data: dict):
-        if 'layer' in data:
-            layer = data['layer']
-            if layer in (0, 1, 10):
-                log(log.INFO, "Load map layer={}".format(layer))
-                message = self._game.map.layer_to_json_str(layer)
-                self._write_response(Result.OKEY, message)
-            else:
-                self._write_response(Result.RESOURCE_NOT_FOUND)
+        self._check_keys(data, ['layer'])
+        layer = data['layer']
+        if layer in (0, 1, 10):
+            log(log.INFO, "Load map layer={}".format(layer))
+            message = self._game.map.layer_to_json_str(layer)
+            self._write_response(Result.OKEY, message)
         else:
-            self._write_response(Result.BAD_COMMAND)
+            self._write_response(Result.RESOURCE_NOT_FOUND)
 
     def _on_move(self, data: dict):
+        self._check_keys(data, ['train_idx', 'speed', 'line_idx'])
         res = self._game.move_train(data['train_idx'], data['speed'], data['line_idx'])
         self._write_response(res)
 
     def _on_turn(self, _):
         self._game.turn()
         self._write_response(Result.OKEY)
+
+    def _on_upgrade(self, data: dict):
+        self._check_keys(data, ['train', 'post'], agg_func=any)
+        res = self._game.make_upgrade(
+            self._player, post_ids=data.get('post', []), train_ids=data.get('train', [])
+        )
+        self._write_response(res)
 
     def _on_observer(self, _):
         if self._game or self._observer:
@@ -147,6 +157,7 @@ class GameServerProtocol(asyncio.Protocol):
         Action.LOGOUT: _on_logout,
         Action.MAP: _on_get_map,
         Action.MOVE: _on_move,
+        Action.UPGRADE: _on_upgrade,
         Action.TURN: _on_turn,
         Action.OBSERVER: _on_observer,
     }
