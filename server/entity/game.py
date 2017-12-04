@@ -321,6 +321,16 @@ class Game(Thread):
             for player in self.players.values():
                 player.town.product = max(player.town.product - parasites_power, 0)
 
+    def refugees_arrival(self):
+        """ Makes refugees arrival which increases quantity of Town's population.
+        """
+        rand_percent = random.randint(1, 100)
+        if rand_percent <= game_config.REFUGEES_ARRIVAL_PROBABILITY:
+            refugees_number = random.randint(*game_config.REFUGEES_NUMBER_RANGE)
+            log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
+            for player in self.players.values():
+                player.town.population += min(player.town.population_capacity - player.town.population, refugees_number)
+
     def update_posts_on_tick(self):
         """ Updates all markets and storages.
         """
