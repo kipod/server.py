@@ -157,10 +157,10 @@ def generate_map02(db):
 
 
 def generate_map03(db):
-    """ Generates 'map02'. See 'map02.png'.
+    """ Generates 'map03'. See 'map03.png'.
     """
     # Map:
-    db.add_map(name='map02', size_x=200, size_y=200)
+    db.add_map(name='map03', size_x=200, size_y=200)
 
     # Points:
     p1  = db.add_point(x=10,  y=10)
@@ -481,7 +481,7 @@ def generate_map03(db):
 MAP_GENERATORS = {
     'map01': generate_map01,
     'map02': generate_map02,
-    'map03': generate_map02,
+    'map03': generate_map03,
 }
 
 
