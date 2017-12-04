@@ -136,7 +136,7 @@ class Game(Thread):
 
     def train_in_point(self, train, point_id):
         """ Makes all needed actions when Train arrives to Point.
-        Applies next Train move if exist, processes Post if exist in the Point.
+        Applies next Train move if it exist, processes Post if exist in the Point.
         """
         msg = "Train is in point, train: {}, point: {}".format(train, self.map.point[point_id])
 
@@ -147,6 +147,11 @@ class Game(Thread):
 
         log(log.INFO, msg)
 
+        self.apply_next_train_move(train)
+
+    def apply_next_train_move(self, train):
+        """ Applies postponed Train MOVE if it exist.
+        """
         if train.idx in self._next_train_moves:
             next_move = self._next_train_moves[train.idx]
             # If next line the same as previous:
@@ -246,17 +251,20 @@ class Game(Thread):
         Behavior depends on PostType, train can be loaded or unloaded.
         """
         if post.type == PostType.TOWN:
-            # Unload product from train to town
+            # Unload product from train to town:
+            goods = 0
             if train.post_type == PostType.MARKET:
-                post.product += train.goods
+                goods = min(train.goods, post.product_capacity - post.product)
+                post.product += goods
             elif train.post_type == PostType.STORAGE:
-                post.armor += train.goods
-
-            train.goods = 0
-            train.post_type = None
+                goods = min(train.goods, post.armor_capacity - post.armor)
+                post.armor += goods
+            train.goods -= goods
+            if train.goods == 0:
+                train.post_type = None
 
         elif post.type == PostType.MARKET:
-            # Load product from market to train.
+            # Load product from market to train:
             if train.post_type is None or train.post_type == post.type:
                 product = min(post.product, train.goods_capacity - train.goods)
                 post.product -= product
@@ -264,7 +272,7 @@ class Game(Thread):
                 train.post_type = post.type
 
         elif post.type == PostType.STORAGE:
-            # Load armor from storage to train.
+            # Load armor from storage to train:
             if train.post_type is None or train.post_type == post.type:
                 armor = min(post.armor, train.goods_capacity - train.goods)
                 post.armor -= armor
