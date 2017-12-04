@@ -35,6 +35,7 @@ class Post(object):
         name: unique name of the Post
         type: type of the Post (PostType)
         point_id: unique index of the Point where the Post is placed
+        event: all events happened with the Post
         level: current level of the Town (only for TOWN)
         population: population in the Town (only for TOWN)
         product: production points (for TOWN and MARKET)
@@ -52,6 +53,7 @@ class Post(object):
         self.name = name
         self.type = PostType(post_type)
         self.point_id = point_id
+        self.event = []
 
         if self.type == PostType.TOWN:
             self.level = level

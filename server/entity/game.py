@@ -6,8 +6,8 @@ from threading import Thread, Event, Lock
 
 import game_config
 from db.replay import DbReplay
-from defs import BadCommandError
 from defs import Result, Action
+from entity.event import EventType, Event as GameEvent
 from entity.map import Map
 from entity.player import Player
 from entity.post import PostType, Post
@@ -259,9 +259,13 @@ class Game(Thread):
             if train.post_type == PostType.MARKET:
                 goods = min(train.goods, post.product_capacity - post.product)
                 post.product += goods
+                if post.product == post.product_capacity:
+                    post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self._current_tick, product=post.product))
             elif train.post_type == PostType.STORAGE:
                 goods = min(train.goods, post.armor_capacity - post.armor)
                 post.armor += goods
+                if post.armor == post.armor_capacity:
+                    post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self._current_tick, armor=post.armor))
             train.goods -= goods
             if train.goods == 0:
                 train.post_type = None
@@ -310,6 +314,9 @@ class Game(Thread):
             for player in self.players.values():
                 player.town.population = max(player.town.population - max(hijackers_power - player.town.armor, 0), 0)
                 player.town.armor = max(player.town.armor - hijackers_power, 0)
+                player.town.event.append(
+                    GameEvent(EventType.HIJACKERS_ASSAULT, self._current_tick, hijackers_power=hijackers_power)
+                )
 
     def parasites_assault_on_tick(self):
         """ Makes parasites assault which decreases quantity of Town's product.
@@ -320,6 +327,9 @@ class Game(Thread):
             log(log.INFO, "Parasites assault happened, parasites power: {}".format(parasites_power))
             for player in self.players.values():
                 player.town.product = max(player.town.product - parasites_power, 0)
+                player.town.event.append(
+                    GameEvent(EventType.PARASITES_ASSAULT, self._current_tick, parasites_power=parasites_power)
+                )
 
     def refugees_arrival(self):
         """ Makes refugees arrival which increases quantity of Town's population.
@@ -330,6 +340,13 @@ class Game(Thread):
             log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
             for player in self.players.values():
                 player.town.population += min(player.town.population_capacity - player.town.population, refugees_number)
+                player.town.event.append(
+                    GameEvent(EventType.REFUGEES_ARRIVAL, self._current_tick, refugees_number=refugees_number)
+                )
+                if player.town.population == player.town.population_capacity:
+                    player.town.event.append(
+                        GameEvent(EventType.RESOURCE_OVERFLOW, self._current_game_id, population=player.town.population)
+                    )
 
     def update_posts_on_tick(self):
         """ Updates all markets and storages.
@@ -366,6 +383,12 @@ class Game(Thread):
             if player.town.product < player.town.population:
                 player.town.population = max(player.town.population - 1, 0)
             player.town.product = max(player.town.product - player.town.population, 0)
+            if player.town.population == 0:
+                player.town.event.append(GameEvent(EventType.GAME_OVER, self._current_tick, population=0))
+            if player.town.product == 0:
+                player.town.event.append(GameEvent(EventType.RESOURCE_LACK, self._current_tick, product=0))
+            if player.town.armor == 0:
+                player.town.event.append(GameEvent(EventType.RESOURCE_LACK, self._current_tick, armor=0))
 
     @staticmethod
     def get_sign(variable):
@@ -395,7 +418,8 @@ class Game(Thread):
         log(log.INFO, "Trains collision happened, trains: [{}, {}]".format(train_1, train_2))
         self.put_train_into_town(train_1, with_unload=True)
         self.put_train_into_town(train_2, with_unload=True)
-        # TODO: Create event here.
+        train_1.event.append(GameEvent(EventType.TRAIN_COLLISION, self._current_tick, train=train_2.idx))
+        train_2.event.append(GameEvent(EventType.TRAIN_COLLISION, self._current_tick, train=train_1.idx))
 
     def handle_trains_collisions_on_tick(self):
         """ Handles Trains collisions.
@@ -444,17 +468,17 @@ class Game(Thread):
             posts = []
             for post_id in post_ids:
                 if post_id not in self.map.post:
-                    raise BadCommandError
+                    return Result.RESOURCE_NOT_FOUND
                 post = self.map.post[post_id]
                 if post.type != PostType.TOWN:
-                    raise BadCommandError
+                    return Result.BAD_COMMAND
                 posts.append(post)
 
             # Get trains from request:
             trains = []
             for train_id in train_ids:
                 if train_id not in self.trains:
-                    raise BadCommandError
+                    return Result.RESOURCE_NOT_FOUND
                 train = self.trains[train_id]
                 trains.append(train)
 
@@ -462,18 +486,18 @@ class Game(Thread):
             posts_has_next_lvl = all([p.level + 1 in game_config.TOWN_LEVELS for p in posts])
             trains_has_next_lvl = all([t.level + 1 in game_config.TRAIN_LEVELS for t in trains])
             if not all([posts_has_next_lvl, trains_has_next_lvl]):
-                raise BadCommandError
+                return Result.BAD_COMMAND
 
             # Check armor quantity for upgrade:
             armor_to_up_posts = sum([p.next_level_price for p in posts])
             armor_to_up_trains = sum([t.next_level_price for t in trains])
             if player.town.armor < sum([armor_to_up_posts, armor_to_up_trains]):
-                raise BadCommandError
+                return Result.BAD_COMMAND
 
             # Check that trains are in town now:
             for train in trains:
                 if not self.is_train_at_post(train, post_to_check=player.town):
-                    raise BadCommandError
+                    return Result.BAD_COMMAND
 
             # Upgrade entities:
             for post in posts:
@@ -484,3 +508,22 @@ class Game(Thread):
                 train.set_level(train.level + 1)
 
         return Result.OKEY
+
+    def get_map_layer(self, layer):
+        """ Returns specified game map layer.
+        """
+        if layer in (0, 1, 10):
+            log(log.INFO, "Load game map layer, layer: {}".format(layer))
+            message = self.map.layer_to_json_str(layer)
+            self.clean_events()
+            return Result.OKEY, message
+        else:
+            return Result.RESOURCE_NOT_FOUND, None
+
+    def clean_events(self):
+        """ Cleans all existing events.
+        """
+        for train in self.map.train.values():
+            train.event = []
+        for post in self.map.post.values():
+            post.event = []

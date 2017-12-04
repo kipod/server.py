@@ -94,7 +94,8 @@ class GameServerProtocol(asyncio.Protocol):
         self.transport.write(len(resp_message).to_bytes(4, byteorder='little'))
         self.transport.write(resp_message.encode('utf-8'))
 
-    def _check_keys(self, data, keys, agg_func=all):
+    @staticmethod
+    def _check_keys(data, keys, agg_func=all):
         if not agg_func([k in data for k in keys]):
             raise BadCommandError
         else:
@@ -121,13 +122,8 @@ class GameServerProtocol(asyncio.Protocol):
 
     def _on_get_map(self, data: dict):
         self._check_keys(data, ['layer'])
-        layer = data['layer']
-        if layer in (0, 1, 10):
-            log(log.INFO, "Load map layer={}".format(layer))
-            message = self._game.map.layer_to_json_str(layer)
-            self._write_response(Result.OKEY, message)
-        else:
-            self._write_response(Result.RESOURCE_NOT_FOUND)
+        res, message = self._game.get_map_layer(data['layer'])
+        self._write_response(res, message)
 
     def _on_move(self, data: dict):
         self._check_keys(data, ['train_idx', 'speed', 'line_idx'])
