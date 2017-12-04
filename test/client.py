@@ -65,15 +65,15 @@ class TestClient(unittest.TestCase):
         result, message = self.do_action(Action.MAP, {'layer': 0})
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
-        data = json.loads(message)
-        self.assertIn('idx', data.keys())
-        self.assertIn('name', data.keys())
-        self.assertIn('line', data.keys())
-        self.assertIn('point', data.keys())
-        self.assertNotIn('post', data.keys())
-        self.assertNotIn('train', data.keys())
-        self.assertNotIn('size', data.keys())
-        self.assertNotIn('coordinate', data.keys())
+        map_data = json.loads(message)
+        self.assertIn('idx', map_data)
+        self.assertIn('name', map_data)
+        self.assertIn('line', map_data)
+        self.assertIn('point', map_data)
+        self.assertNotIn('post', map_data)
+        self.assertNotIn('train', map_data)
+        self.assertNotIn('size', map_data)
+        self.assertNotIn('coordinate', map_data)
 
         map02 = Map()
         map02.from_json_str(message)
@@ -86,15 +86,23 @@ class TestClient(unittest.TestCase):
         result, message = self.do_action(Action.MAP, {'layer': 1})
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
-        data = json.loads(message)
-        self.assertIn('idx', data.keys())
-        self.assertIn('post', data.keys())
-        self.assertIn('train', data.keys())
-        self.assertNotIn('name', data.keys())
-        self.assertNotIn('line', data.keys())
-        self.assertNotIn('point', data.keys())
-        self.assertNotIn('size', data.keys())
-        self.assertNotIn('coordinate', data.keys())
+        map_data = json.loads(message)
+        self.assertIn('idx', map_data)
+        self.assertIn('post', map_data)
+        self.assertIn('train', map_data)
+        self.assertNotIn('name', map_data)
+        self.assertNotIn('line', map_data)
+        self.assertNotIn('point', map_data)
+        self.assertNotIn('size', map_data)
+        self.assertNotIn('coordinate', map_data)
+
+        posts = {x['name']: x for x in map_data['post']}
+        self.assertIn('market-small', posts)
+        self.assertIn('market-medium', posts)
+        self.assertIn('market-big', posts)
+        self.assertEqual(posts['market-small']['replenishment'], 1)
+        self.assertEqual(posts['market-medium']['replenishment'], 1)
+        self.assertEqual(posts['market-big']['replenishment'], 2)
 
         map02 = Map()
         map02.from_json_str(message)
@@ -107,15 +115,15 @@ class TestClient(unittest.TestCase):
         result, message = self.do_action(Action.MAP, {'layer': 10})
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
-        data = json.loads(message)
-        self.assertIn('idx', data.keys())
-        self.assertIn('size', data.keys())
-        self.assertIn('coordinate', data.keys())
-        self.assertNotIn('post', data.keys())
-        self.assertNotIn('train', data.keys())
-        self.assertNotIn('name', data.keys())
-        self.assertNotIn('line', data.keys())
-        self.assertNotIn('point', data.keys())
+        map_data = json.loads(message)
+        self.assertIn('idx', map_data)
+        self.assertIn('size', map_data)
+        self.assertIn('coordinate', map_data)
+        self.assertNotIn('post', map_data)
+        self.assertNotIn('train', map_data)
+        self.assertNotIn('name', map_data)
+        self.assertNotIn('line', map_data)
+        self.assertNotIn('point', map_data)
 
         map02 = Map()
         map02.from_json_str(message)
@@ -164,12 +172,12 @@ class TestClient(unittest.TestCase):
         player_id = data['idx']
         n = 0
 
-        train = self.get_train(0)
+        train = self.get_train(1)
         self.assertEqual(train['player_id'], player_id)
         # Begin moving.
         self.move_train(1+n, train['idx'], 1)
         self.turn()
-        self.assertGreater(self.get_train_pos(0), 0)
+        self.assertGreater(self.get_train_pos(1), 0)
 
         self.move_to_next_line(7+n, train['idx'], 1)
         self.move_to_next_line(8+n, train['idx'], 1)
@@ -178,10 +186,10 @@ class TestClient(unittest.TestCase):
         self.move_to_next_line(11+n, train['idx'], 1)
         self.move_to_next_line(12+n, train['idx'], 1)
         self.move_to_next_line(1+n, train['idx'], -1)
-        for _ in range(self.get_train_pos(0)):
+        for _ in range(self.get_train_pos(1)):
             self.turn()
-        self.assertEqual(self.get_train_pos(0), 0)
-        self.assertEqual(self.get_train_line(0), 1)
+        self.assertEqual(self.get_train_pos(1), 0)
+        self.assertEqual(self.get_train_line(1), 1)
 
     def move_train(self, next_line_id, train_idx, speed):
         """ Sends MOVE action.
@@ -224,45 +232,32 @@ class TestClient(unittest.TestCase):
         post = self.get_post(1)
         start_product = int(post['product'])
 
-        train = self.get_train(0)
+        train = self.get_train(1)
         self.assertEqual(train['player_id'], player_id)
         self.assertEqual(int(train['position']), 0)
-        self.assertNotEqual(int(train['capacity']), 0)
-        self.assertEqual(int(train['product']), 0)
+        self.assertNotEqual(int(train['goods_capacity']), 0)
+        self.assertEqual(int(train['goods']), 0)
         self.assertEqual(int(train['speed']), 0)
         self.move_to_next_line(1, train['idx'], 1)
 
-        train = self.get_train(0)
+        train = self.get_train(1)
         while int(train['speed']) != 0:
             self.turn()
-            train = self.get_train(0)
+            train = self.get_train(1)
 
         self.assertEqual(int(train['line_idx']), 1)
         self.assertEqual(int(train['position']), 1)
-        self.assertEqual(int(train['product']), 2)
+        self.assertEqual(int(train['goods']), 2)
 
         self.move_to_next_line(1, train['idx'], -1)
-        train = self.get_train(0)
+        train = self.get_train(1)
         self.assertEqual(int(train['speed']), 0)
 
         self.assertEqual(int(train['line_idx']), 1)
         self.assertEqual(int(train['position']), 0)
-        self.assertEqual(int(train['product']), 0)
+        self.assertEqual(int(train['goods']), 0)
         post = self.get_post(1)
         self.assertEqual(int(post['product']), start_product-4)
-
-    def test_5_read_coordinates(self):
-        """ Get coordinates of points using layer 10.
-        """
-        result, message = self.do_action(Action.MAP, {'layer': 10})
-        self.assertEqual(Result.OKEY, result)
-        self.assertNotEqual(len(message), 0)
-        data = json.loads(message)
-        self.assertIn('idx', data.keys())
-        self.assertIn('coordinate', data.keys())
-        self.assertIn('size', data.keys())
-        self.assertNotIn('line', data.keys())
-        self.assertNotIn('point', data.keys())
 
     def test_8_wrong_actions(self):
         """ Test error codes on wrong action messages.
