@@ -11,7 +11,6 @@ class DbMap(object):
     """ Contains helpers for map generation.
     """
     def __init__(self):
-        self.reset_db()
         self.session = MapSession()
         self.current_map_id = None
 
@@ -166,6 +165,7 @@ MAP_GENERATORS = {
 @task
 def generate_map(ctx, map_name=None):
     with DbMap() as db:
+        db.reset_db()
         maps_to_generate = MAP_GENERATORS.keys() if map_name is None else [map_name, ]
         for curr_map in maps_to_generate:
             map_generator = MAP_GENERATORS[curr_map]
