@@ -135,6 +135,7 @@ def generate_map02(db):
     db.add_post(p4, 'market-big', PostType.MARKET, product=36, replenishment=2)
     db.add_post(p5, 'market-medium', PostType.MARKET, product=28, replenishment=1)
     db.add_post(p7, 'market-small', PostType.MARKET, product=5, replenishment=1)
+    db.add_post(p6, 'storage-big', PostType.STORAGE, product=36, replenishment=2)
 
     # Lines:
     db.add_line(1, p1, p7)  # 1: 1-7
