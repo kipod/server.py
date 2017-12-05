@@ -4,7 +4,7 @@ import json
 import time
 import unittest
 
-from server.db.map import DbMap, generate_map02
+from server.db.map import DbMap, generate_map03
 from server.db.replay import DbReplay, generate_replay01
 from server.defs import Action, Result
 from server.game_config import TICK_TIME
@@ -41,7 +41,7 @@ class TestObserver(unittest.TestCase):
             generate_replay01(database)
         with DbMap() as database:
             database.reset_db()
-            generate_map02(database)
+            generate_map03(database)
 
     @staticmethod
     def reset_db():
@@ -94,7 +94,7 @@ class TestObserver(unittest.TestCase):
 
         lines = {key: value for (key, value) in dict_items(data['line'])}
         self.assertEqual(lines[1]['point'][0], 1)
-        self.assertEqual(lines[1]['point'][1], 7)
+        self.assertEqual(lines[1]['point'][1], 2)
         train = self.get_train(1)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['line_idx'], 1)
@@ -114,23 +114,27 @@ class TestObserver(unittest.TestCase):
         self.set_turn(3)
         train = self.get_train(1)
         self.assertEqual(train['speed'], 1)
-        self.assertEqual(train['position'], 1)
-        self.assertEqual(train['line_idx'], 14)
+        self.assertEqual(train['position'], 3)
+        self.assertEqual(train['line_idx'], 1)
         self.set_turn(10)
         train = self.get_train(1)
         self.assertEqual(train['speed'], 1)
-        self.assertEqual(train['position'], 1)
-        self.assertEqual(train['line_idx'], 18)
+        self.assertEqual(train['position'], 2)
+        self.assertEqual(train['line_idx'], 3)
         self.set_turn(0)
         train = self.get_train(1)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['position'], 0)
         self.set_turn(100)
         train = self.get_train(1)
-        self.assertEqual(train['speed'], 0)
-        self.assertEqual(train['position'], 3)
-        self.assertEqual(train['line_idx'], 18)
+        self.assertEqual(train['speed'], -1)
+        self.assertEqual(train['position'], 1)
+        self.assertEqual(train['line_idx'], 176)
         self.set_turn(-1)
+        train = self.get_train(1)
+        self.assertEqual(train['speed'], 0)
+        self.assertEqual(train['position'], 0)
+        self.set_turn(1000)
         train = self.get_train(1)
         self.assertEqual(train['speed'], 0)
         self.assertEqual(train['position'], 0)
