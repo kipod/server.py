@@ -4,6 +4,7 @@ import json
 import time
 import unittest
 
+from server.db.map import DbMap, generate_map02
 from server.db.replay import DbReplay, generate_replay01
 from server.defs import Action, Result
 from server.game_config import TICK_TIME
@@ -38,12 +39,17 @@ class TestObserver(unittest.TestCase):
         with DbReplay() as db:
             db.reset_db()
             generate_replay01(db)
+        with DbMap() as db:
+            db.reset_db()
+            generate_map02(db)
 
     @staticmethod
     def reset_db():
         """ Resets replay DB after tests.
         """
         with DbReplay() as db:
+            db.reset_db()
+        with DbMap() as db:
             db.reset_db()
 
     def test_0_connection(self):

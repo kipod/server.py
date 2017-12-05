@@ -2,8 +2,8 @@ import json
 import unittest
 from datetime import datetime
 
-from db.map import generate_map02, DbMap
 from server import game_config
+from server.db.map import generate_map02, DbMap
 from server.defs import Action, Result
 from test.server_connection import ServerConnection
 
