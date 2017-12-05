@@ -57,7 +57,7 @@
             ]
         },
         {
-            "name": "Client-Server Tests",
+            "name": "All Server Tests",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
@@ -73,7 +73,11 @@
             ],
             "args": [
                 "test.client",
-                "test.observer"
+                "test.observer",
+                "test.replay_db_helpers",
+                "test.entity",
+                "test.train_collisions",
+                "test.upgrade"
             ]
         },
         {

@@ -3,15 +3,13 @@
 import json
 import unittest
 
-from entity.point import Point
-from entity.post import Post, PostType
-from entity.train import Train
+from server.game_config import MAP_NAME
+from server.entity.point import Point
+from server.entity.post import Post, PostType
+from server.entity.train import Train
 from server.db.map import generate_map02, DbMap
 from server.entity.map import Map
 from server.entity.player import Player
-
-MAP_NAME = 'map02'
-
 
 class TestEntity(unittest.TestCase):
 

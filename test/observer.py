@@ -36,12 +36,12 @@ class TestObserver(unittest.TestCase):
     def prepare_db():
         """ Prepare replay DB for tests.
         """
-        with DbReplay() as db:
-            db.reset_db()
-            generate_replay01(db)
-        with DbMap() as db:
-            db.reset_db()
-            generate_map02(db)
+        with DbReplay() as database:
+            database.reset_db()
+            generate_replay01(database)
+        with DbMap() as database:
+            database.reset_db()
+            generate_map02(database)
 
     @staticmethod
     def reset_db():

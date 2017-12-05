@@ -76,7 +76,7 @@ def generate_map01(db):
     """ Generates 'map01'. See 'map01.png'.
     """
     # Map:
-    db.add_map(name='map01', size_x=330, size_y=248)
+    db.add_map(name='TheMap', size_x=330, size_y=248)
 
     # Points:
     p1 = db.add_point(x=75, y=16)
@@ -115,7 +115,7 @@ def generate_map02(db):
     """ Generates 'map02'. See 'map02.png'.
     """
     # Map:
-    db.add_map(name='map02', size_x=330, size_y=248)
+    db.add_map(name='theMap', size_x=330, size_y=248)
 
     # Points:
     p1 = db.add_point(x=75, y=16)
@@ -163,7 +163,7 @@ def generate_map03(db):
     """ Generates 'map03'. See 'map03.png'.
     """
     # Map:
-    db.add_map(name='map03', size_x=200, size_y=200)
+    db.add_map(name='theMap', size_x=200, size_y=200)
 
     # Points:
     p1  = db.add_point(x=10,  y=10)
@@ -491,7 +491,7 @@ MAP_GENERATORS = {
 
 
 @task
-def generate_map(ctx, map_name=None):
+def generate_map(ctx, map_name="map03"):
     """ Generates 'map.db'.
     """
     with DbMap() as db:
