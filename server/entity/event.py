@@ -22,5 +22,5 @@ class Event(object):
         for key, value in kwargs.items():  # Additional info from kwargs.
             setattr(self, key, value)
 
-    def __str__(self):
-        return "<Event(type={})>".format(self.type)
+    def __repr__(self):
+        return "<Event(type={}, tick={})>".format(self.type, self.tick)

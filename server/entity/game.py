@@ -129,7 +129,7 @@ class Game(Thread):
         """ Makes game tick. Updates dynamic game entities.
         """
         self._current_tick += 1
-        log(log.DEBUG, "Game tick, tick number: {}".format(self._current_tick))
+        log(log.INFO, "Game tick, tick number: {}".format(self._current_tick))
         self.update_posts_on_tick()
         self.update_trains_positions_on_tick()
         self.handle_trains_collisions_on_tick()
@@ -515,9 +515,11 @@ class Game(Thread):
             for post in posts:
                 player.town.armor -= post.next_level_price
                 post.set_level(post.level + 1)
+                log(log.INFO, "Post has been upgraded, post: {}".format(post))
             for train in trains:
                 player.town.armor -= train.next_level_price
                 train.set_level(train.level + 1)
+                log(log.INFO, "Train has been upgraded, post: {}".format(train))
 
         return Result.OKEY
 

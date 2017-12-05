@@ -11,5 +11,5 @@ class Point(object):
         self.idx = idx
         self.post_id = post_id
 
-    def __str__(self):
+    def __repr__(self):
         return "<Point(idx={}, post_id={})>".format(self.idx, self.post_id)
