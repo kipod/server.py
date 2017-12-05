@@ -48,6 +48,6 @@ class Train(object):
             setattr(self, key, value)
 
     def __str__(self):
-        return "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, level={})>".format(
-            self.idx, self.line_idx, self.position, self.speed, self.player_id, self.level
+        return "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, level={}, goods={})>".format(
+            self.idx, self.line_idx, self.position, self.speed, self.player_id, self.level, self.goods
         )

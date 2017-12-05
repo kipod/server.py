@@ -415,7 +415,7 @@ class Game(Thread):
         """ Returns Post if the Train at some Post now, else returns False.
         """
         point = self.is_train_at_point(train)
-        if point:
+        if point and point.post_id:
             post = self.map.post[point.post_id]
             if post_to_check is None or post_to_check.idx == post.idx:
                 return post
