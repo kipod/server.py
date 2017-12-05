@@ -51,7 +51,7 @@ class Train(object):
 
     def __repr__(self):
         return (
-            "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={},"
+            "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, "
             "level={}, goods={}, post_type={})>".format(
                 self.idx, self.line_idx, self.position, self.speed, self.player_id,
                 self.level, self.goods, self.post_type
