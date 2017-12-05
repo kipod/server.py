@@ -72,10 +72,10 @@
                 "RedirectOutput"
             ],
             "args": [
-                //"test.client",
+                "test.client",
                 "test.observer",
-                //"test.train_collisions",
-                //"test.upgrade"
+                "test.train_collisions",
+                "test.upgrade"
             ]
         },
         {
