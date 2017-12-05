@@ -9,3 +9,6 @@ class Line(object):
         self.idx = idx
         self.length = length
         self.point = (p0, p1)
+
+    def __str__(self):
+        return "<Line(idx={}, length={}, point={})>".format(self.idx, self.length, self.point)

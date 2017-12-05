@@ -5,6 +5,8 @@ import json
 import unittest
 from datetime import datetime
 
+from server import game_config
+from server.db.map import generate_map02, DbMap
 from server.defs import Action, Result
 from server.entity.map import Map
 from test.server_connection import ServerConnection
@@ -17,30 +19,35 @@ class TestClient(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls._conn = ServerConnection()
+        with DbMap() as db:
+            db.reset_db()
+            generate_map02(db)
+        cls.connection = ServerConnection()
 
     @classmethod
     def tearDownClass(cls):
-        del cls._conn
+        with DbMap() as db:
+            db.reset_db()
+        del cls.connection
 
     @classmethod
     def do_action(cls, action, data):
         """ Send action.
         """
-        return cls._conn.do_action(action, data)
+        return cls.connection.do_action(action, data)
 
     @classmethod
     def do_action_raw(cls, action: int, json_str: str):
         """ Send action with raw string data.
         """
-        return cls._conn.do_action_raw(action, json_str)
+        return cls.connection.do_action_raw(action, json_str)
 
     def test_0_connection(self):
         """ Test connection.
         """
-        self.assertIsNotNone(self._conn._loop)
-        self.assertIsNotNone(self._conn._reader)
-        self.assertIsNotNone(self._conn._writer)
+        self.assertIsNotNone(self.connection._loop)
+        self.assertIsNotNone(self.connection._reader)
+        self.assertIsNotNone(self.connection._writer)
 
     def test_1_login(self):
         """ Test login.
@@ -106,8 +113,8 @@ class TestClient(unittest.TestCase):
 
         map02 = Map()
         map02.from_json_str(message)
-        self.assertEqual(len(map02.post), 4)
-        self.assertEqual(len(map02.train), 1)
+        self.assertEqual(len(map02.post), 5)
+        self.assertEqual(len(map02.train), game_config.DEFAULT_TRAINS_COUNT)
 
     def test_2_get_map_layer_10(self):
         """ Test layer_to_json_str and from_json_str for layer 10.
@@ -175,17 +182,17 @@ class TestClient(unittest.TestCase):
         train = self.get_train(1)
         self.assertEqual(train['player_id'], player_id)
         # Begin moving.
-        self.move_train(1+n, train['idx'], 1)
+        self.move_train(1 + n, train['idx'], 1)
         self.turn()
         self.assertGreater(self.get_train_pos(1), 0)
 
-        self.move_to_next_line(7+n, train['idx'], 1)
-        self.move_to_next_line(8+n, train['idx'], 1)
-        self.move_to_next_line(9+n, train['idx'], 1)
-        self.move_to_next_line(10+n, train['idx'], 1)
-        self.move_to_next_line(11+n, train['idx'], 1)
-        self.move_to_next_line(12+n, train['idx'], 1)
-        self.move_to_next_line(1+n, train['idx'], -1)
+        self.move_to_next_line(7 + n, train['idx'], 1)
+        self.move_to_next_line(8 + n, train['idx'], 1)
+        self.move_to_next_line(9 + n, train['idx'], 1)
+        self.move_to_next_line(10 + n, train['idx'], 1)
+        self.move_to_next_line(11 + n, train['idx'], 1)
+        self.move_to_next_line(12 + n, train['idx'], 1)
+        self.move_to_next_line(1 + n, train['idx'], -1)
         for _ in range(self.get_train_pos(1)):
             self.turn()
         self.assertEqual(self.get_train_pos(1), 0)

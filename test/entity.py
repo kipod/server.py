@@ -3,10 +3,22 @@
 import json
 import unittest
 
+from server.db.map import generate_map02, DbMap
 from server.entity.map import Map
 
 
-class TestJsonSerializable(unittest.TestCase):
+class TestEntity(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        with DbMap() as db:
+            db.reset_db()
+            generate_map02(db)
+
+    @classmethod
+    def tearDownClass(cls):
+        with DbMap() as db:
+            db.reset_db()
 
     def setUp(self):
         pass

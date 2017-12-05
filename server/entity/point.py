@@ -10,3 +10,6 @@ class Point(object):
     def __init__(self, idx, post_id=None):
         self.idx = idx
         self.post_id = post_id
+
+    def __str__(self):
+        return "<Point(idx={}, post_id={})>".format(self.idx, self.post_id)

@@ -26,6 +26,7 @@ class Train(object):
         next_level_price: armor amount which player have to pay to get next level
         goods: quantity of some goods in the train at the current moment
         post_type: PostType where first goods have been loaded into the train
+        event: all events happened with the Train
     """
     def __init__(self, idx, line_idx=None, position=None, speed=0, player_id=None, level=1):
         self.idx = idx
@@ -39,3 +40,14 @@ class Train(object):
         # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
         self.goods = 0
         self.post_type = None
+        self.event = []
+
+    def set_level(self, next_lvl):
+        self.level = next_lvl
+        for key, value in TRAIN_LEVELS[self.level].items():
+            setattr(self, key, value)
+
+    def __str__(self):
+        return "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, level={}, goods={})>".format(
+            self.idx, self.line_idx, self.position, self.speed, self.player_id, self.level, self.goods
+        )
