@@ -10,6 +10,7 @@ from defs import Result, Action
 from entity.event import EventType, Event as GameEvent
 from entity.map import Map
 from entity.player import Player
+from entity.point import Point
 from entity.post import PostType, Post
 from entity.train import Train
 from logger import log
@@ -399,17 +400,25 @@ class Game(Thread):
         """
         return variable and (1, -1)[variable < 0]
 
-    def is_train_at_post(self, train: Train, post_to_check: Post = None):
-        """ Returns Post if the Train at some Post now, else returns False.
+    def is_train_at_point(self, train: Train, point_to_check: Point = None):
+        """ Returns Point if the Train at some Point now, else returns False.
         """
         line = self.map.line[train.line_idx]
         if train.position == line.length or train.position == 0:
             point_id = line.point[self.get_sign(train.position)]
             point = self.map.point[point_id]
-            if point.post_id:
-                post = self.map.post[point.post_id]
-                if post_to_check is None or post_to_check.idx == post.idx:
-                    return post
+            if point_to_check is None or point_to_check.idx == point.idx:
+                return point
+        return False
+
+    def is_train_at_post(self, train: Train, post_to_check: Post = None):
+        """ Returns Post if the Train at some Post now, else returns False.
+        """
+        point = self.is_train_at_point(train)
+        if point:
+            post = self.map.post[point.post_id]
+            if post_to_check is None or post_to_check.idx == post.idx:
+                return post
         return False
 
     def make_collision(self, train_1: Train, train_2: Train):
@@ -427,17 +436,25 @@ class Game(Thread):
         collision_pairs = []
         trains = list(self.trains.values())
         for i, train_1 in enumerate(trains):
-            # Get Line and Post of train_1:
+            # Get Line and Point of train_1:
             line_1 = self.map.line[train_1.line_idx]
-            post_1 = self.is_train_at_post(train_1)
+            point_1 = self.is_train_at_point(train_1)
             for train_2 in trains[i + 1:]:
-                # Get Line and Post of train_2:
+                # Get Line and Point of train_2:
                 line_2 = self.map.line[train_2.line_idx]
-                post_2 = self.is_train_at_post(train_2)
+                point_2 = self.is_train_at_point(train_2)
+                # If train_1 and train_2 at the same Point:
+                if point_1 and point_2 and point_1.idx == point_2.idx:
+                    post = None if point_1.post_id is None else self.map.post[point_1.post_id]
+                    if post is not None and post.type in (PostType.TOWN, ):
+                        continue
+                    else:
+                        collision_pairs.append((train_1, train_2))
+                        continue
                 # If train_1 and train_2 on the same Line:
                 if line_1.idx == line_2.idx:
-                    # If train_1 and train_2 have the same position and they are not at Post:
-                    if train_1.position == train_2.position and not (post_1 or post_2):
+                    # If train_1 and train_2 have the same position:
+                    if train_1.position == train_2.position:
                         collision_pairs.append((train_1, train_2))
                         continue
                     # Skip if train_1 or train_2 has been stopped and they have different positions:
@@ -450,11 +467,6 @@ class Game(Thread):
                     dist_after_tick = math.fabs(train_1.position + train_step_1 - train_2.position + train_step_2)
                     # If after next tick train_1 and train_2 cross:
                     if dist_before_tick == dist_after_tick == 1 and train_step_1 + train_step_2 == 0:
-                        collision_pairs.append((train_1, train_2))
-                        continue
-                # If train_1 and train_2 at the same Post:
-                if post_1 and post_2 and post_1.idx == post_2.idx:
-                    if post_1.type not in (PostType.TOWN, ):
                         collision_pairs.append((train_1, train_2))
                         continue
         for pair in collision_pairs:
