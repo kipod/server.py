@@ -13,6 +13,7 @@ class enum Action: public uint32_t
     LOGIN = 1,
     LOGOUT = 2,
     MOVE = 3,
+    UPGRADE = 4,
     TURN = 5,
     MAP = 10
 }
@@ -220,6 +221,28 @@ Each __train__ has follows key fields:
   * 1 - the train moves in positive direction
   * -1 - the train moves in negative direction
 * **train_idx** - index of the train
+
+### UPGRADE action
+
+#### Examples of message of UPGRADE action
+
+``` JSON
+{
+    "post": [],
+    "train": [1, 2]
+}
+```
+``` JSON
+{
+    "post": [1],
+    "train": []
+}
+```
+
+**UPGRADE** action must send follow fields:
+
+* **post** - list with unique indexes of posts to upgrade
+* **train** - list with unique indexes of trains to upgrade
 
 ### TURN action
 

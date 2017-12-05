@@ -1,105 +1,103 @@
 """ Game map entity.
 """
 import json
-import os
-import sqlite3
 
+from sqlalchemy import func
+
+from db.models import Map as MapModel, Line as LineModel, Point as PointModel, Post as PostModel
+from db.session import map_session_ctx
 from entity.line import Line
 from entity.point import Point
-from entity.post import Post
-from entity.serializable import Serializable
-from logger import log
-
-PATH_MAP_DB = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'db', 'map.db')
+from entity.post import Post, PostType
+from entity.train import Train
 
 
-class Map(Serializable):
+class Map(object):
     """ Map of game space.
     """
     def __init__(self, name=None):
+        self.name = name
+        self.idx = None
+        self.size = (None, None)
+        self.line = {}
+        self.point = {}
+        self.coordinate = {}
+        self.post = {}
+        self.train = {}
+
+        # Attributes not included into json representation:
         self.okey = False
-        self.train = []
-        if name is None:
-            return  # Empty map.
-        try:
-            self.name = name
+        self.markets = []
+        self.storages = []
+        self.towns = []
 
-            connection = sqlite3.connect(PATH_MAP_DB)
-            cur = connection.cursor()
+        if self.name is not None:
+            self.init_map()
 
-            cur.execute(
-                """SELECT id, size_x, size_y
-                   FROM map
-                   WHERE name=?""",
-                (self.name, )
-            )
-            row = cur.fetchone()
-            self.idx = row[0]
-            self.size = (row[1], row[2])
+    def init_map(self):
+        with map_session_ctx() as session:
+            _map = session.query(MapModel).filter(MapModel.name == self.name).first()
+            self.idx = _map.id
+            self.size = (_map.size_x, _map.size_y)
 
-            self.line = {}
-            cur.execute(
-                """SELECT id, len, p0, p1
-                   FROM line
-                   WHERE map_id=?
-                   ORDER BY id""",
-                (self.idx,)
-            )
-            for row in cur.fetchall():
-                self.line[row[0]] = Line(row[0], row[1], row[2], row[3])
+            lines = _map.lines.order_by(LineModel.id).all()
+            self.line = {l.id: Line(l.id, l.len, l.p0, l.p1) for l in lines}
 
-            self.point = {}
-            self.coordinate = {}
-            cur.execute(
-                """SELECT id, post_id, x, y
-                   FROM point
-                   WHERE map_id=?
-                   ORDER BY id""",
-                (self.idx,)
-            )
-            for row in cur.fetchall():
-                post_id = row[1]
-                self.coordinate[row[0]] = {'idx': row[0], 'x': row[2], 'y': row[3]}
-                if post_id == 0:
-                    self.point[row[0]] = Point(row[0])
-                else:
-                    self.point[row[0]] = Point(row[0], post_id=post_id if post_id != 0 else None)
+            points = session.query(PointModel, func.max(PostModel.id)).outerjoin(
+                PostModel, PointModel.id == PostModel.point_id).filter(PointModel.map_id == _map.id).group_by(
+                PointModel.id).order_by(PointModel.id).all()
+            for point, post_id in points:
+                self.coordinate[point.id] = {'idx': point.id, 'x': point.x, 'y': point.y}
+                self.point[point.id] = Point(point.id, post_id=post_id)
 
-            self.post = {}
-            cur.execute(
-                """SELECT id, name, type, population, armor, product, replenishment
-                   FROM post
-                   WHERE map_id=?
-                   ORDER BY id""",
-                (self.idx,)
-            )
-            for row in cur.fetchall():
-                self.post[row[0]] = Post(
-                    idx=row[0], name=row[1], post_type=row[2], population=row[3],
-                    armor=row[4], product=row[5], replenishment=row[6])
+            posts = _map.posts.order_by(PostModel.id).all()
+            self.post = {
+                p.id: Post(
+                    p.id, p.name, p.type, p.population, p.armor, p.product,
+                    replenishment=p.replenishment, point_id=p.point_id
+                ) for p in posts
+            }
 
-            connection.close()
-            self.okey = True
+            self.markets = [m for m in self.post.values() if m.type == PostType.MARKET]
+            self.storages = [s for s in self.post.values() if s.type == PostType.STORAGE]
+            self.towns = [t for t in self.post.values() if t.type == PostType.TOWN]
 
-        except sqlite3.Error as exception:
-            log(log.Error, "An error occurred: {}".format(exception.args[0]))
+        self.okey = True
 
     def add_train(self, train):
-        self.train.append(train)
+        self.train[train.idx] = train
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)
-        self.idx = data['idx']
-        self.name = data['name']
-
-        self.line = {}
-        for line in data['line']:
-            self.line[line['idx']] = Line(line['idx'], line['length'], line['point'][0], line['point'][1])
-
-        self.point = {}
-        for p in data['point']:
-            self.point[p['idx']] = Point(p['idx'], post_id=p[u'post_id'] if 'post_id' in p else None)
-
+        if data.get('idx'):
+            self.idx = data['idx']
+        if data.get('name'):
+            self.name = data['name']
+        if data.get('size'):
+            self.size = tuple(data['size'])
+        if data.get('line'):
+            self.line = {l['idx']: Line(l['idx'], l['length'], l['point'][0], l['point'][1]) for l in data['line']}
+        if data.get('point'):
+            self.point = {p['idx']: Point(p['idx'], post_id=p.get('post_id', None)) for p in data['point']}
+        if data.get('post'):
+            self.post = {
+                p['idx']: Post(
+                    p['idx'], p['name'], p['type'], population=p.get('population', None), armor=p.get('armor', None),
+                    product=p.get('product', None), replenishment=p.get('replenishment', None),
+                    level=p.get('level', None), player_id=p.get('player_id', None), point_id=p.get('point_id', None)
+                )
+                for p in data['post']
+            }
+        if data.get('train'):
+            self.train = {
+                t['idx']: Train(
+                    t['idx'], line_idx=t['line_idx'], position=t['position'], speed=t['speed'],
+                    player_id=t['player_id'], level=t['level'], goods=t['goods'], post_type=t['post_type']
+                )
+                for t in data['train']
+            }
+        if data.get('coordinate'):
+            self.coordinate = {c['idx']: {'idx': c['idx'], 'x': c['x'], 'y': c['y']} for c in data['coordinate']}
         self.okey = True
 
     def layer_to_json_str(self, layer):
@@ -119,3 +117,9 @@ class Map(Serializable):
                 else:
                     data[key] = attribute
         return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    def __repr__(self):
+        return "<Map(idx={}, name={}, line_idx=[{}], point_idx=[{}], post_idx=[{}], train_idx=[{}])>".format(
+            self.idx, self.name, ', '.join([str(k) for k in self.line]), ', '.join([str(k) for k in self.point]),
+            ', '.join([str(k) for k in self.post]), ', '.join([str(k) for k in self.train])
+        )

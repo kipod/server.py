@@ -52,11 +52,12 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.entity"
+                "test.entity",
+                "test.replay_db_helpers"
             ]
         },
         {
-            "name": "Client-Server Tests",
+            "name": "All Server Tests",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
@@ -72,7 +73,9 @@
             ],
             "args": [
                 "test.client",
-                "test.observer"
+                "test.observer",
+                "test.train_collisions",
+                "test.upgrade"
             ]
         },
         {
@@ -81,7 +84,7 @@
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/server/Server.py",
+            "program": "${workspaceRoot}/server/server.py",
             "cwd": "${workspaceRoot}/server",
             "env": {},
             "envFile": "${workspaceRoot}/.env",

@@ -3,12 +3,12 @@
 import json
 import uuid
 
-from entity.map import Map
 from entity.point import Point
-from entity.serializable import Serializable
+from entity.post import Post
+from entity.train import Train
 
 
-class Player(Serializable):
+class Player(object):
     """ Player
     * name - player name
     * id - player id
@@ -16,13 +16,13 @@ class Player(Serializable):
     * home - point of the home town
     """
 
-    # All indexes of registered players
+    # All indexes of registered players.
     PLAYERS = {}
 
     def __init__(self, name):
         self.name = name
         self.idx = None
-        self.train = []
+        self.train = {}
         self.home = None
         self.town = None
 
@@ -38,15 +38,50 @@ class Player(Serializable):
         """ Adds train to the player.
         """
         train.player_id = self.idx
-        self.train.append(train)
+        self.train[train.idx] = train
 
-    def set_home(self, point: Point, level: Map):
+    def set_home(self, point: Point, post: Post):
         """ Sets home point.
         """
+        post.player_id = self.idx
         self.home = point
-        self.town = level.post[point.post_id]
+        self.town = post
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)
-        self.idx = data['idx']
-        self.name = data['name']
+        if data.get('idx'):
+            self.idx = data['idx']
+        if data.get('name'):
+            self.name = data['name']
+        if data.get('train'):
+            self.train = {
+                t['idx']: Train(
+                    t['idx'], line_idx=t['line_idx'], position=t['position'], speed=t['speed'],
+                    player_id=t['player_id'], level=t['level'], goods=t['goods'], post_type=t['post_type']
+                )
+                for t in data['train']
+            }
+        if data.get('home'):
+            home = data['home']
+            self.home = Point(home['idx'], home['post_id'])
+        if data.get('town'):
+            town = data['town']
+            self.town = Post(
+                town['idx'], town['name'], town['type'], population=town['population'], armor=town['armor'],
+                product=town['product'], level=town['level'], player_id=town['player_id'], point_id=town['point_id']
+            )
+
+    def to_json_str(self):
+        data = {}
+        for key in self.__dict__:
+            attribute = self.__dict__[key]
+            if isinstance(attribute, dict):
+                data[key] = [i for i in attribute.values()]
+            else:
+                data[key] = attribute
+        return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    def __repr__(self):
+        return "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, trains_idx=[{}])>".format(
+            self.idx, self.name, self.home.idx, self.town.idx, ', '.join([str(idx) for idx in self.train])
+        )

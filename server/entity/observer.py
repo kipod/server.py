@@ -90,7 +90,7 @@ class Observer(object):
             turn = self._max_turn
 
         if turn == self._current_turn:
-            return Action.OKEY, None
+            return Result.OKEY, None
 
         delta_turn = turn - self._current_turn
         if delta_turn > 0:
