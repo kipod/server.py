@@ -1,15 +1,14 @@
 """ Test python's multithreading.
 """
-
 import threading
 import time
 import unittest
 
 
 class TestThreads(unittest.TestCase):
-    """ Test-fixture.
-    Idea: https://habrahabr.ru/post/149420/
+    """ Idea: https://habrahabr.ru/post/149420/
     """
+
     def setUp(self):
         pass
 

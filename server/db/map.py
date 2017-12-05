@@ -1,7 +1,8 @@
 """ DB map generator.
 """
+import sys
+
 from invoke import task
-from invoke.exceptions import Failure as InvFailure
 
 from db.models import MapBase, Map, Line, Point, Post
 from db.session import MapSession
@@ -488,18 +489,20 @@ MAP_GENERATORS = {
     'map03': generate_map03
 }
 
+
 @task
 def generate_map(ctx, map_name=None):
-    """ Generation map.db
+    """ Generates 'map.db'.
     """
     with DbMap() as db:
-        if map_name is not None:
-            if map_name not in MAP_GENERATORS:
-                print("Error: Unknown map name:'{}'".format(map_name))
-                raise InvFailure(1)
+        if map_name is not None and map_name not in MAP_GENERATORS:
+            print("Error, unknown map name: '{}', available: {}".format(
+                map_name, ', '.join(MAP_GENERATORS.keys())))
+            sys.exit(1)
         db.reset_db()
         maps_to_generate = MAP_GENERATORS.keys() if map_name is None else [map_name, ]
         for curr_map in maps_to_generate:
             map_generator = MAP_GENERATORS[curr_map]
             map_generator(db)
             print("Map '{}' has been generated.".format(curr_map))
+        sys.exit(0)

@@ -10,5 +10,5 @@ class Line(object):
         self.length = length
         self.point = (p0, p1)
 
-    def __str__(self):
+    def __repr__(self):
         return "<Line(idx={}, length={}, point={})>".format(self.idx, self.length, self.point)

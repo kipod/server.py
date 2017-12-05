@@ -9,11 +9,10 @@ from db.session import map_session_ctx
 from entity.line import Line
 from entity.point import Point
 from entity.post import Post, PostType
-from entity.serializable import Serializable
 from entity.train import Train
 
 
-class Map(Serializable):
+class Map(object):
     """ Map of game space.
     """
     def __init__(self, name=None):
@@ -70,27 +69,34 @@ class Map(Serializable):
 
     def from_json_str(self, string_data):
         data = json.loads(string_data)
-        self.idx = data['idx']
-        if 'name' in data:
+        if data.get('idx'):
+            self.idx = data['idx']
+        if data.get('name'):
             self.name = data['name']
-        if 'size' in data:
+        if data.get('size'):
             self.size = tuple(data['size'])
-        if 'line' in data:
+        if data.get('line'):
             self.line = {l['idx']: Line(l['idx'], l['length'], l['point'][0], l['point'][1]) for l in data['line']}
-        if 'point' in data:
+        if data.get('point'):
             self.point = {p['idx']: Point(p['idx'], post_id=p.get('post_id', None)) for p in data['point']}
-        if 'post' in data:
+        if data.get('post'):
             self.post = {
-                p['idx']: Post(p['idx'], p['name'], p['type'], p.get('population', None), p.get('armor', None),
-                               p.get('product', None), p.get('replenishment', None))
+                p['idx']: Post(
+                    p['idx'], p['name'], p['type'], population=p.get('population', None), armor=p.get('armor', None),
+                    product=p.get('product', None), replenishment=p.get('replenishment', None),
+                    level=p.get('level', None), player_id=p.get('player_id', None), point_id=p.get('point_id', None)
+                )
                 for p in data['post']
             }
-        if 'train' in data:
+        if data.get('train'):
             self.train = {
-                t['idx']: Train(t['idx'], t['line_idx'], t['position'], t['speed'], t['player_id'])
+                t['idx']: Train(
+                    t['idx'], line_idx=t['line_idx'], position=t['position'], speed=t['speed'],
+                    player_id=t['player_id'], level=t['level'], goods=t['goods'], post_type=t['post_type']
+                )
                 for t in data['train']
             }
-        if 'coordinate' in data:
+        if data.get('coordinate'):
             self.coordinate = {c['idx']: {'idx': c['idx'], 'x': c['x'], 'y': c['y']} for c in data['coordinate']}
         self.okey = True
 
@@ -111,3 +117,9 @@ class Map(Serializable):
                 else:
                     data[key] = attribute
         return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    def __repr__(self):
+        return "<Map(idx={}, name={}, line_idx=[{}], point_idx=[{}], post_idx=[{}], train_idx=[{}])>".format(
+            self.idx, self.name, ', '.join([str(k) for k in self.line]), ', '.join([str(k) for k in self.point]),
+            ', '.join([str(k) for k in self.post]), ', '.join([str(k) for k in self.train])
+        )

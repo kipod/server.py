@@ -79,7 +79,7 @@ class Post(object):
         for key, value in TOWN_LEVELS[self.level].items():
             setattr(self, key, value)
 
-    def __str__(self):
+    def __repr__(self):
         return "<Post(idx={}, name='{}', type={!r}, point_id={})>".format(
             self.idx, self.name, self.type, self.point_id
         )

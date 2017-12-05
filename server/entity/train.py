@@ -11,6 +11,8 @@ class Train(object):
         speed: speed of the Train (-1 or +1), negative - if the train is moving back on the line
         player_id: unique index of the Player which is owner of the Train
         level: current level of the Train
+        goods: quantity of some goods in the train at the current moment
+        post_type: PostType where first goods have been loaded into the train
 
     Has attributes:
         idx: unique index of the Train
@@ -28,7 +30,7 @@ class Train(object):
         post_type: PostType where first goods have been loaded into the train
         event: all events happened with the Train
     """
-    def __init__(self, idx, line_idx=None, position=None, speed=0, player_id=None, level=1):
+    def __init__(self, idx, line_idx=None, position=None, speed=0, player_id=None, level=1, goods=0, post_type=None):
         self.idx = idx
         self.line_idx = line_idx
         self.position = position
@@ -38,8 +40,8 @@ class Train(object):
         for key, value in TRAIN_LEVELS[self.level].items():  # Additional attributes from game_config.
             setattr(self, key, value)
         # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
-        self.goods = 0
-        self.post_type = None
+        self.goods = goods
+        self.post_type = post_type
         self.event = []
 
     def set_level(self, next_lvl):
@@ -47,7 +49,11 @@ class Train(object):
         for key, value in TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
 
-    def __str__(self):
-        return "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, level={}, goods={})>".format(
-            self.idx, self.line_idx, self.position, self.speed, self.player_id, self.level, self.goods
+    def __repr__(self):
+        return (
+            "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={},"
+            "level={}, goods={}, post_type={})>".format(
+                self.idx, self.line_idx, self.position, self.speed, self.player_id,
+                self.level, self.goods, self.post_type
+            )
         )

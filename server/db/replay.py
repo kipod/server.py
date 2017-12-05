@@ -1,5 +1,6 @@
 """ Replay DB helpers.
 """
+import sys
 from datetime import datetime
 
 from invoke import task
@@ -125,10 +126,17 @@ REPLAY_GENERATORS = {
 
 @task
 def generate_replay(ctx, replay_name=None):
+    """ Generates 'replay.db'.
+    """
     with DbReplay() as db:
+        if replay_name is not None and replay_name not in REPLAY_GENERATORS:
+            print("Error, unknown replay name: '{}', available: {}".format(
+                replay_name, ', '.join(REPLAY_GENERATORS.keys())))
+            sys.exit(1)
         db.reset_db()
         replays_to_generate = REPLAY_GENERATORS.keys() if replay_name is None else [replay_name, ]
         for curr_replay in replays_to_generate:
             replay_generator = REPLAY_GENERATORS[curr_replay]
             replay_generator(db)
             print("Replay '{}' has been generated.".format(curr_replay))
+        sys.exit(0)
