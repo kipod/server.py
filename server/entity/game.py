@@ -118,7 +118,10 @@ class Game(Thread):
                     else:
                         self.tick()
                         if replay:
-                            replay.add_action(Action.TURN, None, with_commit=False, game_id=self._current_game_id)
+                            replay.add_action(Action.TURN,
+                                              message=None,
+                                              with_commit=False,
+                                              game_id=self._current_game_id)
             if replay:
                 replay.commit()
         finally:
