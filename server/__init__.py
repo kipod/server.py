@@ -1,5 +1,4 @@
-"""
-server
+""" Server.
 """
 import os
 import sys

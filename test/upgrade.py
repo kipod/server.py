@@ -15,14 +15,14 @@ class TestUpgrade(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as db:
-            db.reset_db()
-            generate_map02(db)
+        with DbMap() as database:
+            database.reset_db()
+            generate_map02(database)
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as db:
-            db.reset_db()
+        with DbMap() as database:
+            database.reset_db()
 
     def do_action(self, action, data):
         return self.connection.do_action(action, data)
