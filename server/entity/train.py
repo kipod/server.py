@@ -1,4 +1,4 @@
-from game_config import TRAIN_LEVELS
+from game_config import config
 
 
 class Train(object):
@@ -37,7 +37,8 @@ class Train(object):
         self.speed = speed
         self.player_id = player_id
         self.level = level
-        for key, value in TRAIN_LEVELS[self.level].items():  # Additional attributes from game_config.
+        # Additional attributes from game_config:
+        for key, value in config.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
         # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
         self.goods = goods
@@ -46,7 +47,7 @@ class Train(object):
 
     def set_level(self, next_lvl):
         self.level = next_lvl
-        for key, value in TRAIN_LEVELS[self.level].items():
+        for key, value in config.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
 
     def __repr__(self):
