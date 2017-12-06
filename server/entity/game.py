@@ -138,6 +138,7 @@ class Game(Thread):
         self.handle_trains_collisions_on_tick()
         self.process_trains_points_on_tick()
         self.update_towns_on_tick()
+        self.refugees_arrival_on_tick()
         self.hijackers_assault_on_tick()
         self.parasites_assault_on_tick()
 
@@ -335,7 +336,7 @@ class Game(Thread):
                     GameEvent(EventType.PARASITES_ASSAULT, self._current_tick, parasites_power=parasites_power)
                 )
 
-    def refugees_arrival(self):
+    def refugees_arrival_on_tick(self):
         """ Makes refugees arrival which increases quantity of Town's population.
         """
         rand_percent = random.randint(1, 100)
