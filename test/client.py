@@ -19,15 +19,15 @@ class TestClient(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as db:
-            db.reset_db()
-            generate_map02(db)
+        with DbMap() as database:
+            database.reset_db()
+            generate_map02(database)
         cls.connection = ServerConnection()
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as db:
-            db.reset_db()
+        with DbMap() as database:
+            database.reset_db()
         del cls.connection
 
     @classmethod
