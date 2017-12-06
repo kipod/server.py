@@ -248,8 +248,220 @@ Each __train__ has follows key fields:
 
 Turn action needs for force next turn of the game and don't wait game's time slice.
 Game time slice equal to 1 second.
-TURN action don't need any parameters.
+TURN action receives empty parameters.
 
 #### Example turn action bin data
 
-Hex: |05 00 00 00|00 00 00 00|
+Hex: |05 00 00 00|02 00 00 00|"{}"
+
+
+## The Game
+
+### Two types of goods
+
+In the game uses two types of resources (goods): product and armor
+
+#### product
+
+This type of resource (goods) uses for support the city's population. In a game turn 1 settler eats 1 product in the town.
+Product can be mined by a train in a Market ( on the map this object defined as Post with type MARKET )
+Products sometimes steal parasites! (See: Event:"Parasites Invasion")
+
+#### armor
+
+This type of resource (goods) uses for increase the town defence from bandits attack (see: Event:"Bandits Attack" item ) and upgrades units (see: Upgrade). On Bandits Attack decreases armor in the town (1 bandit ---> -1 armor).
+Armor can be mined by a train in a Storage ( on the map this object defined as Post with type STORAGE )
+If you have enough armor in the town - you can use it for upgrade the town it self or/and upgrade yours train(s)
+
+### Events
+
+In the game can happens something :). Player notified about it by events.
+Each event binds to some game entity (Town, Train, etc.)
+In current moment in the Game implements following type of events:
+
+#### Events Types
+
+```Python
+    TRAIN_COLLISION = 1
+    HIJACKERS_ASSAULT = 2
+    PARASITES_ASSAULT = 3
+    REFUGEES_ARRIVAL = 4
+    RESOURCE_OVERFLOW = 5
+    RESOURCE_LACK = 6
+    GAME_OVER = 100
+````
+
+#### Parasites Invasion
+
+This event binds to the Town.
+Parasites eats products in the town. Products decrement count equal to parasites count in attack event.
+
+##### Map JSON string data example for result of action MAP for layer=1
+
+``` JSON
+{
+    "idx": 1,
+    "post": [
+        {
+	        "type": 1,
+            "name": "town-one",
+            "event": [
+                {
+                    "parasites_power": 3,
+                    "tick": 111,
+                    "type": 3
+                }
+            ],
+            "product": 29,
+            "product_capacity": 200,
+            ...
+
+        },
+        ...
+}
+```
+
+* **parasites_power** - count of parasites (count of products decreased in the town)
+* **tick** - game's turn number
+* **type** - event's type. This value equal to 3.
+
+
+#### Bandits Attack
+
+This event binds to the Town. "Bandits Attack" very same to "Parasites Invasion", but in this case decrements armor.
+If the town has less armor than takes on this attack, than population of this town decreases by 1!
+
+##### Map JSON string data example for result of action MAP for layer=1
+
+``` JSON
+{
+    "idx": 1,
+    "post": [
+        {
+	        "type": 1,
+            "name": "town-one",
+            "event": [
+                {
+                    "hijackers_power": 2,
+                    "tick": 1,
+                    "type": 2
+                }
+            ],
+            "product": 29,
+            "product_capacity": 200,
+            ...
+
+        },
+        ...
+}
+```
+
+* **hijackers_power** - count of bandits (count of armors decreased in the town).
+* **tick** - game's turn number
+* **type** - event's type. This value equal to 2.
+
+#### Arrival of Refugees
+
+Increase population of the town.
+
+##### Map JSON string data example for result of action MAP for layer=1
+
+``` JSON
+{
+    "idx": 1,
+    "post": [
+        {
+	        "type": 1,
+            "name": "town-one",
+            "event": [
+                {
+                    "refugees_number": 2,
+                    "tick": 1,
+                    "type": 4
+                }
+            ],
+            "product": 29,
+            "product_capacity": 200,
+            ...
+
+        },
+        ...
+}
+```
+
+* **refugees_number** - count of population that increased in the town).
+* **tick** - game's turn number
+* **type** - event's type. This value equal to 4.
+
+#### Train Crash
+If two or more trains at same time and at the same point - this is the crash situation!
+All trains participated in this crash immediately returns to it's town (on this turn) and all goods on the train will be nulled (set to 0).
+
+##### Map JSON string data example for result of action MAP for layer=1
+
+``` JSON
+{
+    "idx": 1,
+    ...
+    "train": [
+        {
+            "event": [
+                {
+                    "tick": 2,
+                    "train": 2,
+                    "type": 1
+                }
+            ],
+            "goods": 0,
+            "goods_capacity": 40,
+            "idx": 1,
+            "level": 1,
+
+            "line_idx": 1,
+            "next_level_price": 40,
+            "player_id": "5e0087f0-0f15-40a0-aa87-0ef2abce32cb",
+            "position": 0,
+            "post_type": null,
+            "speed": 0
+        },
+        ...
+}
+```
+
+* **tick** - game's turn number
+* **train** - train ID with that was collision
+* **type** - event's type. This value equal to 1.
+
+### Upgrade
+In some moment of the game the player have decide to upgrade his town or train.
+All upgrades are paid by armor.
+For initiate upgrade client sends to server action UPGRADE (protocol of action UPGRADE described above)
+
+#### Town upgrade
+
+What gets the town as a result of upgrade? See in following table:
+
+Level | Population Capacity | Product Capacity | Armor Capacity | Next Level Price
+------|---------------------|------------------|----------------|-----------------
+1 | 10 | 200 | 100 | 100
+2 | 20 | 400 | 200 | 200
+3 | 40 | 800 | 400 | None
+
+Level 3 - is maximal town level
+
+#### Train upgrade
+
+What gets the train as a result of upgrade? See in following table:
+
+Level | Goods Capacity | Next Level Price
+------|----------------|------------------
+1 | 40  | 40
+2 | 80  | 80
+3 | 160 | None
+
+Level 3 - is maximal train level
+
+### Rating
+
+TBD
+
