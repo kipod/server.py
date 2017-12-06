@@ -2,9 +2,9 @@ import json
 import unittest
 from datetime import datetime
 
-from server import game_config
 from server.db.map import generate_map02, DbMap
 from server.defs import Action, Result
+from server.game_config import config
 from test.server_connection import ServerConnection
 
 
@@ -227,7 +227,7 @@ class TestUpgrade(unittest.TestCase):
         train_1 = self.player['train'][0]
         train_2 = self.player['train'][1]
 
-        for i in range(len(game_config.TRAIN_LEVELS.keys()) - 2):
+        for i in range(len(config.TRAIN_LEVELS.keys()) - 2):
             self.move_train_and_go_to_line_end(test_line_idx, train_1['idx'], -1)
             self.move_train_and_go_to_line_end(test_line_idx, train_1['idx'], 1)
             self.turn(wait_for_replenishment)

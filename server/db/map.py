@@ -7,7 +7,7 @@ from invoke import task
 from db.models import MapBase, Map, Line, Point, Post
 from db.session import MapSession
 from entity.post import PostType
-from game_config import CURRENT_MAP_VERSION
+from game_config import config
 
 
 class DbMap(object):
@@ -502,7 +502,7 @@ MAP_GENERATORS = {
 
 
 @task
-def generate_map(ctx, map_version=CURRENT_MAP_VERSION):
+def generate_map(ctx, map_version=config.CURRENT_MAP_VERSION):
     """ Generates 'map.db'.
     """
     with DbMap() as db:

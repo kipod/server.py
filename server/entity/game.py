@@ -4,7 +4,6 @@ import math
 import random
 from threading import Thread, Event, Lock
 
-import game_config
 from db.replay import DbReplay
 from defs import Result, Action
 from entity.event import EventType, Event as GameEvent
@@ -13,6 +12,7 @@ from entity.player import Player
 from entity.point import Point
 from entity.post import PostType, Post
 from entity.train import Train
+from game_config import config
 from logger import log
 
 
@@ -31,7 +31,7 @@ class Game(Thread):
     # All registered games.
     GAMES = {}
 
-    def __init__(self, name, map_name=game_config.MAP_NAME, observed=False):
+    def __init__(self, name, map_name=config.MAP_NAME, observed=False):
         super(Game, self).__init__(name=name)
         log(log.INFO, "Create game, name: '{}'".format(self.name))
         self.replay = None
@@ -73,7 +73,7 @@ class Game(Thread):
                 player.set_home(player_home_point, player_town)
                 self.players[player.idx] = player
                 # Add trains for the player:
-                for _ in range(game_config.DEFAULT_TRAINS_COUNT):
+                for _ in range(config.DEFAULT_TRAINS_COUNT):
                     # Create Train:
                     train = Train(idx=len(self.trains) + 1)
                     # Add Train:
@@ -111,7 +111,7 @@ class Game(Thread):
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
         try:
-            while not self._stop_event.wait(game_config.TICK_TIME):
+            while not self._stop_event.wait(config.TICK_TIME):
                 with self._lock:
                     if self._pass_next_tick:
                         self._pass_next_tick = False
@@ -312,8 +312,8 @@ class Game(Thread):
         """ Makes hijackers assault which decreases quantity of Town's armor and population.
         """
         rand_percent = random.randint(1, 100)
-        if rand_percent <= game_config.HIJACKERS_ASSAULT_PROBABILITY:
-            hijackers_power = random.randint(*game_config.HIJACKERS_POWER_RANGE)
+        if rand_percent <= config.HIJACKERS_ASSAULT_PROBABILITY:
+            hijackers_power = random.randint(*config.HIJACKERS_POWER_RANGE)
             log(log.INFO, "Hijackers assault happened, hijackers power: {}".format(hijackers_power))
             for player in self.players.values():
                 player.town.population = max(player.town.population - max(hijackers_power - player.town.armor, 0), 0)
@@ -326,8 +326,8 @@ class Game(Thread):
         """ Makes parasites assault which decreases quantity of Town's product.
         """
         rand_percent = random.randint(1, 100)
-        if rand_percent <= game_config.PARASITES_ASSAULT_PROBABILITY:
-            parasites_power = random.randint(*game_config.PARASITES_POWER_RANGE)
+        if rand_percent <= config.PARASITES_ASSAULT_PROBABILITY:
+            parasites_power = random.randint(*config.PARASITES_POWER_RANGE)
             log(log.INFO, "Parasites assault happened, parasites power: {}".format(parasites_power))
             for player in self.players.values():
                 player.town.product = max(player.town.product - parasites_power, 0)
@@ -339,8 +339,8 @@ class Game(Thread):
         """ Makes refugees arrival which increases quantity of Town's population.
         """
         rand_percent = random.randint(1, 100)
-        if rand_percent <= game_config.REFUGEES_ARRIVAL_PROBABILITY:
-            refugees_number = random.randint(*game_config.REFUGEES_NUMBER_RANGE)
+        if rand_percent <= config.REFUGEES_ARRIVAL_PROBABILITY:
+            refugees_number = random.randint(*config.REFUGEES_NUMBER_RANGE)
             log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
             for player in self.players.values():
                 player.town.population += min(player.town.population_capacity - player.town.population, refugees_number)
@@ -498,8 +498,8 @@ class Game(Thread):
                 trains.append(train)
 
             # Check existence of next level for each entity:
-            posts_has_next_lvl = all([p.level + 1 in game_config.TOWN_LEVELS for p in posts])
-            trains_has_next_lvl = all([t.level + 1 in game_config.TRAIN_LEVELS for t in trains])
+            posts_has_next_lvl = all([p.level + 1 in config.TOWN_LEVELS for p in posts])
+            trains_has_next_lvl = all([t.level + 1 in config.TRAIN_LEVELS for t in trains])
             if not all([posts_has_next_lvl, trains_has_next_lvl]):
                 return Result.BAD_COMMAND
 

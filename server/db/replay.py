@@ -6,10 +6,10 @@ from datetime import datetime
 from invoke import task
 from sqlalchemy import func, and_
 
-import game_config
 from db.models import ReplayBase, Game, Action
 from db.session import ReplaySession
 from defs import Action as ActionCodes
+from game_config import config
 
 TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
@@ -99,7 +99,7 @@ class DbReplay(object):
 
 
 def generate_replay01(db):
-    db.add_game('Test', game_config.MAP_NAME)
+    db.add_game('Test', config.MAP_NAME)
     db.add_action(ActionCodes.MOVE, '{"line_idx": 1, "speed": 1, "train_idx": 1}')
     db.add_action(ActionCodes.TURN, None)
     db.add_action(ActionCodes.TURN, None)
