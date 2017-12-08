@@ -100,6 +100,7 @@ class DbReplay(object):
 
 def generate_replay01(db):
     db.add_game('Test', config.MAP_NAME)
+    db.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}')
     db.add_action(ActionCodes.MOVE, '{"line_idx": 1, "speed": 1, "train_idx": 1}')
     db.add_action(ActionCodes.TURN, None)
     db.add_action(ActionCodes.TURN, None)

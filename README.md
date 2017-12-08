@@ -175,6 +175,9 @@ Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
             "type": 1
         }
     ],
+    "rating": {
+        "Nikolay": 3000
+    },
     "train": [
         {
             "idx": 0,
@@ -201,6 +204,8 @@ Each __train__ has follows key fields:
 * **player_id** - id of player, who owner of this train
 * **position** - position of this train in the current line
 * **speed** - speed on the train
+
+Rating of players calculated each turn and can be get from dictionary __rating__. The key on this dictionary - player name; value - rating score.
 
 #### Map JSON string data example for result of action MAP for layer=10
 

@@ -34,7 +34,10 @@ class Observer(object):
         """ Resets the game to initial state.
         """
         self._game = Game(self._game_name, self._map_name, observed=True)
-        self._game.add_player(Player(Observer.PLAYER_NAME))
+        for action in self._actions:
+            if action['code'] == Action.LOGIN:
+                data = json.loads(action['message'])
+                self._game.add_player(Player(data['name']))
         self._current_turn = 0
         self._current_action = 0
 
@@ -51,11 +54,7 @@ class Observer(object):
             return Result.RESOURCE_NOT_FOUND, None
         if 'layer' in data:
             layer = data['layer']
-            if layer in (0, 1, 10):
-                log(log.INFO, "Load map layer={}".format(layer))
-                return Result.OKEY, self._game.map.layer_to_json_str(layer)
-            else:
-                return Result.RESOURCE_NOT_FOUND, None
+            return self._game.get_map_layer(layer)
         return Result.BAD_COMMAND, None
 
     def game_turn(self, turns):
@@ -114,9 +113,9 @@ class Observer(object):
                 game_name = game['name']
                 self._game_name = game_name
                 self._map_name = game['map']
-                self.reset_game()
                 log(log.INFO, "Observer selected game: {}".format(game_name))
                 self._actions = self._db.get_all_actions(game_id)
+                self.reset_game()
                 self._max_turn = game['length']
                 break
         if self._game is None:
