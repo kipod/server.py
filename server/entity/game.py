@@ -119,10 +119,9 @@ class Game(Thread):
                     else:
                         self.tick()
                         if replay:
-                            replay.add_action(Action.TURN,
-                                              message=None,
-                                              with_commit=False,
-                                              game_id=self._current_game_id)
+                            replay.add_action(
+                                Action.TURN, message=None, with_commit=False, game_id=self._current_game_id
+                            )
             if replay:
                 replay.commit()
         finally:
@@ -317,12 +316,13 @@ class Game(Thread):
         if rand_percent <= config.HIJACKERS_ASSAULT_PROBABILITY:
             hijackers_power = random.randint(*config.HIJACKERS_POWER_RANGE)
             log(log.INFO, "Hijackers assault happened, hijackers power: {}".format(hijackers_power))
+            event = GameEvent(EventType.HIJACKERS_ASSAULT, self._current_tick, hijackers_power=hijackers_power)
             for player in self.players.values():
                 player.town.population = max(player.town.population - max(hijackers_power - player.town.armor, 0), 0)
                 player.town.armor = max(player.town.armor - hijackers_power, 0)
-                player.town.event.append(
-                    GameEvent(EventType.HIJACKERS_ASSAULT, self._current_tick, hijackers_power=hijackers_power)
-                )
+                player.town.event.append(event)
+            if self.replay:
+                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
 
     def parasites_assault_on_tick(self):
         """ Makes parasites assault which decreases quantity of Town's product.
@@ -331,11 +331,12 @@ class Game(Thread):
         if rand_percent <= config.PARASITES_ASSAULT_PROBABILITY:
             parasites_power = random.randint(*config.PARASITES_POWER_RANGE)
             log(log.INFO, "Parasites assault happened, parasites power: {}".format(parasites_power))
+            event = GameEvent(EventType.PARASITES_ASSAULT, self._current_tick, parasites_power=parasites_power)
             for player in self.players.values():
                 player.town.product = max(player.town.product - parasites_power, 0)
-                player.town.event.append(
-                    GameEvent(EventType.PARASITES_ASSAULT, self._current_tick, parasites_power=parasites_power)
-                )
+                player.town.event.append(event)
+            if self.replay:
+                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
 
     def refugees_arrival_on_tick(self):
         """ Makes refugees arrival which increases quantity of Town's population.
@@ -344,17 +345,18 @@ class Game(Thread):
         if rand_percent <= config.REFUGEES_ARRIVAL_PROBABILITY:
             refugees_number = random.randint(*config.REFUGEES_NUMBER_RANGE)
             log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
+            event = GameEvent(EventType.REFUGEES_ARRIVAL, self._current_tick, refugees_number=refugees_number)
             for player in self.players.values():
                 player.town.population += max(
                     min(player.town.population_capacity - player.town.population, refugees_number), 0
                 )
-                player.town.event.append(
-                    GameEvent(EventType.REFUGEES_ARRIVAL, self._current_tick, refugees_number=refugees_number)
-                )
+                player.town.event.append(event)
                 if player.town.population == player.town.population_capacity:
                     player.town.event.append(
                         GameEvent(EventType.RESOURCE_OVERFLOW, self._current_game_id, population=player.town.population)
                     )
+            if self.replay:
+                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
 
     def update_posts_on_tick(self):
         """ Updates all markets and storages.
