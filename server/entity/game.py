@@ -262,12 +262,12 @@ class Game(Thread):
             # Unload product from train to town:
             goods = 0
             if train.post_type == PostType.MARKET:
-                goods = min(train.goods, post.product_capacity - post.product)
+                goods = self.min_or_zero(train.goods, post.product_capacity - post.product)
                 post.product += goods
                 if post.product == post.product_capacity:
                     post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self._current_tick, product=post.product))
             elif train.post_type == PostType.STORAGE:
-                goods = min(train.goods, post.armor_capacity - post.armor)
+                goods = self.min_or_zero(train.goods, post.armor_capacity - post.armor)
                 post.armor += goods
                 if post.armor == post.armor_capacity:
                     post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self._current_tick, armor=post.armor))
@@ -278,7 +278,7 @@ class Game(Thread):
         elif post.type == PostType.MARKET:
             # Load product from market to train:
             if train.post_type is None or train.post_type == post.type:
-                product = min(post.product, train.goods_capacity - train.goods)
+                product = self.min_or_zero(post.product, train.goods_capacity - train.goods)
                 post.product -= product
                 train.goods += product
                 train.post_type = post.type
@@ -286,7 +286,7 @@ class Game(Thread):
         elif post.type == PostType.STORAGE:
             # Load armor from storage to train:
             if train.post_type is None or train.post_type == post.type:
-                armor = min(post.armor, train.goods_capacity - train.goods)
+                armor = self.min_or_zero(post.armor, train.goods_capacity - train.goods)
                 post.armor -= armor
                 train.goods += armor
                 train.post_type = post.type
@@ -344,7 +344,9 @@ class Game(Thread):
             refugees_number = random.randint(*config.REFUGEES_NUMBER_RANGE)
             log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
             for player in self.players.values():
-                player.town.population += min(player.town.population_capacity - player.town.population, refugees_number)
+                player.town.population += self.min_or_zero(
+                    player.town.population_capacity - player.town.population, refugees_number
+                )
                 player.town.event.append(
                     GameEvent(EventType.REFUGEES_ARRIVAL, self._current_tick, refugees_number=refugees_number)
                 )
@@ -358,10 +360,10 @@ class Game(Thread):
         """
         for market in self.map.markets:
             if market.product < market.product_capacity:
-                market.product = min(market.product + market.replenishment, market.product_capacity)
+                market.product = self.min_or_zero(market.product + market.replenishment, market.product_capacity)
         for storage in self.map.storages:
             if storage.armor < storage.armor_capacity:
-                storage.armor = min(storage.armor + storage.replenishment, storage.armor_capacity)
+                storage.armor = self.min_or_zero(storage.armor + storage.replenishment, storage.armor_capacity)
 
     def update_trains_positions_on_tick(self):
         """ Update trains positions.
@@ -403,6 +405,13 @@ class Game(Thread):
          0 if variable == 0
         """
         return variable and (1, -1)[variable < 0]
+
+    @staticmethod
+    def min_or_zero(*variables):
+        """ Returns minimal value among given variables or 0 if minimal value less than zero.
+        """
+        min_var = min(*variables)
+        return min_var if min_var >= 0 else 0
 
     def is_train_at_point(self, train: Train, point_to_check: Point = None):
         """ Returns Point if the Train at some Point now, else returns False.

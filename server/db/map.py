@@ -278,7 +278,7 @@ def generate_map03(db):
     p100 = db.add_point(x=190, y=190)
 
     # Posts:
-    db.add_post(p1, 'town-one', PostType.TOWN, population=3, product=350, armor=100)
+    db.add_post(p1, 'town-one', PostType.TOWN, population=3, product=200, armor=100)
     db.add_post(p89, 'market-big', PostType.MARKET, product=500, replenishment=10)
     db.add_post(p49, 'market-medium', PostType.MARKET, product=250, replenishment=10)
     db.add_post(p12, 'market-small', PostType.MARKET, product=50, replenishment=5)
