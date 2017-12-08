@@ -21,7 +21,8 @@ class DbReplay(object):
         self.session = ReplaySession()
         self.current_game_id = None
 
-    def reset_db(self):
+    @staticmethod
+    def reset_db():
         """ Re-applies DB schema.
         """
         ReplayBase.metadata.drop_all()
@@ -37,6 +38,7 @@ class DbReplay(object):
         self.current_game_id = new_game.id
         return self.current_game_id
 
+    # pylint: disable=R0913
     def add_action(self, action, message, game_id=None, date=None, with_commit=True):
         """ Creates new Action in DB.
         """
@@ -53,7 +55,7 @@ class DbReplay(object):
         games = []
         rows = self.session.query(Game, func.count(Action.id)).outerjoin(
             Action, and_(Game.id == Action.game_id, Action.code == ActionCodes.TURN)).group_by(
-            Game.id).order_by(Game.id).all()
+                Game.id).order_by(Game.id).all()
         for row in rows:
             game_data, game_length = row
             game = {
@@ -97,208 +99,35 @@ class DbReplay(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
+def insert_replay_move_and_turns(database, line_idx: int, speed: int, train_idx: int, turns_count: int):
+    """ Inserts into replays database MOVE action + number of TURN actions
+    """
+    database.add_action(ActionCodes.MOVE,
+                        "{{\"line_idx\": {0}, \"speed\": {1}, \"train_idx\": {2}}}".format(line_idx, speed, train_idx))
+    for _ in range(turns_count):
+        database.add_action(ActionCodes.TURN, None)
 
-def generate_replay01(db):
-    db.add_game('Test', config.MAP_NAME)
-    db.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}')
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 1, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 2, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # in point 2
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 3, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # in point 3
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 4, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 4
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 5, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 5
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 6, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 6
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 7, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 7
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 8, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 8
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 9, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 9
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 19, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 10
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 38, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 20
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 57, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 30
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 76, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 40
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 95, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 50
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 114, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 60
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 133, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 70
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 152, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 80
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 171, "speed": 1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 90
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)  # point 100
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 180, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 179, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 99
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 178, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 98
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 177, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 97
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 176, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 96
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 175, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 95
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 174, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 94
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 173, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 93
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 172, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 92
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 162, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 91
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 143, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 81
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 124, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 71
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 105, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 61
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 86, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 51
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 67, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 41
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 48, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 31
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 29, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 21
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.MOVE, '{"line_idx": 10, "speed": -1, "train_idx": 1}')
-    db.add_action(ActionCodes.TURN, None)  # point 11
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)
-    db.add_action(ActionCodes.TURN, None)  # point 1
+def generate_replay01(database):
+    """ Generate test game record
+    """
+    database.add_game('Test', config.MAP_NAME)
+    database.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}')
+
+    def fwd(line_idx: int, count_turns: int):
+        """ Forward move. Inner helper for simplify formatin records
+        """
+        insert_replay_move_and_turns(database, line_idx, 1, 1, count_turns)
+
+    def rev(line_idx: int, count_turns: int):
+        """ Reverse move. Inner helper for simplify formatin records
+        """
+        insert_replay_move_and_turns(database, line_idx, -1, 1, count_turns)
+
+    # pylint: disable=C0321
+    fwd(1, 3); fwd(2, 4); fwd(3, 4); fwd(4, 4); fwd(5, 4); fwd(6, 4); fwd(7, 4); fwd(8, 4); fwd(9, 4)
+    fwd(19, 5); fwd(38, 5); fwd(57, 5); fwd(76, 5); fwd(95, 5); fwd(114, 5); fwd(133, 5); fwd(152, 5); fwd(171, 6)
+    rev(180, 3); rev(179, 4); rev(178, 4); rev(177, 4); rev(176, 4); rev(175, 4); rev(174, 4); rev(173, 4); rev(172, 4)
+    rev(162, 5); rev(143, 5); rev(124, 5); rev(105, 5); rev(86, 5); rev(67, 5); rev(48, 5); rev(29, 5); rev(10, 6)
 
 
 REPLAY_GENERATORS = {
@@ -307,18 +136,18 @@ REPLAY_GENERATORS = {
 
 
 @task
-def generate_replay(ctx, replay_name=None):
+def generate_replay(_, replay_name=None):
     """ Generates 'replay.db'.
     """
-    with DbReplay() as db:
+    with DbReplay() as database:
         if replay_name is not None and replay_name not in REPLAY_GENERATORS:
             print("Error, unknown replay name: '{}', available: {}".format(
                 replay_name, ', '.join(REPLAY_GENERATORS.keys())))
             sys.exit(1)
-        db.reset_db()
+        database.reset_db()
         replays_to_generate = REPLAY_GENERATORS.keys() if replay_name is None else [replay_name, ]
-        for curr_replay in replays_to_generate:
-            replay_generator = REPLAY_GENERATORS[curr_replay]
-            replay_generator(db)
-            print("Replay '{}' has been generated.".format(curr_replay))
+        for current_replay in replays_to_generate:
+            replay_generator = REPLAY_GENERATORS[current_replay]
+            replay_generator(database)
+            print("Replay '{}' has been generated.".format(current_replay))
         sys.exit(0)

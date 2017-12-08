@@ -1,3 +1,5 @@
+""" Train entity
+"""
 from game_config import config
 
 

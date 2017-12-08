@@ -49,6 +49,8 @@ class Player(object):
         self.town = post
 
     def from_json_str(self, string_data):
+        """ loads object from json string
+        """
         data = json.loads(string_data)
         if data.get('idx'):
             self.idx = data['idx']
@@ -73,6 +75,8 @@ class Player(object):
             )
 
     def to_json_str(self):
+        """ store object to JSON string
+        """
         data = {}
         for key in self.__dict__:
             attribute = self.__dict__[key]
