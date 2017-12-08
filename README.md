@@ -102,6 +102,7 @@ Reads game map. Map loads by layers:
 
 * Layer 0 - static objects
 * Layer 1 - dynamic objects
+* Layer 10 - coordinates of points
 
 Layer 0 includes info about map index(idx), map name(name), lines(line), points(point)
 
@@ -200,6 +201,53 @@ Each __train__ has follows key fields:
 * **player_id** - id of player, who owner of this train
 * **position** - position of this train in the current line
 * **speed** - speed on the train
+
+#### Map JSON string data example for result of action MAP for layer=10
+
+``` JSON
+'{
+    "coordinate": [
+        {
+            "idx": 1,
+            "x": 10,
+            "y": 10
+        },
+        {
+            "idx": 2,
+            "x": 30,
+            "y": 10
+        },
+        {
+            "idx": 3,
+            "x": 50,
+            "y": 10
+        },
+        {
+            "idx": 4,
+            "x": 70,
+            "y": 10
+        },
+        {
+            "idx": 5,
+            "x": 90,
+            "y": 10
+        }
+    ],
+    "size": [
+        200,
+        200
+    ]
+}'
+```
+Layer 10 contains coordinates for all points on the map. In the example we got coordinates of 5 points.
+Also Layer 10 bring us size on the map.
+Coordinates and size in logical units.
+Each __coordinate__ includes:
+* **idx** - point index
+* **x** - x coordinate
+* **y** - y coordinate
+
+__size__ is array of two integers: **width** and **height**
 
 ### MOVE action
 
