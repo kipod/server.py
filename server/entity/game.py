@@ -566,11 +566,11 @@ class Game(Thread):
             log(log.INFO, "Load game map layer, layer: {}".format(layer))
             message = self.map.layer_to_json_str(layer)
             self.clean_events()
-            if layer == 1: # add ratings
+            if layer == 1:  # Add ratings.
                 data = json.loads(message)
                 rating = {}
                 for player in self.players.values():
-                    rating[player.name]=player.rating
+                    rating[player.name] = player.rating
                 data['rating'] = rating
                 message = json.dumps(data, sort_keys=True, indent=4)
             return Result.OKEY, message
