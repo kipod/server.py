@@ -270,7 +270,7 @@ class TestUpgrade(unittest.TestCase):
         self.assertEqual(map_data['train'][1]['next_level_price'], curr_train_2['next_level_price'])
 
     def test_upgrade_town(self):
-        trips = 3
+        trips = 4
         test_line_idx = 18
         wait_for_replenishment = 6
         town = self.player['town']
