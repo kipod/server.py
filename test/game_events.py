@@ -9,7 +9,7 @@ from server.game_config import config
 from test.server_connection import ServerConnection
 
 
-class TestTrainCollisions(unittest.TestCase):
+class TestGameEvents(unittest.TestCase):
     """ Test class for a Game Player.
     """
     PLAYER_NAME = 'Test Player Name ' + datetime.now().strftime('%H:%M:%S.%f')
