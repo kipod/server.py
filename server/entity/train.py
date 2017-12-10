@@ -29,6 +29,7 @@ class Train(object):
         goods: quantity of some goods in the train at the current moment
         post_type: PostType where first goods have been loaded into the train
         event: all events happened with the Train
+        cooldown: the Train is blocked for this quantity of game ticks
     """
     def __init__(self, idx, line_idx=None, position=None, speed=0, player_id=None, level=1, goods=0, post_type=None):
         self.idx = idx
@@ -44,6 +45,7 @@ class Train(object):
         self.goods = goods
         self.post_type = post_type
         self.event = []
+        self.cooldown = 0
 
     def set_level(self, next_lvl):
         self.level = next_lvl
@@ -53,8 +55,8 @@ class Train(object):
     def __repr__(self):
         return (
             "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, "
-            "level={}, goods={}, post_type={})>".format(
+            "level={}, goods={}, post_type={}, cooldown={})>".format(
                 self.idx, self.line_idx, self.position, self.speed, self.player_id,
-                self.level, self.goods, self.post_type
+                self.level, self.goods, self.post_type, self.cooldown
             )
         )

@@ -51,7 +51,7 @@ class TestTrainCollisions(unittest.TestCase):
             result, _ = self.do_action(Action.TURN, {})
             self.assertEqual(Result.OKEY, result)
 
-    def move_train(self, line_idx, train_idx, speed):
+    def move_train(self, line_idx, train_idx, speed, exp_result=Result.OKEY):
         result, _ = self.do_action(
             Action.MOVE,
             {
@@ -60,7 +60,7 @@ class TestTrainCollisions(unittest.TestCase):
                 'line_idx': line_idx
             }
         )
-        self.assertEqual(Result.OKEY, result)
+        self.assertEqual(exp_result, result)
 
     def get_train(self, train_id):
         data = self.get_map(1)
@@ -361,3 +361,83 @@ class TestTrainCollisions(unittest.TestCase):
         map_data = self.get_map(1)
         self.assertEqual(map_data['train'][0]['event'], [])
         self.assertEqual(map_data['train'][1]['event'], [])
+
+    def test_collision_with_3_trains(self):
+        test_line_idx = 13
+        train_1 = self.player['train'][0]
+        train_2 = self.player['train'][1]
+        train_3 = self.player['train'][2]
+        self.move_train(test_line_idx, train_1['idx'], 1)
+        self.move_train(test_line_idx, train_2['idx'], 1)
+        self.move_train(test_line_idx, train_3['idx'], 1)
+        self.turn()
+        map_data = self.get_map(1)
+        self.assertTrue(
+            self.check_collision_event(
+                map_data['train'][0]['event'],
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train_2['idx'])
+            )
+        )
+        self.assertTrue(
+            self.check_collision_event(
+                map_data['train'][0]['event'],
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train_3['idx'])
+            )
+        )
+        self.assertTrue(
+            self.check_collision_event(
+                map_data['train'][1]['event'],
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train_1['idx'])
+            )
+        )
+        self.assertTrue(
+            self.check_collision_event(
+                map_data['train'][1]['event'],
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train_3['idx'])
+            )
+        )
+        self.assertTrue(
+            self.check_collision_event(
+                map_data['train'][2]['event'],
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train_1['idx'])
+            )
+        )
+        self.assertTrue(
+            self.check_collision_event(
+                map_data['train'][2]['event'],
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train_2['idx'])
+            )
+        )
+        self.assertEqual(map_data['train'][0]['line_idx'], train_1['line_idx'])
+        self.assertEqual(map_data['train'][0]['position'], train_1['position'])
+        self.assertEqual(map_data['train'][1]['line_idx'], train_2['line_idx'])
+        self.assertEqual(map_data['train'][1]['position'], train_2['position'])
+        self.assertEqual(map_data['train'][2]['line_idx'], train_3['line_idx'])
+        self.assertEqual(map_data['train'][2]['position'], train_3['position'])
+
+    def test_cooldown_on_collision(self):
+        test_line_idx = 13
+        town = self.get_post(self.player['town']['idx'])
+        train_1 = self.player['train'][0]
+        train_2 = self.player['train'][1]
+
+        self.assertEqual(train_1['cooldown'], 0)
+        self.assertEqual(train_2['cooldown'], 0)
+
+        self.move_train(test_line_idx, train_1['idx'], 1)
+        self.move_train(test_line_idx, train_2['idx'], 1)
+        self.turn()
+
+        for i in range(town['train_cooldown_on_collision']):
+            map_data = self.get_map(1)
+            self.assertEqual(map_data['train'][0]['cooldown'], town['train_cooldown_on_collision'] - i)
+            self.assertEqual(map_data['train'][1]['cooldown'], town['train_cooldown_on_collision'] - i)
+            self.move_train(test_line_idx, train_1['idx'], 1, exp_result=Result.BAD_COMMAND)
+            self.move_train(test_line_idx, train_2['idx'], 1, exp_result=Result.BAD_COMMAND)
+            self.turn()
+
+        map_data = self.get_map(1)
+        self.assertEqual(map_data['train'][0]['cooldown'], 0)
+        self.assertEqual(map_data['train'][1]['cooldown'], 0)
+        self.move_train(test_line_idx, train_1['idx'], 1)
+        self.move_train(test_line_idx, train_2['idx'], 1)
