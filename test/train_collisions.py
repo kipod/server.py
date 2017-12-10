@@ -435,9 +435,9 @@ class TestTrainCollisions(unittest.TestCase):
             self.move_train(test_line_idx, train_1['idx'], 1, exp_result=Result.BAD_COMMAND)
             self.move_train(test_line_idx, train_2['idx'], 1, exp_result=Result.BAD_COMMAND)
             self.turn()
-
-        map_data = self.get_map(1)
-        self.assertEqual(map_data['train'][0]['cooldown'], 0)
-        self.assertEqual(map_data['train'][1]['cooldown'], 0)
-        self.move_train(test_line_idx, train_1['idx'], 1)
-        self.move_train(test_line_idx, train_2['idx'], 1)
+        else:
+            map_data = self.get_map(1)
+            self.assertEqual(map_data['train'][0]['cooldown'], 0)
+            self.assertEqual(map_data['train'][1]['cooldown'], 0)
+            self.move_train(test_line_idx, train_1['idx'], 1, exp_result=Result.OKEY)
+            self.move_train(test_line_idx, train_2['idx'], 1, exp_result=Result.OKEY)
