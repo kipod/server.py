@@ -7,11 +7,6 @@
 * Observed Game doesn't generate random events
 * **Action.Event**. Inserts in in table ReplayDB:action
 * Game process Action Event. This Action generates by Observer
+* Do we need train collision event in a replay?
 
-### Cold-Down for random events
-
-Time of cold-down depends of "power attack"
-
-
-### Process situation of collision more than 2 trains
-
+### Add fuel for trains
