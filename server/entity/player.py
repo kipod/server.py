@@ -3,6 +3,7 @@
 import json
 import uuid
 
+from game_config import config
 from entity.point import Point
 from entity.post import Post
 from entity.train import Train
@@ -48,6 +49,8 @@ class Player(object):
         self.town = post
 
     def from_json_str(self, string_data):
+        """ loads object from json string
+        """
         data = json.loads(string_data)
         if data.get('idx'):
             self.idx = data['idx']
@@ -72,6 +75,8 @@ class Player(object):
             )
 
     def to_json_str(self):
+        """ store object to JSON string
+        """
         data = {}
         for key in self.__dict__:
             attribute = self.__dict__[key]
@@ -85,3 +90,19 @@ class Player(object):
         return "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, trains_idx=[{}])>".format(
             self.idx, self.name, self.home.idx, self.town.idx, ', '.join([str(idx) for idx in self.train])
         )
+
+    @property
+    def rating(self):
+        """ calculate player's rating
+        """
+        rating_value = self.town.population * 1000
+        rating_value += (self.town.product + self.town.armor)
+        sum_next_level_price = 0
+        for train in self.train.values():
+            for level in range(1, train.level):
+                sum_next_level_price += config.TRAIN_LEVELS[level]['next_level_price']
+        for level in range(1, self.town.level):
+            sum_next_level_price += config.TOWN_LEVELS[level]['next_level_price']
+        rating_value += sum_next_level_price
+
+        return rating_value

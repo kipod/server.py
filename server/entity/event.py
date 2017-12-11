@@ -1,5 +1,7 @@
 from enum import IntEnum
 
+from entity.serializable import Serializable
+
 
 class EventType(IntEnum):
     """ Types of an Event.
@@ -13,7 +15,7 @@ class EventType(IntEnum):
     GAME_OVER = 100
 
 
-class Event(object):
+class Event(Serializable):
     """ Event entity defined by: EventType, game tick and additional info.
     """
     def __init__(self, event_type: EventType, tick, **kwargs):

@@ -7,6 +7,7 @@ from invoke import task
 from db.models import MapBase, Map, Line, Point, Post
 from db.session import MapSession
 from entity.post import PostType
+from game_config import config
 
 
 class DbMap(object):
@@ -132,7 +133,7 @@ def generate_map02(db):
     p12 = db.add_point(x=85, y=120)
 
     # Posts:
-    db.add_post(p1, 'town-one', PostType.TOWN, population=3, product=35, armor=10)
+    db.add_post(p1, 'town-one', PostType.TOWN, population=3, product=60, armor=3)
     db.add_post(p4, 'market-big', PostType.MARKET, product=36, replenishment=2)
     db.add_post(p5, 'market-medium', PostType.MARKET, product=28, replenishment=1)
     db.add_post(p7, 'market-small', PostType.MARKET, product=5, replenishment=1)
@@ -166,15 +167,15 @@ def generate_map03(db):
     db.add_map(name='theMap', size_x=200, size_y=200)
 
     # Points:
-    p1  = db.add_point(x=10,  y=10)
-    p2  = db.add_point(x=30,  y=10)
-    p3  = db.add_point(x=50,  y=10)
-    p4  = db.add_point(x=70,  y=10)
-    p5  = db.add_point(x=90,  y=10)
-    p6  = db.add_point(x=110, y=10)
-    p7  = db.add_point(x=130, y=10)
-    p8  = db.add_point(x=150, y=10)
-    p9  = db.add_point(x=170, y=10)
+    p1 = db.add_point(x=10,  y=10)
+    p2 = db.add_point(x=30,  y=10)
+    p3 = db.add_point(x=50,  y=10)
+    p4 = db.add_point(x=70,  y=10)
+    p5 = db.add_point(x=90,  y=10)
+    p6 = db.add_point(x=110, y=10)
+    p7 = db.add_point(x=130, y=10)
+    p8 = db.add_point(x=150, y=10)
+    p9 = db.add_point(x=170, y=10)
     p10 = db.add_point(x=190, y=10)
 
     p11 = db.add_point(x=10,  y=30)
@@ -276,9 +277,8 @@ def generate_map03(db):
     p99 = db.add_point(x=170, y=190)
     p100 = db.add_point(x=190, y=190)
 
-
     # Posts:
-    db.add_post(p1, 'town-one', PostType.TOWN, population=3, product=350, armor=100)
+    db.add_post(p1, 'town-one', PostType.TOWN, population=3, product=200, armor=100)
     db.add_post(p89, 'market-big', PostType.MARKET, product=500, replenishment=10)
     db.add_post(p49, 'market-medium', PostType.MARKET, product=250, replenishment=10)
     db.add_post(p12, 'market-small', PostType.MARKET, product=50, replenishment=5)
@@ -308,7 +308,7 @@ def generate_map03(db):
     db.add_line(5, p10, p20)
 
 
-    db.add_line(4, p11, p12)
+    db.add_line(4, p11, p12)  # noqa E303
     db.add_line(4, p12, p13)
     db.add_line(4, p13, p14)
     db.add_line(4, p14, p15)
@@ -330,7 +330,7 @@ def generate_map03(db):
     db.add_line(5, p20, p30)
 
 
-    db.add_line(4, p21, p22)
+    db.add_line(4, p21, p22)  # noqa E303
     db.add_line(4, p22, p23)
     db.add_line(4, p23, p24)
     db.add_line(4, p24, p25)
@@ -373,7 +373,7 @@ def generate_map03(db):
     db.add_line(5, p40, p50)
 
 
-    db.add_line(4, p41, p42)
+    db.add_line(4, p41, p42)  # noqa E303
     db.add_line(4, p42, p43)
     db.add_line(4, p43, p44)
     db.add_line(4, p44, p45)
@@ -395,7 +395,7 @@ def generate_map03(db):
     db.add_line(5, p50, p60)
 
 
-    db.add_line(4, p51, p52)
+    db.add_line(4, p51, p52)  # noqa E303
     db.add_line(4, p52, p53)
     db.add_line(4, p53, p54)
     db.add_line(4, p54, p55)
@@ -417,7 +417,7 @@ def generate_map03(db):
     db.add_line(5, p60, p70)
 
 
-    db.add_line(4, p61, p62)
+    db.add_line(4, p61, p62)  # noqa E303
     db.add_line(4, p62, p63)
     db.add_line(4, p63, p64)
     db.add_line(4, p64, p65)
@@ -439,7 +439,7 @@ def generate_map03(db):
     db.add_line(5, p70, p80)
 
 
-    db.add_line(4, p71, p72)
+    db.add_line(4, p71, p72)  # noqa E303
     db.add_line(4, p72, p73)
     db.add_line(4, p73, p74)
     db.add_line(4, p74, p75)
@@ -461,7 +461,7 @@ def generate_map03(db):
     db.add_line(5, p80, p90)
 
 
-    db.add_line(4, p81, p82)
+    db.add_line(4, p81, p82)  # noqa E303
     db.add_line(4, p82, p83)
     db.add_line(4, p83, p84)
     db.add_line(4, p84, p85)
@@ -483,7 +483,7 @@ def generate_map03(db):
     db.add_line(5, p90, p100)
 
 
-    db.add_line(4, p91, p92)
+    db.add_line(4, p91, p92)  # noqa E303
     db.add_line(4, p92, p93)
     db.add_line(4, p93, p94)
     db.add_line(4, p94, p95)
@@ -493,6 +493,7 @@ def generate_map03(db):
     db.add_line(4, p98, p99)
     db.add_line(4, p99, p100)
 
+
 MAP_GENERATORS = {
     'map01': generate_map01,
     'map02': generate_map02,
@@ -501,16 +502,16 @@ MAP_GENERATORS = {
 
 
 @task
-def generate_map(ctx, map_name="map03"):
+def generate_map(ctx, map_version=config.CURRENT_MAP_VERSION):
     """ Generates 'map.db'.
     """
     with DbMap() as db:
-        if map_name is not None and map_name not in MAP_GENERATORS:
+        if map_version is not None and map_version not in MAP_GENERATORS:
             print("Error, unknown map name: '{}', available: {}".format(
-                map_name, ', '.join(MAP_GENERATORS.keys())))
+                map_version, ', '.join(MAP_GENERATORS.keys())))
             sys.exit(1)
         db.reset_db()
-        maps_to_generate = MAP_GENERATORS.keys() if map_name is None else [map_name, ]
+        maps_to_generate = MAP_GENERATORS.keys() if map_version is None else [map_version, ]
         for curr_map in maps_to_generate:
             map_generator = MAP_GENERATORS[curr_map]
             map_generator(db)

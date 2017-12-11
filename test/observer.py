@@ -7,7 +7,7 @@ import unittest
 from server.db.map import DbMap, generate_map03
 from server.db.replay import DbReplay, generate_replay01
 from server.defs import Action, Result
-from server.game_config import TICK_TIME
+from server.game_config import config
 from test.server_connection import ServerConnection
 
 
@@ -47,10 +47,10 @@ class TestObserver(unittest.TestCase):
     def reset_db():
         """ Resets replay DB after tests.
         """
-        with DbReplay() as db:
-            db.reset_db()
-        with DbMap() as db:
-            db.reset_db()
+        with DbReplay() as database:
+            database.reset_db()
+        with DbMap() as database:
+            database.reset_db()
 
     def test_0_connection(self):
         """ Test connection.
@@ -158,7 +158,7 @@ class TestObserver(unittest.TestCase):
         conn = ServerConnection()
         result, _ = conn.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
-        time.sleep(TICK_TIME + 1)  # Wait for game tick.
+        time.sleep(config.TICK_TIME + 1)  # Wait for game tick.
         result, _ = conn.do_action(Action.LOGOUT, None)
         self.assertEqual(Result.OKEY, result)
         time.sleep(2)  # Wait for DB commit.

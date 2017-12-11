@@ -5,10 +5,10 @@ import json
 import unittest
 from datetime import datetime
 
-from server import game_config
 from server.db.map import generate_map02, DbMap
 from server.defs import Action, Result
 from server.entity.map import Map
+from server.game_config import config
 from test.server_connection import ServerConnection
 
 
@@ -19,15 +19,15 @@ class TestClient(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as db:
-            db.reset_db()
-            generate_map02(db)
+        with DbMap() as database:
+            database.reset_db()
+            generate_map02(database)
         cls.connection = ServerConnection()
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as db:
-            db.reset_db()
+        with DbMap() as database:
+            database.reset_db()
         del cls.connection
 
     @classmethod
@@ -114,7 +114,7 @@ class TestClient(unittest.TestCase):
         map02 = Map()
         map02.from_json_str(message)
         self.assertEqual(len(map02.post), 5)
-        self.assertEqual(len(map02.train), game_config.DEFAULT_TRAINS_COUNT)
+        self.assertEqual(len(map02.train), config.DEFAULT_TRAINS_COUNT)
 
     def test_2_get_map_layer_10(self):
         """ Test layer_to_json_str and from_json_str for layer 10.

@@ -12,4 +12,4 @@ class Serializable(object):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def from_json_str(self, string_data):
-        self = json.loads(string_data)
+        self = json.loads(string_data)  # noqa F841

@@ -3,26 +3,27 @@
 import json
 import unittest
 
-from server.game_config import MAP_NAME
-from server.entity.point import Point
-from server.entity.post import Post, PostType
-from server.entity.train import Train
 from server.db.map import generate_map02, DbMap
 from server.entity.map import Map
 from server.entity.player import Player
+from server.entity.point import Point
+from server.entity.post import Post, PostType
+from server.entity.train import Train
+from server.game_config import config
+
 
 class TestEntity(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as db:
-            db.reset_db()
-            generate_map02(db)
+        with DbMap() as database:
+            database.reset_db()
+            generate_map02(database)
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as db:
-            db.reset_db()
+        with DbMap() as database:
+            database.reset_db()
 
     def setUp(self):
         pass
@@ -33,7 +34,7 @@ class TestEntity(unittest.TestCase):
     def test_map_init(self):
         """ Test create map entity.
         """
-        game_map = Map(MAP_NAME)
+        game_map = Map(config.MAP_NAME)
         train = Train(idx=1, line_idx=game_map.line[1].idx, position=0)
         game_map.add_train(train)
 
@@ -48,7 +49,7 @@ class TestEntity(unittest.TestCase):
     def test_map_serialization(self):
         """ Test Map entity serialization/deserialization.
         """
-        game_map = Map(MAP_NAME)
+        game_map = Map(config.MAP_NAME)
         train = Train(idx=1, line_idx=game_map.line[1].idx, position=0)
         game_map.add_train(train)
 

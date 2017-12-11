@@ -1,4 +1,6 @@
-from game_config import TRAIN_LEVELS
+""" Train entity
+"""
+from game_config import config
 
 
 class Train(object):
@@ -29,6 +31,7 @@ class Train(object):
         goods: quantity of some goods in the train at the current moment
         post_type: PostType where first goods have been loaded into the train
         event: all events happened with the Train
+        cooldown: the Train is blocked for this quantity of game ticks
     """
     def __init__(self, idx, line_idx=None, position=None, speed=0, player_id=None, level=1, goods=0, post_type=None):
         self.idx = idx
@@ -37,23 +40,25 @@ class Train(object):
         self.speed = speed
         self.player_id = player_id
         self.level = level
-        for key, value in TRAIN_LEVELS[self.level].items():  # Additional attributes from game_config.
+        # Additional attributes from game_config:
+        for key, value in config.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
         # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
         self.goods = goods
         self.post_type = post_type
         self.event = []
+        self.cooldown = 0
 
     def set_level(self, next_lvl):
         self.level = next_lvl
-        for key, value in TRAIN_LEVELS[self.level].items():
+        for key, value in config.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
 
     def __repr__(self):
         return (
             "<Train(idx={}, line_idx={}, position={}, speed={}, player_id={}, "
-            "level={}, goods={}, post_type={})>".format(
+            "level={}, goods={}, post_type={}, cooldown={})>".format(
                 self.idx, self.line_idx, self.position, self.speed, self.player_id,
-                self.level, self.goods, self.post_type
+                self.level, self.goods, self.post_type, self.cooldown
             )
         )

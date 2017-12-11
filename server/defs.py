@@ -25,6 +25,9 @@ class Action(IntEnum):
     OBSERVER = 100
     GAME = 101
 
+    # This actions are not available for client:
+    EVENT = 102
+
 
 class Result(IntEnum):
     """ Server response codes.

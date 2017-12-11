@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-from game_config import TOWN_LEVELS
+from game_config import config
 
 
 class PostType(IntEnum):
@@ -15,8 +15,8 @@ class PostType(IntEnum):
 
 
 class Post(object):
-    """ Post object represents dynamic object on the map. Describes additional parameters of the Point.
-    Post can belong to only one Point.
+    """ Post object represents dynamic object on the map.
+    Describes additional parameters of the Point. Post can belong to only one Point.
 
     Initialization:
         idx: unique index of the Post
@@ -47,8 +47,8 @@ class Post(object):
         next_level_price: armor amount which player have to pay to get next level (only for TOWN)
         replenishment: replenishment of the resource per game tick (for MARKET and STORAGE)
     """
-    def __init__(self, idx, name, post_type, population=0, armor=0, product=0, replenishment=1, level=1,
-                 player_id=None, point_id=None):
+    def __init__(self, idx, name, post_type, population=0, armor=0, product=0,
+                 replenishment=1, level=1, player_id=None, point_id=None):
         self.idx = idx
         self.name = name
         self.type = PostType(post_type)
@@ -61,7 +61,8 @@ class Post(object):
             self.product = product
             self.armor = armor
             self.player_id = player_id
-            for key, value in TOWN_LEVELS[self.level].items():  # Additional attributes from game_config.
+            # Additional attributes from game_config:
+            for key, value in config.TOWN_LEVELS[self.level].items():
                 setattr(self, key, value)
 
         if self.type == PostType.MARKET:
@@ -76,7 +77,7 @@ class Post(object):
 
     def set_level(self, next_lvl):
         self.level = next_lvl
-        for key, value in TOWN_LEVELS[self.level].items():
+        for key, value in config.TOWN_LEVELS[self.level].items():
             setattr(self, key, value)
 
     def __repr__(self):

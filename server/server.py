@@ -50,7 +50,7 @@ class GameServerProtocol(asyncio.Protocol):
                         raise BadCommandError
                     method = self.COMMAND_MAP[self._action]
                     method(self, data)
-                    if self._replay and self._action in (Action.MOVE, ):
+                    if self._replay and self._action in (Action.MOVE, Action.LOGIN, Action.UPGRADE, ):
                         self._replay.add_action(self._action, self.message, with_commit=False)
             except (json.decoder.JSONDecodeError, BadCommandError):
                 self._write_response(Result.BAD_COMMAND)
