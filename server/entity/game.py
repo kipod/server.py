@@ -35,22 +35,19 @@ class Game(Thread):
     def __init__(self, name, map_name=config.MAP_NAME, observed=False):
         super(Game, self).__init__(name=name)
         log(log.INFO, "Create game, name: '{}'".format(self.name))
-        self.replay = None
-        self._observed = observed
-        if not observed:
-            self.replay = DbReplay()
-        self._lock = Lock()
-        self._current_game_id = 0
-        self._current_tick = 0
-        self.players = {}
+        self.observed = observed
+        self.replay = None if self.observed else DbReplay()
         self.map = Map(map_name)
+        self.current_game_id = 0 if self.observed else self.replay.add_game(name, map_name=self.map.name)
+        self.current_tick = 0
+        self.players = {}
         self.name = name
         self.trains = {}
+        self.skip_next_tick = False
+        self.next_train_moves = {}
+        self.event_cooldowns = {}
+        self._lock = Lock()
         self._stop_event = Event()
-        self._pass_next_tick = False
-        self._next_train_moves = {}
-        if not observed:
-            self._current_game_id = self.replay.add_game(name, map_name=self.map.name)
         random.seed()
 
     @staticmethod
@@ -82,15 +79,15 @@ class Game(Thread):
                     self.map.add_train(train)
                     self.trains[train.idx] = train
                     # Put the Train into Town:
-                    self.put_train_into_town(train)
+                    self.put_train_into_town(train, with_cooldown=False)
                 log(log.INFO, "Add new player to the game, player: {}".format(player))
-            if not self._observed:
+            if not self.observed:
                 Thread.start(self)
 
     def turn(self):
         """ Makes next turn.
         """
-        self._pass_next_tick = True
+        self.skip_next_tick = True
         with self._lock:
             self.tick()
             if self.replay:
@@ -114,15 +111,14 @@ class Game(Thread):
         try:
             while not self._stop_event.wait(config.TICK_TIME):
                 with self._lock:
-                    if self._pass_next_tick:
-                        self._pass_next_tick = False
+                    if self.skip_next_tick:
+                        self.skip_next_tick = False
                     else:
                         self.tick()
                         if replay:
-                            replay.add_action(Action.TURN,
-                                              message=None,
-                                              with_commit=False,
-                                              game_id=self._current_game_id)
+                            replay.add_action(
+                                Action.TURN, message=None, with_commit=False, game_id=self.current_game_id
+                            )
             if replay:
                 replay.commit()
         finally:
@@ -132,8 +128,9 @@ class Game(Thread):
     def tick(self):
         """ Makes game tick. Updates dynamic game entities.
         """
-        self._current_tick += 1
-        log(log.INFO, "Game tick, tick number: {}".format(self._current_tick))
+        self.current_tick += 1
+        log(log.INFO, "Game tick, tick number: {}".format(self.current_tick))
+        self.update_cooldowns_on_tick()  # Update cooldowns in the beginning of the tick.
         self.update_posts_on_tick()
         self.update_trains_positions_on_tick()
         self.handle_trains_collisions_on_tick()
@@ -161,8 +158,8 @@ class Game(Thread):
     def apply_next_train_move(self, train: Train):
         """ Applies postponed Train MOVE if it exist.
         """
-        if train.idx in self._next_train_moves:
-            next_move = self._next_train_moves[train.idx]
+        if train.idx in self.next_train_moves:
+            next_move = self.next_train_moves[train.idx]
             # If next line the same as previous:
             if next_move['line_idx'] == train.line_idx:
                 if train.speed > 0 and train.position == self.map.line[train.line_idx].length:
@@ -187,11 +184,15 @@ class Game(Thread):
         with self._lock:
             if train_idx not in self.trains:
                 return Result.RESOURCE_NOT_FOUND
-            if train_idx in self._next_train_moves:
-                del self._next_train_moves[train_idx]
+            if train_idx in self.next_train_moves:
+                del self.next_train_moves[train_idx]
             train = self.trains[train_idx]
             if line_idx not in self.map.line:
                 return Result.RESOURCE_NOT_FOUND
+
+            # Check cooldown for the train:
+            if train.cooldown > 0:
+                return Result.BAD_COMMAND
 
             # Stop the train:
             if speed == 0:
@@ -248,7 +249,7 @@ class Game(Thread):
 
                 # This train move request is valid and will be applied later:
                 if switch_line_possible:
-                    self._next_train_moves[train_idx] = {'speed': speed, 'line_idx': line_idx}
+                    self.next_train_moves[train_idx] = {'speed': speed, 'line_idx': line_idx}
                 # This train move request is invalid:
                 else:
                     return Result.PATH_NOT_FOUND
@@ -266,12 +267,12 @@ class Game(Thread):
                 goods = max(min(train.goods, post.product_capacity - post.product), 0)
                 post.product += goods
                 if post.product == post.product_capacity:
-                    post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self._current_tick, product=post.product))
+                    post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, product=post.product))
             elif train.post_type == PostType.STORAGE:
                 goods = max(min(train.goods, post.armor_capacity - post.armor), 0)
                 post.armor += goods
                 if post.armor == post.armor_capacity:
-                    post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self._current_tick, armor=post.armor))
+                    post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, armor=post.armor))
             train.goods -= goods
             if train.goods == 0:
                 train.post_type = None
@@ -292,7 +293,9 @@ class Game(Thread):
                 train.goods += armor
                 train.post_type = post.type
 
-    def put_train_into_town(self, train: Train, with_unload=True):
+    def put_train_into_town(self, train: Train, with_unload=True, with_cooldown=True):
+        """ Puts given Train to his Town.
+        """
         # Get Train owner's home point:
         player_home_point = self.players[train.player_id].home
         # Use first Line connected to the home point as default train's line:
@@ -309,52 +312,78 @@ class Game(Thread):
         if with_unload:
             train.goods = 0
             train.post_type = None
+        # Set cooldown for the Train:
+        if with_cooldown:
+            # Get Train owner's town:
+            player_town = self.players[train.player_id].town
+            train.cooldown = player_town.train_cooldown_on_collision
 
     def hijackers_assault_on_tick(self):
         """ Makes hijackers assault which decreases quantity of Town's armor and population.
         """
+        # Check cooldown for this Event:
+        if self.event_cooldowns.get(EventType.HIJACKERS_ASSAULT, 0) > 0:
+            return
+
         rand_percent = random.randint(1, 100)
         if rand_percent <= config.HIJACKERS_ASSAULT_PROBABILITY:
             hijackers_power = random.randint(*config.HIJACKERS_POWER_RANGE)
             log(log.INFO, "Hijackers assault happened, hijackers power: {}".format(hijackers_power))
+            event = GameEvent(EventType.HIJACKERS_ASSAULT, self.current_tick, hijackers_power=hijackers_power)
             for player in self.players.values():
                 player.town.population = max(player.town.population - max(hijackers_power - player.town.armor, 0), 0)
                 player.town.armor = max(player.town.armor - hijackers_power, 0)
-                player.town.event.append(
-                    GameEvent(EventType.HIJACKERS_ASSAULT, self._current_tick, hijackers_power=hijackers_power)
-                )
+                player.town.event.append(event)
+            if self.replay:
+                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+            self.event_cooldowns[EventType.HIJACKERS_ASSAULT] = round(
+                hijackers_power * config.HIJACKERS_COOLDOWN_COEF)
 
     def parasites_assault_on_tick(self):
         """ Makes parasites assault which decreases quantity of Town's product.
         """
+        # Check cooldown for this Event:
+        if self.event_cooldowns.get(EventType.PARASITES_ASSAULT, 0) > 0:
+            return
+
         rand_percent = random.randint(1, 100)
         if rand_percent <= config.PARASITES_ASSAULT_PROBABILITY:
             parasites_power = random.randint(*config.PARASITES_POWER_RANGE)
             log(log.INFO, "Parasites assault happened, parasites power: {}".format(parasites_power))
+            event = GameEvent(EventType.PARASITES_ASSAULT, self.current_tick, parasites_power=parasites_power)
             for player in self.players.values():
                 player.town.product = max(player.town.product - parasites_power, 0)
-                player.town.event.append(
-                    GameEvent(EventType.PARASITES_ASSAULT, self._current_tick, parasites_power=parasites_power)
-                )
+                player.town.event.append(event)
+            if self.replay:
+                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+            self.event_cooldowns[EventType.PARASITES_ASSAULT] = round(
+                parasites_power * config.PARASITES_COOLDOWN_COEF)
 
     def refugees_arrival_on_tick(self):
         """ Makes refugees arrival which increases quantity of Town's population.
         """
+        # Check cooldown for this Event:
+        if self.event_cooldowns.get(EventType.REFUGEES_ARRIVAL, 0) > 0:
+            return
+
         rand_percent = random.randint(1, 100)
         if rand_percent <= config.REFUGEES_ARRIVAL_PROBABILITY:
             refugees_number = random.randint(*config.REFUGEES_NUMBER_RANGE)
             log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
+            event = GameEvent(EventType.REFUGEES_ARRIVAL, self.current_tick, refugees_number=refugees_number)
             for player in self.players.values():
                 player.town.population += max(
                     min(player.town.population_capacity - player.town.population, refugees_number), 0
                 )
-                player.town.event.append(
-                    GameEvent(EventType.REFUGEES_ARRIVAL, self._current_tick, refugees_number=refugees_number)
-                )
+                player.town.event.append(event)
                 if player.town.population == player.town.population_capacity:
                     player.town.event.append(
-                        GameEvent(EventType.RESOURCE_OVERFLOW, self._current_game_id, population=player.town.population)
+                        GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, population=player.town.population)
                     )
+            if self.replay:
+                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+            self.event_cooldowns[EventType.REFUGEES_ARRIVAL] = round(
+                refugees_number * config.REFUGEES_COOLDOWN_COEF)
 
     def update_posts_on_tick(self):
         """ Updates all markets and storages.
@@ -392,11 +421,11 @@ class Game(Thread):
                 player.town.population = max(player.town.population - 1, 0)
             player.town.product = max(player.town.product - player.town.population, 0)
             if player.town.population == 0:
-                player.town.event.append(GameEvent(EventType.GAME_OVER, self._current_tick, population=0))
+                player.town.event.append(GameEvent(EventType.GAME_OVER, self.current_tick, population=0))
             if player.town.product == 0:
-                player.town.event.append(GameEvent(EventType.RESOURCE_LACK, self._current_tick, product=0))
+                player.town.event.append(GameEvent(EventType.RESOURCE_LACK, self.current_tick, product=0))
             if player.town.armor == 0:
-                player.town.event.append(GameEvent(EventType.RESOURCE_LACK, self._current_tick, armor=0))
+                player.town.event.append(GameEvent(EventType.RESOURCE_LACK, self.current_tick, armor=0))
 
     @staticmethod
     def get_sign(variable):
@@ -432,10 +461,10 @@ class Game(Thread):
         """ Makes collision between two trains.
         """
         log(log.INFO, "Trains collision happened, trains: [{}, {}]".format(train_1, train_2))
-        self.put_train_into_town(train_1, with_unload=True)
-        self.put_train_into_town(train_2, with_unload=True)
-        train_1.event.append(GameEvent(EventType.TRAIN_COLLISION, self._current_tick, train=train_2.idx))
-        train_2.event.append(GameEvent(EventType.TRAIN_COLLISION, self._current_tick, train=train_1.idx))
+        self.put_train_into_town(train_1, with_unload=True, with_cooldown=True)
+        self.put_train_into_town(train_2, with_unload=True, with_cooldown=True)
+        train_1.event.append(GameEvent(EventType.TRAIN_COLLISION, self.current_tick, train=train_2.idx))
+        train_2.event.append(GameEvent(EventType.TRAIN_COLLISION, self.current_tick, train=train_1.idx))
 
     def handle_trains_collisions_on_tick(self):
         """ Handles Trains collisions.
@@ -537,11 +566,11 @@ class Game(Thread):
             log(log.INFO, "Load game map layer, layer: {}".format(layer))
             message = self.map.layer_to_json_str(layer)
             self.clean_events()
-            if layer == 1: # add ratings
+            if layer == 1:  # Add ratings.
                 data = json.loads(message)
                 rating = {}
                 for player in self.players.values():
-                    rating[player.name]=player.rating
+                    rating[player.name] = player.rating
                 data['rating'] = rating
                 message = json.dumps(data, sort_keys=True, indent=4)
             return Result.OKEY, message
@@ -555,3 +584,16 @@ class Game(Thread):
             train.event = []
         for post in self.map.post.values():
             post.event = []
+
+    def update_cooldowns_on_tick(self):
+        """ Decreases all cooldown values on game tick.
+        """
+        # Update cooldowns for random events:
+        for event in self.event_cooldowns:
+            if self.event_cooldowns[event] != 0:
+                self.event_cooldowns[event] = max(self.event_cooldowns[event] - 1, 0)
+
+        # Update cooldowns for trains:
+        for train in self.trains.values():
+            if train.cooldown != 0:
+                train.cooldown = max(train.cooldown - 1, 0)

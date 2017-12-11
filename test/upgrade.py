@@ -235,7 +235,7 @@ class TestUpgrade(unittest.TestCase):
             curr_train_1 = self.get_train(train_1['idx'])
             curr_train_2 = self.get_train(train_2['idx'])
             armor = self.get_post(town['idx'])['armor']
-            armor_to_pay = self.get_train(train_1['idx'])['next_level_price']
+            armor_to_pay = curr_train_1['next_level_price']
             # Check that player have enough armor to upgrade train:
             self.assertGreaterEqual(armor, armor_to_pay)
 
@@ -270,7 +270,7 @@ class TestUpgrade(unittest.TestCase):
         self.assertEqual(map_data['train'][1]['next_level_price'], curr_train_2['next_level_price'])
 
     def test_upgrade_town(self):
-        trips = 3
+        trips = 4
         test_line_idx = 18
         wait_for_replenishment = 6
         town = self.player['town']
@@ -291,14 +291,18 @@ class TestUpgrade(unittest.TestCase):
         self.upgrade(posts=(town['idx'],))
         self.turn()
         map_data = self.get_map(1)
+        town_now = self.get_post(town['idx'])
 
-        self.assertEqual(self.get_post(town['idx'])['armor'],
-                         armor - town['next_level_price'] + train_1_partial_unload['goods'])
-        self.assertEqual(self.get_post(town['idx'])['level'], town['level'] + 1)
-        self.assertGreater(self.get_post(town['idx'])['population_capacity'], town['population_capacity'])
-        self.assertGreater(self.get_post(town['idx'])['product_capacity'], town['product_capacity'])
-        self.assertGreater(self.get_post(town['idx'])['armor_capacity'], town['armor_capacity'])
-        self.assertGreater(self.get_post(town['idx'])['next_level_price'], town['next_level_price'])
+        self.assertEqual(town_now['armor'], armor - town['next_level_price'] + train_1_partial_unload['goods'])
+        self.assertEqual(town_now['level'], town['level'] + 1)
+        self.assertGreater(town_now['population_capacity'], town['population_capacity'])
+        self.assertGreater(town_now['product_capacity'], town['product_capacity'])
+        self.assertGreater(town_now['armor_capacity'], town['armor_capacity'])
+        self.assertGreater(town_now['next_level_price'], town['next_level_price'])
+        self.assertTrue(
+            town_now['train_cooldown_on_collision'] < town['train_cooldown_on_collision']
+            or town_now['train_cooldown_on_collision'] == 0
+        )
 
         self.assertEqual(map_data['train'][0]['level'], train_1['level'])
         self.assertEqual(map_data['train'][0]['goods_capacity'], train_1['goods_capacity'])
@@ -317,13 +321,15 @@ class TestUpgrade(unittest.TestCase):
 
         self.upgrade(posts=(town['idx'],), exp_result=Result.BAD_COMMAND)
         map_data = self.get_map(1)
+        town_now = self.get_post(town['idx'])
 
-        self.assertEqual(self.get_post(town['idx'])['armor'], town['armor'])
-        self.assertEqual(self.get_post(town['idx'])['level'], town['level'])
-        self.assertEqual(self.get_post(town['idx'])['population_capacity'], town['population_capacity'])
-        self.assertEqual(self.get_post(town['idx'])['product_capacity'], town['product_capacity'])
-        self.assertEqual(self.get_post(town['idx'])['armor_capacity'], town['armor_capacity'])
-        self.assertEqual(self.get_post(town['idx'])['next_level_price'], town['next_level_price'])
+        self.assertEqual(town_now['armor'], town['armor'])
+        self.assertEqual(town_now['level'], town['level'])
+        self.assertEqual(town_now['population_capacity'], town['population_capacity'])
+        self.assertEqual(town_now['product_capacity'], town['product_capacity'])
+        self.assertEqual(town_now['armor_capacity'], town['armor_capacity'])
+        self.assertEqual(town_now['next_level_price'], town['next_level_price'])
+        self.assertEqual(town_now['train_cooldown_on_collision'], town['train_cooldown_on_collision'])
 
         self.assertEqual(map_data['train'][0]['level'], train_1['level'])
         self.assertEqual(map_data['train'][0]['goods_capacity'], train_1['goods_capacity'])
