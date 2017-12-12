@@ -348,6 +348,8 @@ In current moment in the Game implements following type of events:
 
 This event binds to the Town.
 Parasites eats products in the town. Products decrement count equal to parasites count in attack event.
+Number of parasites in one attack [1..3]
+Safe time after attack: 5 * (number parasites in last attack)
 
 ##### Map JSON string data example for result of action MAP for layer=1
 
@@ -383,6 +385,8 @@ Parasites eats products in the town. Products decrement count equal to parasites
 
 This event binds to the Town. "Bandits Attack" very same to "Parasites Invasion", but in this case decrements armor.
 If the town has less armor than takes on this attack, than population of this town decreases by 1!
+Number of bandits in one attack [1..3]
+Safe time after attack: 5 * (number bandits in last attack)
 
 ##### Map JSON string data example for result of action MAP for layer=1
 
@@ -494,11 +498,11 @@ For initiate upgrade client sends to server action UPGRADE (protocol of action U
 
 What gets the town as a result of upgrade? See in following table:
 
-Level | Population Capacity | Product Capacity | Armor Capacity | Next Level Price
-------|---------------------|------------------|----------------|-----------------
-1 | 10 | 200 | 100 | 100
-2 | 20 | 400 | 200 | 200
-3 | 40 | 800 | 400 | None
+Level | Population Capacity | Product Capacity | Armor Capacity | Crash Penalty | Next Level Price
+------|---------------------|------------------|----------------|---------------|------------------
+1 | 10 | 200 | 100 | 2 | 100
+2 | 20 | 400 | 200 | 1 | 200
+3 | 40 | 800 | 400 | 0 | None
 
 Level 3 - is maximal town level
 

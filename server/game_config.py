@@ -11,36 +11,36 @@ class BaseConfig(object):
 
     HIJACKERS_ASSAULT_PROBABILITY = 0
     HIJACKERS_POWER_RANGE = (1, 3)
-    HIJACKERS_COOLDOWN_COEF = 2
+    HIJACKERS_COOLDOWN_COEF = 5
 
     PARASITES_ASSAULT_PROBABILITY = 0
     PARASITES_POWER_RANGE = (1, 3)
-    PARASITES_COOLDOWN_COEF = 2
+    PARASITES_COOLDOWN_COEF = 5
 
     REFUGEES_ARRIVAL_PROBABILITY = 0
     REFUGEES_NUMBER_RANGE = (1, 3)
-    REFUGEES_COOLDOWN_COEF = 2
+    REFUGEES_COOLDOWN_COEF = 5
 
     TOWN_LEVELS = AttrDict({
         1: {
             'population_capacity': 10,
             'product_capacity': 200,
             'armor_capacity': 100,
-            'train_cooldown_on_collision': 8,
+            'train_cooldown_on_collision': 2,
             'next_level_price': 100,
         },
         2: {
             'population_capacity': 20,
             'product_capacity': 400,
             'armor_capacity': 200,
-            'train_cooldown_on_collision': 6,
+            'train_cooldown_on_collision': 1,
             'next_level_price': 200,
         },
         3: {
             'population_capacity': 40,
             'product_capacity': 800,
             'armor_capacity': 400,
-            'train_cooldown_on_collision': 4,
+            'train_cooldown_on_collision': 0,
             'next_level_price': None,
         },
     })
