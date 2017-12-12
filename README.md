@@ -8,7 +8,7 @@ Client sends to server some "action" messages and retrieves "response" message.
 The **Action message** always begins from action code. On C++ language all possible action codes can be represents by enumeration:
 
 ```C++
-class enum Action: public uint32_t
+enum Action
 {
     LOGIN = 1,
     LOGOUT = 2,
@@ -23,7 +23,7 @@ After action code (if necessary) follows data section.
 As answer from server client gets **response message**. Response message starts with **result code**:
 
 ```C++
-class enum Result: public uint32_t
+enum Result
 {
     OKEY = 0
     BAD_COMMAND = 1
@@ -244,10 +244,12 @@ Rating of players calculated each turn and can be get from dictionary __rating__
     ]
 }'
 ```
+
 Layer 10 contains coordinates for all points on the map. In the example we got coordinates of 5 points.
 Also Layer 10 bring us size on the map.
 Coordinates and size in logical units.
 Each __coordinate__ includes:
+
 * **idx** - point index
 * **x** - x coordinate
 * **y** - y coordinate
@@ -285,6 +287,7 @@ __size__ is array of two integers: **width** and **height**
     "train": [1, 2]
 }
 ```
+
 ``` JSON
 {
     "post": [1],
@@ -306,7 +309,6 @@ TURN action receives empty parameters.
 #### Example turn action bin data
 
 Hex: |05 00 00 00|02 00 00 00|"{}"
-
 
 ## The Game
 
@@ -351,25 +353,25 @@ Parasites eats products in the town. Products decrement count equal to parasites
 Number of parasites in one attack [1..3]
 Safe time after attack: 5 * (number parasites in last attack)
 
-##### Map JSON string data example for result of action MAP for layer=1
+##### Map JSON string data example for result of action MAP for layer=1 with event "parasites attack"
 
 ``` JSON
 {
     "idx": 1,
     "post": [
         {
-	        "type": 1,
-            "name": "town-one",
-            "event": [
-                {
-                    "parasites_power": 3,
-                    "tick": 111,
-                    "type": 3
-                }
-            ],
-            "product": 29,
-            "product_capacity": 200,
-            ...
+        "type": 1,
+        "name": "town-one",
+        "event": [
+            {
+                "parasites_power": 3,
+                "tick": 111,
+                "type": 3
+            }
+        ],
+        "product": 29,
+        "product_capacity": 200,
+        ...
 
         },
         ...
@@ -380,7 +382,6 @@ Safe time after attack: 5 * (number parasites in last attack)
 * **tick** - game's turn number
 * **type** - event's type. This value equal to 3.
 
-
 #### Bandits Attack
 
 This event binds to the Town. "Bandits Attack" very same to "Parasites Invasion", but in this case decrements armor.
@@ -388,24 +389,24 @@ If the town has less armor than takes on this attack, than population of this to
 Number of bandits in one attack [1..3]
 Safe time after attack: 5 * (number bandits in last attack)
 
-##### Map JSON string data example for result of action MAP for layer=1
+##### Map JSON string data example for result of action MAP for layer=1 with event bandits attack
 
 ``` JSON
 {
     "idx": 1,
     "post": [
         {
-	        "type": 1,
-            "name": "town-one",
-            "event": [
-                {
-                    "hijackers_power": 2,
-                    "tick": 1,
-                    "type": 2
-                }
-            ],
-            "product": 29,
-            "product_capacity": 200,
+        "type": 1,
+        "name": "town-one",
+        "event": [
+            {
+                "hijackers_power": 2,
+                "tick": 1,
+                "type": 2
+            }
+        ],
+        "product": 29,
+        "product_capacity": 200,
             ...
 
         },
@@ -421,26 +422,25 @@ Safe time after attack: 5 * (number bandits in last attack)
 
 Increase population of the town.
 
-##### Map JSON string data example for result of action MAP for layer=1
+##### Map JSON string data example for result of action MAP for layer=1 with event "refugees arrived"
 
 ``` JSON
 {
     "idx": 1,
     "post": [
         {
-	        "type": 1,
-            "name": "town-one",
-            "event": [
-                {
-                    "refugees_number": 2,
-                    "tick": 1,
-                    "type": 4
-                }
-            ],
-            "product": 29,
-            "product_capacity": 200,
-            ...
-
+        "type": 1,
+        "name": "town-one",
+        "event": [
+            {
+                "refugees_number": 2,
+                "tick": 1,
+                "type": 4
+            }
+        ],
+        "product": 29,
+        "product_capacity": 200,
+        ...
         },
         ...
 }
@@ -451,10 +451,11 @@ Increase population of the town.
 * **type** - event's type. This value equal to 4.
 
 #### Train Crash
+
 If two or more trains at same time and at the same point - this is the crash situation!
 All trains participated in this crash immediately returns to it's town (on this turn) and all goods on the train will be nulled (set to 0).
 
-##### Map JSON string data example for result of action MAP for layer=1
+##### Map JSON string data example for result of action MAP for layer=1 with event "trains crash"
 
 ``` JSON
 {
@@ -490,6 +491,7 @@ All trains participated in this crash immediately returns to it's town (on this 
 * **type** - event's type. This value equal to 1.
 
 ### Upgrade
+
 In some moment of the game the player have decide to upgrade his town or train.
 All upgrades are paid by armor.
 For initiate upgrade client sends to server action UPGRADE (protocol of action UPGRADE described above)
@@ -520,5 +522,5 @@ Level 3 - is maximal train level
 
 ### Rating
 
-TBD
-
+Rating value (game score) calculated on server every turn for each player.
+This value figured on result of MAP(layer=1)
