@@ -32,7 +32,7 @@ class Game(Thread):
     # All registered games.
     GAMES = {}
 
-    def __init__(self, name, map_name=config.MAP_NAME, observed=False):
+    def __init__(self, name, map_name=config.MAP_NAME, observed=False, num_players=1):
         super(Game, self).__init__(name=name)
         log(log.INFO, "Create game, name: '{}'".format(self.name))
         self.observed = observed
@@ -48,17 +48,23 @@ class Game(Thread):
         self.event_cooldowns = {}
         self._lock = Lock()
         self._stop_event = Event()
+        self._num_players = num_players
         random.seed()
 
     @staticmethod
-    def create(name):
+    def create(name, num_players=1):
         """ Returns instance of class Game.
         """
         if name in Game.GAMES:
             game = Game.GAMES[name]
         else:
-            Game.GAMES[name] = game = Game(name)
+            Game.GAMES[name] = game = Game(name, num_players=num_players)
         return game
+
+    @num_players.getter
+    def num_players(self):
+        """ getter property num_players """
+        return self._num_players
 
     def add_player(self, player: Player):
         """ Adds player to the game.

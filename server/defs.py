@@ -48,3 +48,6 @@ class WgForgeServerError(Exception):
 
 class BadCommandError(WgForgeServerError):
     pass
+
+class IllegalCommandError(WgForgeServerError):
+    pass

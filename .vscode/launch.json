@@ -57,6 +57,25 @@
             ]
         },
         {
+            "name": "Multiplay test",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "module": "unittest",
+            "cwd": "${workspaceRoot}",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ],
+            "args": [
+                "test.multiplay"
+            ]
+        },
+        {
             "name": "All Server Tests",
             "type": "python",
             "request": "launch",
