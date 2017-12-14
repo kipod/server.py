@@ -42,19 +42,29 @@ class Result(IntEnum):
 
 # Server errors:
 
-
-class WgForgeServerError(Exception):
+class WgForgeServerException(Exception):
+    """ base class for all our exceptions """
     pass
 
+class WgForgeServerError:
+    """ server exceptions """
 
-class BadCommandError(WgForgeServerError):
-    pass
+    class BadCommand(WgForgeServerException):
+        """ Wrong command detected """
+        pass
 
-class IllegalCommandError(WgForgeServerError):
-    pass
+    class IllegalCommand(WgForgeServerException):
+        """ logical error on command execution """
+        pass
 
-class GameNotReady(WgForgeServerError):
-    pass
+    class GameNotReady(WgForgeServerException):
+        """ game not ready for this action """
+        pass
 
-class GameTimeout(WgForgeServerError):
-    pass
+    class GameTimeout(WgForgeServerException):
+        """ action timeout """
+        pass
+
+    class GameAccessDenied(WgForgeServerException):
+        """ access to requested resource denied """
+        pass

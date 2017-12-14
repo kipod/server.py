@@ -7,7 +7,7 @@ import random
 from threading import Thread, Event, Lock
 
 from db.replay import DbReplay
-from defs import Result, Action, GameNotReady, GameTimeout
+from defs import Result, Action, WgForgeServerError
 from entity.event import EventType, Event as GameEvent
 from entity.map import Map
 from entity.player import Player
@@ -55,7 +55,7 @@ class Game(Thread):
         self._lock = Lock()
         self._start_tick_event = Event()
         self._done_tick_event = Event()
-        self._num_players = num_players
+        self.num_players = num_players
         self._state = Game.State.INIT
         random.seed()
 
@@ -68,11 +68,6 @@ class Game(Thread):
         else:
             Game.GAMES[name] = game = Game(name, num_players=num_players)
         return game
-
-    @property
-    def num_players(self):
-        """ getter property num_players """
-        return self._num_players
 
     def add_player(self, player: Player):
         """ Adds player to the game.
@@ -103,7 +98,7 @@ class Game(Thread):
         """ Makes next turn.
         """
         if self._state != Game.State.RUN:
-            raise GameNotReady
+            raise WgForgeServerError.GameNotReady
         with self._lock:
             player.turn_done = True
             for player in self.players.values():
@@ -111,10 +106,10 @@ class Game(Thread):
                     break
             else:
                 self._start_tick_event.set()
-                for player in self.players:
+                for player in self.players.values():
                     player.turn_done = False
         if self._done_tick_event.wait(config.TICK_TIME):
-            raise GameTimeout
+            raise WgForgeServerError.GameTimeout
 
 
     def stop(self):

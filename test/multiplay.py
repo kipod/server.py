@@ -100,9 +100,6 @@ class TestMultiplay(unittest.TestCase):
     def test_02_turn(self):
         """ test turn 2 players """
         result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN)
-        self.assertEqual(Result.TIMEOUT, result)
+        self.assertEqual(Result.OKEY, result)
         result, _ = self.do_action(self.PLAYER_NAME[1], Action.TURN)
         self.assertEqual(Result.OKEY, result)
-
-
-
