@@ -1,12 +1,13 @@
 """ Game entity.
 """
+from enum import IntEnum
 import math
 import json
 import random
 from threading import Thread, Event, Lock
 
 from db.replay import DbReplay
-from defs import Result, Action
+from defs import Result, Action, GameNotReady
 from entity.event import EventType, Event as GameEvent
 from entity.map import Map
 from entity.player import Player
@@ -29,6 +30,12 @@ class Game(Thread):
           trains - one train per player
     """
 
+    class State(IntEnum):
+        """ game state """
+        INIT = 1
+        RUN = 2
+        FINISHED = 3
+
     # All registered games.
     GAMES = {}
 
@@ -49,6 +56,7 @@ class Game(Thread):
         self._lock = Lock()
         self._stop_event = Event()
         self._num_players = num_players
+        self._state = Game.State.INIT
         random.seed()
 
     @staticmethod
@@ -61,7 +69,7 @@ class Game(Thread):
             Game.GAMES[name] = game = Game(name, num_players=num_players)
         return game
 
-    @num_players.getter
+    @property
     def num_players(self):
         """ getter property num_players """
         return self._num_players
@@ -87,12 +95,15 @@ class Game(Thread):
                     # Put the Train into Town:
                     self.put_train_into_town(train, with_cooldown=False)
                 log(log.INFO, "Add new player to the game, player: {}".format(player))
-            if not self.observed:
+            if not self.observed and (self.num_players == len(self.players)):
                 Thread.start(self)
+                self._state = Game.State.RUN
 
     def turn(self):
         """ Makes next turn.
         """
+        if self._state != Game.State.RUN:
+            raise GameNotReady
         self.skip_next_tick = True
         with self._lock:
             self.tick()

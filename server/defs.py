@@ -37,7 +37,7 @@ class Result(IntEnum):
     RESOURCE_NOT_FOUND = 2
     PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
-
+    NOT_READY = 21
 
 # Server errors:
 
@@ -50,4 +50,7 @@ class BadCommandError(WgForgeServerError):
     pass
 
 class IllegalCommandError(WgForgeServerError):
+    pass
+
+class GameNotReady(WgForgeServerError):
     pass

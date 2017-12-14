@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from defs import SERVER_ADDR, SERVER_PORT, Action, Result, BadCommandError, IllegalCommandError
+from defs import *
 from entity.game import Game
 from entity.observer import Observer
 from entity.player import Player
@@ -56,6 +56,8 @@ class GameServerProtocol(asyncio.Protocol):
                 self._write_response(Result.BAD_COMMAND)
             except (IllegalCommandError):
                 self._write_response(Result.ACCESS_DENIED)
+            except (GameNotReady):
+                self._write_response(Result.NOT_READY)
             finally:
                 self._action = None
 
@@ -125,11 +127,13 @@ class GameServerProtocol(asyncio.Protocol):
 
     def _on_logout(self, _):
         self._write_response(Result.OKEY)
-        log(log.INFO, "Logout player: {}".format(self._player.name))
+        if self._player:
+            log(log.INFO, "Logout player: {}".format(self._player.name))
+            self._game.stop()
+            del self._game
+            self._game = None
         self.transport.close()
-        self._game.stop()
-        del self._game
-        self._game = None
+
 
     def _on_get_map(self, data: dict):
         if self._game is None:

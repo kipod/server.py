@@ -18,6 +18,8 @@ class TestMultiplay(unittest.TestCase):
         "Test Player Name 1 {}".format(TIME_SUFFIX)
     ]
 
+    PLAYER = {name: {'name': name, 'conn': None} for name in PLAYER_NAME}
+
     GAME_NAME = "Test Game {}".format(TIME_SUFFIX)
 
     @classmethod
@@ -25,21 +27,20 @@ class TestMultiplay(unittest.TestCase):
         # with DbMap() as database:
         #     database.reset_db()
         #     generate_map03(database)
-        cls.connection = []
-        for _ in cls.PLAYER_NAME:
-            cls.connection.append(ServerConnection())
+        for player in cls.PLAYER.values():
+            player['conn'] = ServerConnection()
 
     @classmethod
     def tearDownClass(cls):
         # with DbMap() as database:
         #     database.reset_db()
-        del cls.connection
+        pass
 
     @classmethod
-    def do_action(cls, connection_idx: int, action: Action, data):
+    def do_action(cls, player_name: str, action: Action, data):
         """ Send action.
         """
-        return cls.connection[connection_idx].do_action(action, data)
+        return cls.PLAYER[player_name]['conn'].do_action(action, data)
 
     # @classmethod
     # def do_action_raw(cls, action: int, json_str: str):
@@ -50,19 +51,28 @@ class TestMultiplay(unittest.TestCase):
     def test_00_connection(self):
         """ Test connection.
         """
-        for conn in self.connection:
+        for player in self.PLAYER.values():
+            conn = player['conn']
             self.assertIsNotNone(conn._loop)
             self.assertIsNotNone(conn._reader)
             self.assertIsNotNone(conn._writer)
 
+    def test_99_logout(self):
+        """ Test logout.
+        """
+        for player in self.PLAYER_NAME:
+            result, _ = self.do_action(player, Action.LOGOUT, None)
+            self.assertEqual(Result.OKEY, result)
+
     def test_01_login(self):
         """ Test login.
         """
-        result, message = self.do_action(0, Action.LOGIN,
+
+        result, message = self.do_action(self.PLAYER_NAME[0], Action.LOGIN,
                                          {
                                              'name': self.PLAYER_NAME[0],
                                              'game': self.GAME_NAME,
-                                             'num_players': 1
+                                             'num_players': 2
                                          })
         self.assertEqual(Result.OKEY, result)
         self.assertNotEqual(len(message), 0)
@@ -70,3 +80,7 @@ class TestMultiplay(unittest.TestCase):
         self.assertIn('idx', data)
         player_id = data['idx']
         self.assertIsNotNone(player_id)
+
+        result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN, {})
+        self.assertEqual(Result.NOT_READY, result)
+
