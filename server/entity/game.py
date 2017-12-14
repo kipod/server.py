@@ -1,13 +1,14 @@
 """ Game entity.
 """
-from enum import IntEnum
-import math
 import json
+import math
 import random
+from enum import IntEnum
 from threading import Thread, Event, Lock
 
+import errors
 from db.replay import DbReplay
-from defs import Result, Action, WgForgeServerError
+from defs import Result, Action
 from entity.event import EventType, Event as GameEvent
 from entity.map import Map
 from entity.player import Player
@@ -16,6 +17,14 @@ from entity.post import PostType, Post
 from entity.train import Train
 from game_config import config
 from logger import log
+
+
+class GameState(IntEnum):
+    """ Game states.
+    """
+    INIT = 1
+    RUN = 2
+    FINISHED = 3
 
 
 class Game(Thread):
@@ -29,12 +38,6 @@ class Game(Thread):
           name - unique game name
           trains - one train per player
     """
-
-    class State(IntEnum):
-        """ game state """
-        INIT = 1
-        RUN = 2
-        FINISHED = 3
 
     # All registered games.
     GAMES = {}
@@ -56,7 +59,7 @@ class Game(Thread):
         self._start_tick_event = Event()
         self._done_tick_event = Event()
         self.num_players = num_players
-        self._state = Game.State.INIT
+        self._state = GameState.INIT
         random.seed()
 
     @staticmethod
@@ -92,13 +95,13 @@ class Game(Thread):
                 log(log.INFO, "Add new player to the game, player: {}".format(player))
             if not self.observed and (self.num_players == len(self.players)):
                 Thread.start(self)
-                self._state = Game.State.RUN
+                self._state = GameState.RUN
 
     def turn(self, player: Player):
         """ Makes next turn.
         """
-        if self._state != Game.State.RUN:
-            raise WgForgeServerError.GameNotReady
+        if self._state != GameState.RUN:
+            raise errors.GameNotReady
         with self._lock:
             player.turn_done = True
             for player in self.players.values():
@@ -109,14 +112,13 @@ class Game(Thread):
                 for player in self.players.values():
                     player.turn_done = False
         if self._done_tick_event.wait(config.TICK_TIME):
-            raise WgForgeServerError.GameTimeout
-
+            raise errors.GameTimeout
 
     def stop(self):
         """ Stops ticks.
         """
         log(log.INFO, "Game stopped, name: '{}'".format(self.name))
-        self._state = Game.State.FINISHED
+        self._state = GameState.FINISHED
         self._start_tick_event.set()
         if self.name in Game.GAMES:
             del Game.GAMES[self.name]
@@ -131,8 +133,8 @@ class Game(Thread):
         try:
             while not self._start_tick_event.wait(config.TICK_TIME):
                 with self._lock:
-                    if self._state != Game.State.RUN:
-                        break # finish game thread
+                    if self._state != GameState.RUN:
+                        break  # Finish game thread.
                     self.tick()
                     if replay:
                         replay.add_action(
