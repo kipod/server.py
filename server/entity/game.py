@@ -4,7 +4,7 @@ import json
 import math
 import random
 from enum import IntEnum
-from threading import Thread, Event, Lock
+from threading import Thread, Event, Lock, Condition
 
 import errors
 from db.replay import DbReplay
@@ -45,9 +45,11 @@ class Game(Thread):
     def __init__(self, name, map_name=config.MAP_NAME, observed=False, num_players=1):
         super(Game, self).__init__(name=name)
         log(log.INFO, "Create game, name: '{}'".format(self.name))
+        self.state = GameState.INIT
         self.observed = observed
         self.replay = None if self.observed else DbReplay()
         self.map = Map(map_name)
+        self.num_players = num_players
         self.current_game_id = 0 if self.observed else self.replay.add_game(name, map_name=self.map.name)
         self.current_tick = 0
         self.players = {}
@@ -56,10 +58,9 @@ class Game(Thread):
         self.next_train_moves = {}
         self.event_cooldowns = {}
         self._lock = Lock()
+        self._stop_event = Event()
         self._start_tick_event = Event()
-        self._done_tick_event = Event()
-        self.num_players = num_players
-        self._state = GameState.INIT
+        self._done_tick_condition = Condition()
         random.seed()
 
     @staticmethod
@@ -93,33 +94,33 @@ class Game(Thread):
                     # Put the Train into Town:
                     self.put_train_into_town(train, with_cooldown=False)
                 log(log.INFO, "Add new player to the game, player: {}".format(player))
+            # Start thread with game ticks:
             if not self.observed and (self.num_players == len(self.players)):
                 Thread.start(self)
-                self._state = GameState.RUN
+                self.state = GameState.RUN
 
     def turn(self, player: Player):
         """ Makes next turn.
         """
-        if self._state != GameState.RUN:
+        if self.state != GameState.RUN:
             raise errors.GameNotReady
         with self._lock:
             player.turn_done = True
-            for player in self.players.values():
-                if not player.turn_done:
-                    break
-            else:
+            all_ready_for_turn = all([p.turn_done for p in self.players.values()])
+            if all_ready_for_turn:
                 self._start_tick_event.set()
                 for player in self.players.values():
                     player.turn_done = False
-        if self._done_tick_event.wait(config.TICK_TIME):
-            raise errors.GameTimeout
+        with self._done_tick_condition:
+            if not self._done_tick_condition.wait(config.TICK_TIME):
+                raise errors.GameTimeout
 
     def stop(self):
         """ Stops ticks.
         """
         log(log.INFO, "Game stopped, name: '{}'".format(self.name))
-        self._state = GameState.FINISHED
-        self._start_tick_event.set()
+        self.state = GameState.FINISHED
+        self._stop_event.set()
         if self.name in Game.GAMES:
             del Game.GAMES[self.name]
         if self.replay:
@@ -131,11 +132,15 @@ class Game(Thread):
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
         try:
-            while not self._start_tick_event.wait(config.TICK_TIME):
+            while not self._stop_event.is_set():
+                if self._start_tick_event.wait(config.TICK_TIME):
+                    self._start_tick_event.clear()
                 with self._lock:
-                    if self._state != GameState.RUN:
+                    if self.state != GameState.RUN:
                         break  # Finish game thread.
                     self.tick()
+                    with self._done_tick_condition:
+                        self._done_tick_condition.notify_all()
                     if replay:
                         replay.add_action(
                             Action.TURN, message=None, with_commit=False, game_id=self.current_game_id

@@ -99,35 +99,46 @@ class DbReplay(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.close()
 
-def insert_replay_move_and_turns(database, line_idx: int, speed: int, train_idx: int, turns_count: int):
-    """ Inserts into replays database MOVE action + number of TURN actions
-    """
-    database.add_action(ActionCodes.MOVE,
-                        "{{\"line_idx\": {0}, \"speed\": {1}, \"train_idx\": {2}}}".format(line_idx, speed, train_idx))
-    for _ in range(turns_count):
-        database.add_action(ActionCodes.TURN, None)
 
-def generate_replay01(database):
-    """ Generate test game record
+def generate_replay01(database: DbReplay):
+    """ Generates test game replay.
     """
     database.add_game('Test', config.MAP_NAME)
     database.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}')
 
-    def fwd(line_idx: int, count_turns: int):
-        """ Forward move. Inner helper for simplify formatin records
+    def insert_replay_move_and_turns(database: DbReplay, line_idx: int, speed: int, train_idx: int, turns_count: int):
+        """ Inserts into replays database MOVE action + number of TURN actions.
+        """
+        database.add_action(
+            ActionCodes.MOVE,
+            '{{"line_idx": {0}, "speed": {1}, "train_idx": {2}}}'.format(line_idx, speed, train_idx)
+        )
+        for _ in range(turns_count):
+            database.add_action(ActionCodes.TURN, None)
+
+    def forward_move(line_idx: int, count_turns: int):
+        """ Forward move. Inner helper to simplify records formatting.
         """
         insert_replay_move_and_turns(database, line_idx, 1, 1, count_turns)
 
-    def rev(line_idx: int, count_turns: int):
-        """ Reverse move. Inner helper for simplify formatin records
+    def reverse_move(line_idx: int, count_turns: int):
+        """ Reverse move. Inner helper to simplify records formatting.
         """
         insert_replay_move_and_turns(database, line_idx, -1, 1, count_turns)
 
-    # pylint: disable=C0321
-    fwd(1, 3); fwd(2, 4); fwd(3, 4); fwd(4, 4); fwd(5, 4); fwd(6, 4); fwd(7, 4); fwd(8, 4); fwd(9, 4)
-    fwd(19, 5); fwd(38, 5); fwd(57, 5); fwd(76, 5); fwd(95, 5); fwd(114, 5); fwd(133, 5); fwd(152, 5); fwd(171, 6)
-    rev(180, 3); rev(179, 4); rev(178, 4); rev(177, 4); rev(176, 4); rev(175, 4); rev(174, 4); rev(173, 4); rev(172, 4)
-    rev(162, 5); rev(143, 5); rev(124, 5); rev(105, 5); rev(86, 5); rev(67, 5); rev(48, 5); rev(29, 5); rev(10, 6)
+    forward = [
+        (1, 3), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4), (8, 4), (9, 4),
+        (19, 5), (38, 5), (57, 5), (76, 5), (95, 5), (114, 5), (133, 5), (152, 5), (171, 6)
+    ]
+    for move in forward:
+        forward_move(*move)
+
+    reverse = [
+        (180, 3), (179, 4), (178, 4), (177, 4), (176, 4), (175, 4), (174, 4), (173, 4), (172, 4),
+        (162, 5), (143, 5), (124, 5), (105, 5), (86, 5), (67, 5), (48, 5), (29, 5), (10, 6)
+    ]
+    for move in reverse:
+        reverse_move(*move)
 
 
 REPLAY_GENERATORS = {

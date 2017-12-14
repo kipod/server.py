@@ -3,7 +3,8 @@
 import asyncio
 import json
 
-from defs import SERVER_ADDR, SERVER_PORT, Action, Result, WgForgeServerError
+import errors
+from defs import SERVER_ADDR, SERVER_PORT, Action, Result
 from entity.game import Game
 from entity.observer import Observer
 from entity.player import Player
@@ -42,25 +43,25 @@ class GameServerProtocol(asyncio.Protocol):
             try:
                 data = json.loads(self.message)
                 if not isinstance(data, dict):
-                    raise WgForgeServerError.BadCommand
+                    raise errors.BadCommand
                 if self._observer:
                     self._write_response(*self._observer.action(self._action, data))
                 else:
                     if self._action not in self.COMMAND_MAP:
-                        raise WgForgeServerError.BadCommand
+                        raise errors.BadCommand
                     method = self.COMMAND_MAP[self._action]
                     method(self, data)
                     if self._replay and self._action in (Action.MOVE, Action.LOGIN, Action.UPGRADE, ):
                         self._replay.add_action(self._action, self.message, with_commit=False)
-            except (json.decoder.JSONDecodeError, WgForgeServerError.BadCommand):
+            except (json.decoder.JSONDecodeError, errors.BadCommand):
                 self._write_response(Result.BAD_COMMAND)
-            except WgForgeServerError.IllegalCommand:
+            except errors.IllegalCommand:
                 self._write_response(Result.ACCESS_DENIED)
-            except WgForgeServerError.GameNotReady:
+            except errors.GameNotReady:
                 self._write_response(Result.NOT_READY)
-            except WgForgeServerError.GameTimeout:
+            except errors.GameTimeout:
                 self._write_response(Result.TIMEOUT)
-            except WgForgeServerError.GameAccessDenied:
+            except errors.GameAccessDenied:
                 self._write_response(Result.ACCESS_DENIED)
             finally:
                 self._action = None
@@ -105,7 +106,7 @@ class GameServerProtocol(asyncio.Protocol):
     @staticmethod
     def _check_keys(data: dict, keys, agg_func=all):
         if not agg_func([k in data for k in keys]):
-            raise WgForgeServerError.BadCommand
+            raise errors.BadCommand
         else:
             return True
 
@@ -121,7 +122,7 @@ class GameServerProtocol(asyncio.Protocol):
         if self._game.num_players != num_players:
             log(log.ERROR, "User try login in game:{} with num_players:{}, but expected:{} self._game.num_players")
             self._game = None
-            raise WgForgeServerError.IllegalCommand
+            raise errors.IllegalCommand
         self._replay = self._game.replay
         security_key = None
         if 'security_key' in data:
@@ -129,7 +130,7 @@ class GameServerProtocol(asyncio.Protocol):
         self._player = Player(data['name'], security_key)
         if self._player.idx in self._game.players:
             if self._game.players[self._player.idx].security_key != security_key:
-                raise WgForgeServerError.GameAccessDenied
+                raise errors.GameAccessDenied
         self._game.add_player(self._player)
         log(log.INFO, "Login player: {}".format(data['name']))
         message = self._player.to_json_str()
@@ -146,27 +147,27 @@ class GameServerProtocol(asyncio.Protocol):
 
     def _on_get_map(self, data: dict):
         if self._game is None:
-            raise WgForgeServerError.IllegalCommand
+            raise errors.IllegalCommand
         self._check_keys(data, ['layer'])
         res, message = self._game.get_map_layer(data['layer'])
         self._write_response(res, message)
 
     def _on_move(self, data: dict):
         if self._game is None:
-            raise WgForgeServerError.IllegalCommand
+            raise errors.IllegalCommand
         self._check_keys(data, ['train_idx', 'speed', 'line_idx'])
         res = self._game.move_train(data['train_idx'], data['speed'], data['line_idx'])
         self._write_response(res)
 
     def _on_turn(self, _):
         if self._game is None:
-            raise WgForgeServerError.IllegalCommand
+            raise errors.IllegalCommand
         self._game.turn(self._player)
         self._write_response(Result.OKEY)
 
     def _on_upgrade(self, data: dict):
         if self._game is None:
-            raise WgForgeServerError.IllegalCommand
+            raise errors.IllegalCommand
         self._check_keys(data, ['train', 'post'], agg_func=any)
         res = self._game.make_upgrade(
             self._player, post_ids=data.get('post', []), train_ids=data.get('train', [])
