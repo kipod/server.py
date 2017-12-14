@@ -38,6 +38,7 @@ class Result(IntEnum):
     PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
     NOT_READY = 21
+    TIMEOUT = 258
 
 # Server errors:
 
@@ -53,4 +54,7 @@ class IllegalCommandError(WgForgeServerError):
     pass
 
 class GameNotReady(WgForgeServerError):
+    pass
+
+class GameTimeout(WgForgeServerError):
     pass

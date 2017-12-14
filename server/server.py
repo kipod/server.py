@@ -58,6 +58,8 @@ class GameServerProtocol(asyncio.Protocol):
                 self._write_response(Result.ACCESS_DENIED)
             except (GameNotReady):
                 self._write_response(Result.NOT_READY)
+            except (GameTimeout):
+                self._write_response(Result.TIMEOUT)
             finally:
                 self._action = None
 
@@ -152,7 +154,7 @@ class GameServerProtocol(asyncio.Protocol):
     def _on_turn(self, _):
         if self._game is None:
             raise IllegalCommandError
-        self._game.turn()
+        self._game.turn(self._player)
         self._write_response(Result.OKEY)
 
     def _on_upgrade(self, data: dict):

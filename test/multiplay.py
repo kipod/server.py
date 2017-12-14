@@ -37,7 +37,7 @@ class TestMultiplay(unittest.TestCase):
         pass
 
     @classmethod
-    def do_action(cls, player_name: str, action: Action, data):
+    def do_action(cls, player_name: str, action: Action, data={}):
         """ Send action.
         """
         return cls.PLAYER[player_name]['conn'].do_action(action, data)
@@ -81,6 +81,28 @@ class TestMultiplay(unittest.TestCase):
         player_id = data['idx']
         self.assertIsNotNone(player_id)
 
-        result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN, {})
+        result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN)
         self.assertEqual(Result.NOT_READY, result)
+
+        result, message = self.do_action(self.PLAYER_NAME[1], Action.LOGIN,
+                                         {
+                                             'name': self.PLAYER_NAME[1],
+                                             'game': self.GAME_NAME,
+                                             'num_players': 2
+                                         })
+        self.assertEqual(Result.OKEY, result)
+        self.assertNotEqual(len(message), 0)
+        data = json.loads(message)
+        self.assertIn('idx', data)
+        player_id = data['idx']
+        self.assertIsNotNone(player_id)
+
+    def test_02_turn(self):
+        """ test turn 2 players """
+        result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN)
+        self.assertEqual(Result.TIMEOUT, result)
+        result, _ = self.do_action(self.PLAYER_NAME[1], Action.TURN)
+        self.assertEqual(Result.OKEY, result)
+
+
 

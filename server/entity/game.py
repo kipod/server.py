@@ -7,7 +7,7 @@ import random
 from threading import Thread, Event, Lock
 
 from db.replay import DbReplay
-from defs import Result, Action, GameNotReady
+from defs import Result, Action, GameNotReady, GameTimeout
 from entity.event import EventType, Event as GameEvent
 from entity.map import Map
 from entity.player import Player
@@ -50,11 +50,11 @@ class Game(Thread):
         self.players = {}
         self.name = name
         self.trains = {}
-        self.skip_next_tick = False
         self.next_train_moves = {}
         self.event_cooldowns = {}
         self._lock = Lock()
-        self._stop_event = Event()
+        self._start_tick_event = Event()
+        self._done_tick_event = Event()
         self._num_players = num_players
         self._state = Game.State.INIT
         random.seed()
@@ -99,22 +99,30 @@ class Game(Thread):
                 Thread.start(self)
                 self._state = Game.State.RUN
 
-    def turn(self):
+    def turn(self, player: Player):
         """ Makes next turn.
         """
         if self._state != Game.State.RUN:
             raise GameNotReady
-        self.skip_next_tick = True
         with self._lock:
-            self.tick()
-            if self.replay:
-                self.replay.add_action(Action.TURN, None, with_commit=False)
+            player.turn_done = True
+            for player in self.players.values():
+                if not player.turn_done:
+                    break
+            else:
+                self._start_tick_event.set()
+                for player in self.players:
+                    player.turn_done = False
+        if self._done_tick_event.wait(config.TICK_TIME):
+            raise GameTimeout
+
 
     def stop(self):
         """ Stops ticks.
         """
         log(log.INFO, "Game stopped, name: '{}'".format(self.name))
-        self._stop_event.set()
+        self._state = Game.State.FINISHED
+        self._start_tick_event.set()
         if self.name in Game.GAMES:
             del Game.GAMES[self.name]
         if self.replay:
@@ -126,16 +134,15 @@ class Game(Thread):
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
         try:
-            while not self._stop_event.wait(config.TICK_TIME):
+            while not self._start_tick_event.wait(config.TICK_TIME):
                 with self._lock:
-                    if self.skip_next_tick:
-                        self.skip_next_tick = False
-                    else:
-                        self.tick()
-                        if replay:
-                            replay.add_action(
-                                Action.TURN, message=None, with_commit=False, game_id=self.current_game_id
-                            )
+                    if self._state != Game.State.RUN:
+                        break # finish game thread
+                    self.tick()
+                    if replay:
+                        replay.add_action(
+                            Action.TURN, message=None, with_commit=False, game_id=self.current_game_id
+                        )
             if replay:
                 replay.commit()
         finally:

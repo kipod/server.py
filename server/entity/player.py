@@ -26,6 +26,7 @@ class Player(object):
         self.train = {}
         self.home = None
         self.town = None
+        self._turn_done = False
 
         if name in Player.PLAYERS:
             self.idx = Player.PLAYERS[name]
@@ -106,3 +107,13 @@ class Player(object):
         rating_value += sum_next_level_price
 
         return rating_value
+
+    @property
+    def turn_done(self):
+        """ getter to turn_done"""
+        return self._turn_done
+
+    @turn_done.setter
+    def turn_done(self, value: bool):
+        """ setter for turn_done"""
+        self._turn_done = value
