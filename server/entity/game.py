@@ -133,14 +133,15 @@ class Game(Thread):
         replay = DbReplay() if self.replay else None
         try:
             while not self._stop_event.is_set():
-                if self._start_tick_event.wait(config.TICK_TIME):
-                    self._start_tick_event.clear()
+                self._start_tick_event.wait(config.TICK_TIME)
                 with self._lock:
                     if self.state != GameState.RUN:
                         break  # Finish game thread.
                     self.tick()
                     with self._done_tick_condition:
                         self._done_tick_condition.notify_all()
+                    if self._start_tick_event.is_set():
+                        self._start_tick_event.clear()
                     if replay:
                         replay.add_action(
                             Action.TURN, message=None, with_commit=False, game_id=self.current_game_id
