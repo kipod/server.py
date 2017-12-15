@@ -120,10 +120,11 @@ class GameServerProtocol(asyncio.Protocol):
     def error_response(self, result, error=None):
         if error is not None:
             error_msg = str(error)
+            response_msg = json.dumps({'error': error_msg})
             log(log.ERROR, error_msg)
         else:
-            error_msg = ''
-        self.write_response(result, error_msg)
+            response_msg = ''
+        self.write_response(result, response_msg)
 
     @staticmethod
     def check_keys(data: dict, keys, agg_func=all):
