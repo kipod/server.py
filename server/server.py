@@ -166,8 +166,8 @@ class GameServerProtocol(asyncio.Protocol):
         log(log.INFO, "Logout player: {}".format(self.player.name))
         self.game.stop()
         self.game = None
-        self.transport.close()
         self.write_response(Result.OKEY)
+        self.transport.close()
 
     @check_game
     def on_get_map(self, data: dict):

@@ -1,105 +1,115 @@
-""" Multiplay scenarios test cases
+""" Multiplay scenarios test cases.
 """
 import json
 import unittest
+from time import time
 from datetime import datetime
 
-from test.server_connection import ServerConnection
-from server.db.map import generate_map03, DbMap
+from attrdict import AttrDict
 
+from server.db.map import generate_map03, DbMap
 from server.defs import Action, Result
+from server.game_config import config
+from test.server_connection import ServerConnection
+
 
 class TestMultiplay(unittest.TestCase):
-    """ Multiplay test cases
+    """ Multiplay test cases.
     """
     TIME_SUFFIX = datetime.now().strftime('%H:%M:%S.%f')
-    PLAYER_NAME = [
-        "Test Player Name 0 {}".format(TIME_SUFFIX),
-        "Test Player Name 1 {}".format(TIME_SUFFIX)
+    NUM_PLAYERS = 2
+    PLAYER_NAMES = [
+        "Test Player Name 1 {}".format(TIME_SUFFIX),
+        "Test Player Name 2 {}".format(TIME_SUFFIX)
     ]
-
-    PLAYER = {name: {'name': name, 'conn': None} for name in PLAYER_NAME}
-
     GAME_NAME = "Test Game {}".format(TIME_SUFFIX)
 
     @classmethod
     def setUpClass(cls):
-        # with DbMap() as database:
-        #     database.reset_db()
-        #     generate_map03(database)
-        for player in cls.PLAYER.values():
-            player['conn'] = ServerConnection()
+        with DbMap() as database:
+            database.reset_db()
+            generate_map03(database)
 
     @classmethod
     def tearDownClass(cls):
-        # with DbMap() as database:
-        #     database.reset_db()
-        pass
+        with DbMap() as database:
+            database.reset_db()
 
-    @classmethod
-    def do_action(cls, player_name: str, action: Action, data={}):
-        """ Send action.
+    def setUp(self):
+        self.players = []
+        for player_name in self.PLAYER_NAMES:
+            conn = ServerConnection(config.SERVER_ADDR, config.SERVER_PORT)
+            player = AttrDict({'name': player_name, 'conn': conn})
+            self.players.append(player)
+
+    def tearDown(self):
+        for player in self.players:
+            player.conn.close()
+
+    @staticmethod
+    def do_action(player: AttrDict, action: Action, data=None, is_raw=False):
+        return player.conn.send_action(action, data, is_raw=is_raw)
+
+    def login(self, player: AttrDict, security_key=None, exp_result=Result.OKEY):
+        result, message = self.do_action(
+            player, Action.LOGIN,
+            {
+                'name': player.name,
+                'security_key': security_key,
+                'game': self.GAME_NAME,
+                'num_players': self.NUM_PLAYERS,
+            }
+        )
+        self.assertEqual(exp_result, result)
+        return json.loads(message)
+
+    def logout(self, player, exp_result=Result.OKEY):
+        result, message = self.do_action(
+            player, Action.LOGOUT, None
+        )
+        self.assertEqual(exp_result, result)
+        if message:
+            return json.loads(message)
+
+    def turn(self, player, exp_result=Result.OKEY):
+        result, message = self.do_action(player, Action.TURN, {})
+        self.assertEqual(exp_result, result)
+        if message:
+            return json.loads(message)
+
+    def turn_no_resp(self, player):
+        player.conn.send_action(Action.TURN, {}, wait_for_response=False)
+
+    def turn_check_resp(self, player, exp_result=Result.OKEY):
+        result, message = player.conn.read_response()
+        self.assertEqual(exp_result, result)
+        if message:
+            return json.loads(message)
+
+    @unittest.skip
+    def test_login_and_logout(self):
+        """ Test login and logout.
         """
-        return cls.PLAYER[player_name]['conn'].do_action(action, data)
+        for player in self.players:
+            self.login(player)
+        for player in self.players:
+            self.logout(player)
 
-    # @classmethod
-    # def do_action_raw(cls, action: int, json_str: str):
-    #     """ Send action with raw string data.
-    #     """
-    #     return cls.connection.do_action_raw(action, json_str)
-
-    def test_00_connection(self):
-        """ Test connection.
+    def test_turn(self):
+        """ Test login one by one.
         """
-        for player in self.PLAYER.values():
-            conn = player['conn']
-            self.assertIsNotNone(conn._loop)
-            self.assertIsNotNone(conn._reader)
-            self.assertIsNotNone(conn._writer)
+        turns_num = 3
 
-    def test_99_logout(self):
-        """ Test logout.
-        """
-        for player in self.PLAYER_NAME:
-            result, _ = self.do_action(player, Action.LOGOUT, None)
-            self.assertEqual(Result.OKEY, result)
+        self.login(self.players[0])
+        # self.turn(self.players[0], exp_result=Result.NOT_READY)
+        self.login(self.players[1])
+        # self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
 
-    def test_01_login(self):
-        """ Test login.
-        """
-
-        result, message = self.do_action(self.PLAYER_NAME[0], Action.LOGIN,
-                                         {
-                                             'name': self.PLAYER_NAME[0],
-                                             'game': self.GAME_NAME,
-                                             'num_players': 2
-                                         })
-        self.assertEqual(Result.OKEY, result)
-        self.assertNotEqual(len(message), 0)
-        data = json.loads(message)
-        self.assertIn('idx', data)
-        player_id = data['idx']
-        self.assertIsNotNone(player_id)
-
-        result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN)
-        self.assertEqual(Result.NOT_READY, result)
-
-        result, message = self.do_action(self.PLAYER_NAME[1], Action.LOGIN,
-                                         {
-                                             'name': self.PLAYER_NAME[1],
-                                             'game': self.GAME_NAME,
-                                             'num_players': 2
-                                         })
-        self.assertEqual(Result.OKEY, result)
-        self.assertNotEqual(len(message), 0)
-        data = json.loads(message)
-        self.assertIn('idx', data)
-        player_id = data['idx']
-        self.assertIsNotNone(player_id)
-
-    def test_02_turn(self):
-        """ test turn 2 players """
-        result, _ = self.do_action(self.PLAYER_NAME[0], Action.TURN)
-        self.assertEqual(Result.OKEY, result)
-        result, _ = self.do_action(self.PLAYER_NAME[1], Action.TURN)
-        self.assertEqual(Result.OKEY, result)
+        for _ in range(turns_num):
+            start = time()
+            self.turn_no_resp(self.players[0])
+            self.turn_no_resp(self.players[1])
+            self.turn_check_resp(self.players[0])
+            self.turn_check_resp(self.players[1])
+            elapsed = time() - start
+            self.assertLess(elapsed, config.TICK_TIME)

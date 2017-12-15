@@ -69,6 +69,8 @@ class BaseConfig(object):
 
 class TestingConfig(BaseConfig):
     DEFAULT_TRAINS_COUNT = 3
+    SERVER_ADDR = '127.0.0.1'
+    SERVER_PORT = 2000
 
 
 class TestingConfigWithEvents(TestingConfig):
