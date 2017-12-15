@@ -3,6 +3,7 @@ import logging
 
 class Logger(object):
 
+    EXCEPTION = 100
     CRITICAL = 50
     ERROR = 40
     WARNING = 30
@@ -18,7 +19,8 @@ class Logger(object):
             self.INFO: self._log.info,
             self.WARNING: self._log.warning,
             self.ERROR: self._log.error,
-            self.CRITICAL: self._log.critical
+            self.CRITICAL: self._log.critical,
+            self.EXCEPTION: self._log.exception,
         }
 
     def __call__(self, lvl, msg, *args, **kwargs):

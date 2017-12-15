@@ -35,36 +35,7 @@ class Result(IntEnum):
     OKEY = 0
     BAD_COMMAND = 1
     RESOURCE_NOT_FOUND = 2
-    PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
     NOT_READY = 21
     TIMEOUT = 258
-
-# Server errors:
-
-class WgForgeServerException(Exception):
-    """ base class for all our exceptions """
-    pass
-
-class WgForgeServerError:
-    """ server exceptions """
-
-    class BadCommand(WgForgeServerException):
-        """ Wrong command detected """
-        pass
-
-    class IllegalCommand(WgForgeServerException):
-        """ logical error on command execution """
-        pass
-
-    class GameNotReady(WgForgeServerException):
-        """ game not ready for this action """
-        pass
-
-    class GameTimeout(WgForgeServerException):
-        """ action timeout """
-        pass
-
-    class GameAccessDenied(WgForgeServerException):
-        """ access to requested resource denied """
-        pass
+    INTERNAL_SERVER_ERROR = 500
