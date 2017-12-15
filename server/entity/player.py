@@ -17,7 +17,7 @@ class Player(object):
     * home - point of the home town
     """
 
-    # All indexes of registered players.
+    # All registered players.
     PLAYERS = {}
 
     def __init__(self, name, security_key=None):
@@ -28,14 +28,20 @@ class Player(object):
         self.town = None
         self.turn_done = False
         self.security_key = security_key
-
-        if name in Player.PLAYERS:
-            self.idx = Player.PLAYERS[name]
-        else:
-            Player.PLAYERS[name] = self.idx = str(uuid.uuid4())
+        self.idx = str(uuid.uuid4())
 
     def __eq__(self, other):
         return self.idx == other.idx
+
+    @staticmethod
+    def create(name, security_key=None):
+        """ Returns instance of class Player.
+        """
+        if name in Player.PLAYERS:
+            player = Player.PLAYERS[name]
+        else:
+            Player.PLAYERS[name] = player = Player(name, security_key=security_key)
+        return player
 
     def add_train(self, train):
         """ Adds train to the player.

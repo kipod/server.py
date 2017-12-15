@@ -123,7 +123,7 @@ class TestEntity(unittest.TestCase):
         """ Test create player entity.
         """
         player_name = 'Vasya'
-        player = Player(player_name)
+        player = Player.create(player_name)
         train = Train(idx=1, line_idx=1, position=0)
         point = Point(idx=1, post_id=1)
         post = Post(idx=1, name='test-post', post_type=PostType.TOWN, point_id=point.idx)
@@ -138,13 +138,13 @@ class TestEntity(unittest.TestCase):
         self.assertIs(player.home, point)
         self.assertIs(player.town, post)
 
-        new_player = Player(player_name)
+        new_player = Player.create(player_name)
         self.assertEqual(player.idx, new_player.idx)
 
     def test_player_serialization(self):
         """ Test Player entity serialization/deserialization.
         """
-        player1 = Player('Vasya')
+        player1 = Player.create('Vasya')
         train = Train(idx=1, line_idx=1, position=0)
         point = Point(idx=1, post_id=1)
         post = Post(idx=1, name='test-post', post_type=PostType.TOWN, point_id=point.idx)
@@ -152,7 +152,7 @@ class TestEntity(unittest.TestCase):
         player1.add_train(train)
         str_data = player1.to_json_str()
 
-        player2 = Player(None)
+        player2 = Player.create(None)
         player2.from_json_str(str_data)
 
         self.assertEqual(player1.idx, player2.idx)

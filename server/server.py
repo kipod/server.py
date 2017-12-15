@@ -11,17 +11,26 @@ from entity.player import Player
 from logger import log
 
 
+def check_game(func):
+    def wrapped(self, *args, **kwargs):
+        if self.game is None:
+            raise errors.AccessDenied("There is no game")
+        else:
+            return func(self, *args, **kwargs)
+    return wrapped
+
+
 class GameServerProtocol(asyncio.Protocol):
     def __init__(self):
         asyncio.Protocol.__init__(self)
-        self._action = None
+        self.action = None
         self.message_len = None
         self.message = None
         self.data = None
-        self._player = None
-        self._game = None
-        self._replay = None
-        self._observer = None
+        self.player = None
+        self.game = None
+        self.replay = None
+        self.observer = None
         self.peername = None
         self.transport = None
 
@@ -37,48 +46,53 @@ class GameServerProtocol(asyncio.Protocol):
         if self.data:
             data = self.data + data
             self.data = None
-        if self._process_data(data):
-            log(log.INFO, Action(self._action))
+        if self.process_data(data):
+            log(log.INFO, Action(self.action))
             log(log.INFO, self.message)
             try:
                 data = json.loads(self.message)
                 if not isinstance(data, dict):
-                    raise errors.BadCommand
-                if self._observer:
-                    self._write_response(*self._observer.action(self._action, data))
+                    raise errors.BadCommand("The command payload is not a dictionary")
+                if self.observer:
+                    self.write_response(*self.observer.action(self.action, data))
                 else:
-                    if self._action not in self.COMMAND_MAP:
-                        raise errors.BadCommand
-                    method = self.COMMAND_MAP[self._action]
+                    if self.action not in self.COMMAND_MAP:
+                        raise errors.BadCommand("No such command")
+                    method = self.COMMAND_MAP[self.action]
                     method(self, data)
-                    if self._replay and self._action in (Action.MOVE, Action.LOGIN, Action.UPGRADE, ):
-                        self._replay.add_action(self._action, self.message, with_commit=False)
-            except (json.decoder.JSONDecodeError, errors.BadCommand):
-                self._write_response(Result.BAD_COMMAND)
-            except errors.IllegalCommand:
-                self._write_response(Result.ACCESS_DENIED)
-            except errors.GameNotReady:
-                self._write_response(Result.NOT_READY)
-            except errors.GameTimeout:
-                self._write_response(Result.TIMEOUT)
-            except errors.GameAccessDenied:
-                self._write_response(Result.ACCESS_DENIED)
-            finally:
-                self._action = None
+                    if self.replay and self.action in (Action.MOVE, Action.LOGIN, Action.UPGRADE, ):
+                        self.replay.add_action(self.action, self.message, with_commit=False)
 
-    def _process_data(self, data):
+            # Handle errors:
+            except (json.decoder.JSONDecodeError, errors.BadCommand) as err:
+                self.error_response(Result.BAD_COMMAND, err)
+            except errors.AccessDenied as err:
+                self.error_response(Result.ACCESS_DENIED, err)
+            except errors.NotReady as err:
+                self.error_response(Result.NOT_READY, err)
+            except errors.Timeout as err:
+                self.error_response(Result.TIMEOUT, err)
+            except errors.ResourceNotFound as err:
+                self.error_response(Result.RESOURCE_NOT_FOUND, err)
+            except Exception:
+                log(log.EXCEPTION, "Got unhandled exception on client command execution")
+                self.error_response(Result.INTERNAL_SERVER_ERROR)
+            finally:
+                self.action = None
+
+    def process_data(self, data):
         """ Parses input command.
         returns: True if command parsing completed
         """
         # Read action [4 bytes]:
-        if not self._action:
+        if not self.action:
             if len(data) < 4:
                 self.data = data
                 return False
-            self._action = Action(int.from_bytes(data[0:4], byteorder='little'))
+            self.action = Action(int.from_bytes(data[0:4], byteorder='little'))
             self.message_len = 0
             data = data[4:]
-            if self._action in (Action.LOGOUT, Action.OBSERVER):  # Commands without data.
+            if self.action in (Action.LOGOUT, Action.OBSERVER):  # Commands without data.
                 self.data = b''
                 self.message = '{}'
                 return True
@@ -97,98 +111,104 @@ class GameServerProtocol(asyncio.Protocol):
         self.data = data[self.message_len:]
         return True
 
-    def _write_response(self, result, message=None):
+    def write_response(self, result, message=None):
         resp_message = '' if message is None else message
         self.transport.write(result.to_bytes(4, byteorder='little'))
         self.transport.write(len(resp_message).to_bytes(4, byteorder='little'))
         self.transport.write(resp_message.encode('utf-8'))
 
+    def error_response(self, result, error=None):
+        if error is not None:
+            error_msg = str(error)
+            log(log.ERROR, error_msg)
+        else:
+            error_msg = ''
+        self.write_response(result, error_msg)
+
     @staticmethod
-    def _check_keys(data: dict, keys, agg_func=all):
+    def check_keys(data: dict, keys, agg_func=all):
         if not agg_func([k in data for k in keys]):
-            raise errors.BadCommand
+            raise errors.BadCommand(
+                "The command payload does not contain all needed keys, following keys are expected: {}".format(keys))
         else:
             return True
 
-    def _on_login(self, data: dict):
-        self._check_keys(data, ['name'])
+    def on_login(self, data: dict):
+        self.check_keys(data, ['name'])
         game_name = 'Game of {}'.format(data['name'])
         num_players = 1
         if 'game' in data:
-            self._check_keys(data, ['game', 'num_players'])
+            self.check_keys(data, ['num_players'])
             game_name = data['game']
             num_players = data['num_players']
-        self._game = Game.create(game_name, num_players)
-        if self._game.num_players != num_players:
-            log(log.ERROR, "User try login in game:{} with num_players:{}, but expected:{} self._game.num_players")
-            self._game = None
-            raise errors.IllegalCommand
-        self._replay = self._game.replay
-        security_key = None
-        if 'security_key' in data:
-            security_key = data['security_key']
-        self._player = Player(data['name'], security_key)
-        if self._player.idx in self._game.players:
-            if self._game.players[self._player.idx].security_key != security_key:
-                raise errors.GameAccessDenied
-        self._game.add_player(self._player)
+        self.game = Game.create(game_name, num_players)
+        game_num_players = self.game.num_players
+        if game_num_players != num_players:
+            self.game = None
+            raise errors.BadCommand(
+                "Incorrect players number requested, game: {}, game players number: {}, "
+                "requested players number: {}".format(game_name, game_num_players, num_players)
+            )
+        self.replay = self.game.replay
+
+        security_key = data.get('security_key', None)
+        self.player = Player.create(data['name'], security_key)
+        if self.player.security_key != security_key:
+            raise errors.AccessDenied("Security key mismatch")
+        self.game.add_player(self.player)
         log(log.INFO, "Login player: {}".format(data['name']))
-        message = self._player.to_json_str()
-        self._write_response(Result.OKEY, message)
+        message = self.player.to_json_str()
+        self.write_response(Result.OKEY, message)
 
-    def _on_logout(self, _):
-        self._write_response(Result.OKEY)
-        if self._player:
-            log(log.INFO, "Logout player: {}".format(self._player.name))
-            self._game.stop()
-            del self._game
-            self._game = None
+    @check_game
+    def on_logout(self, _):
+        log(log.INFO, "Logout player: {}".format(self.player.name))
+        self.game.stop()
+        self.game = None
         self.transport.close()
+        self.write_response(Result.OKEY)
 
-    def _on_get_map(self, data: dict):
-        if self._game is None:
-            raise errors.IllegalCommand
-        self._check_keys(data, ['layer'])
-        res, message = self._game.get_map_layer(data['layer'])
-        self._write_response(res, message)
+    @check_game
+    def on_get_map(self, data: dict):
+        self.check_keys(data, ['layer'])
+        message = self.game.get_map_layer(data['layer'])
+        self.write_response(Result.OKEY, message)
 
-    def _on_move(self, data: dict):
-        if self._game is None:
-            raise errors.IllegalCommand
-        self._check_keys(data, ['train_idx', 'speed', 'line_idx'])
-        res = self._game.move_train(data['train_idx'], data['speed'], data['line_idx'])
-        self._write_response(res)
+    @check_game
+    def on_move(self, data: dict):
+        self.check_keys(data, ['train_idx', 'speed', 'line_idx'])
+        self.game.move_train(data['train_idx'], data['speed'], data['line_idx'])
+        self.write_response(Result.OKEY)
 
-    def _on_turn(self, _):
-        if self._game is None:
-            raise errors.IllegalCommand
-        self._game.turn(self._player)
-        self._write_response(Result.OKEY)
+    @check_game
+    def on_turn(self, _):
+        self.game.turn(self.player)
+        self.write_response(Result.OKEY)
 
-    def _on_upgrade(self, data: dict):
-        if self._game is None:
-            raise errors.IllegalCommand
-        self._check_keys(data, ['train', 'post'], agg_func=any)
-        res = self._game.make_upgrade(
-            self._player, post_ids=data.get('post', []), train_ids=data.get('train', [])
+    @check_game
+    def on_upgrade(self, data: dict):
+        self.check_keys(data, ['train', 'post'], agg_func=any)
+        self.game.make_upgrade(
+            self.player, post_ids=data.get('post', []), train_ids=data.get('train', [])
         )
-        self._write_response(res)
+        self.write_response(Result.OKEY)
 
-    def _on_observer(self, _):
-        if self._game or self._observer:
-            self._write_response(Result.BAD_COMMAND)
+    def on_observer(self, _):
+        if self.game or self.observer:
+            # TODO: raise error.BadCommand("<Error message>")
+            self.write_response(Result.BAD_COMMAND)
         else:
-            self._observer = Observer()
-            self._write_response(Result.OKEY, json.dumps(self._observer.games()))
+            self.observer = Observer()
+            self.write_response(Result.OKEY, json.dumps(self.observer.games()))
 
     COMMAND_MAP = {
-        Action.LOGIN: _on_login,
-        Action.LOGOUT: _on_logout,
-        Action.MAP: _on_get_map,
-        Action.MOVE: _on_move,
-        Action.UPGRADE: _on_upgrade,
-        Action.TURN: _on_turn,
-        Action.OBSERVER: _on_observer,
+        Action.LOGIN: on_login,
+        Action.LOGOUT: on_logout,
+        Action.MAP: on_get_map,
+        Action.MOVE: on_move,
+        Action.UPGRADE: on_upgrade,
+        Action.TURN: on_turn,
+        Action.OBSERVER: on_observer,
     }
 
 

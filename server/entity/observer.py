@@ -37,7 +37,7 @@ class Observer(object):
         for action in self._actions:
             if action['code'] == Action.LOGIN:
                 data = json.loads(action['message'])
-                self._game.add_player(Player(data['name']))
+                self._game.add_player(Player.create(data['name']))
         self._current_turn = 0
         self._current_action = 0
 

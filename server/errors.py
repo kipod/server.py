@@ -12,19 +12,19 @@ class BadCommand(WgForgeServerError):
     pass
 
 
-class IllegalCommand(WgForgeServerError):
+class NotReady(WgForgeServerError):
     pass
 
 
-class GameNotReady(WgForgeServerError):
+class Timeout(WgForgeServerError):
     pass
 
 
-class GameTimeout(WgForgeServerError):
-    pass
-
-
-class GameAccessDenied(WgForgeServerError):
+class AccessDenied(WgForgeServerError):
     """ Access to requested resource denied.
     """
+    pass
+
+
+class ResourceNotFound(WgForgeServerError):
     pass

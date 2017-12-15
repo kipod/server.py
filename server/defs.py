@@ -35,7 +35,7 @@ class Result(IntEnum):
     OKEY = 0
     BAD_COMMAND = 1
     RESOURCE_NOT_FOUND = 2
-    PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
     NOT_READY = 21
     TIMEOUT = 258
+    INTERNAL_SERVER_ERROR = 500
