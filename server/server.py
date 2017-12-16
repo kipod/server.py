@@ -30,18 +30,23 @@ class GameServerRequestHandler(BaseRequestHandler):
         self.game = None
         self.replay = None
         self.observer = None
-        self.closed = False
+        self.closed = None
         super(GameServerRequestHandler, self).__init__(*args, **kwargs)
 
+    def setup(self):
+        log(log.INFO, "New connection from {}".format(self.client_address))
+        self.closed = False
+
     def handle(self):
-        log(log.INFO, "Connection from {}".format(self.client_address))
         while not self.closed:
             data = self.request.recv(RECEIVE_CHUNK_SIZE)
             if data:
                 self.data_received(data)
             else:
-                log(log.WARNING, "Connection from {0} lost".format(self.client_address))
                 self.closed = True
+
+    def finish(self):
+        log(log.WARNING, "Connection from {0} lost".format(self.client_address))
 
     def data_received(self, data):
         if self.data:
