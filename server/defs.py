@@ -11,6 +11,7 @@ DB_URI = {
     'map': MAP_DB_URI,
     'replay': REPLAY_DB_URI,
 }
+RECEIVE_CHUNK_SIZE = 1024
 
 
 class Action(IntEnum):

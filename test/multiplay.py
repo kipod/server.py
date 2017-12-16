@@ -86,7 +86,6 @@ class TestMultiplay(unittest.TestCase):
         if message:
             return json.loads(message)
 
-    @unittest.skip
     def test_login_and_logout(self):
         """ Test login and logout.
         """
@@ -95,15 +94,15 @@ class TestMultiplay(unittest.TestCase):
         for player in self.players:
             self.logout(player)
 
-    def test_turn(self):
+    def test_login_and_turn(self):
         """ Test login one by one.
         """
         turns_num = 3
 
         self.login(self.players[0])
-        # self.turn(self.players[0], exp_result=Result.NOT_READY)
+        self.turn(self.players[0], exp_result=Result.NOT_READY)
         self.login(self.players[1])
-        # self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
+        self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
 
         for _ in range(turns_num):
             start = time()
@@ -113,3 +112,6 @@ class TestMultiplay(unittest.TestCase):
             self.turn_check_resp(self.players[1])
             elapsed = time() - start
             self.assertLess(elapsed, config.TICK_TIME)
+
+        self.logout(self.players[0])
+        self.logout(self.players[1])

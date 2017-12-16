@@ -1,10 +1,10 @@
 """ Game server.
 """
-import asyncio
 import json
+from socketserver import ThreadingTCPServer, BaseRequestHandler
 
 import errors
-from defs import SERVER_ADDR, SERVER_PORT, Action, Result
+from defs import SERVER_ADDR, SERVER_PORT, RECEIVE_CHUNK_SIZE, Action, Result
 from entity.game import Game
 from entity.observer import Observer
 from entity.player import Player
@@ -20,9 +20,8 @@ def check_game(func):
     return wrapped
 
 
-class GameServerProtocol(asyncio.Protocol):
-    def __init__(self):
-        asyncio.Protocol.__init__(self)
+class GameServerRequestHandler(BaseRequestHandler):
+    def __init__(self, *args, **kwargs):
         self.action = None
         self.message_len = None
         self.message = None
@@ -31,16 +30,18 @@ class GameServerProtocol(asyncio.Protocol):
         self.game = None
         self.replay = None
         self.observer = None
-        self.peername = None
-        self.transport = None
+        self.closed = False
+        super(GameServerRequestHandler, self).__init__(*args, **kwargs)
 
-    def connection_made(self, transport):
-        self.peername = transport.get_extra_info('peername')
-        log(log.INFO, "Connection from {}".format(self.peername))
-        self.transport = transport
-
-    def connection_lost(self, exc):
-        log(log.WARNING, "Connection from {0} lost. Reason: {1}".format(self.peername, exc))
+    def handle(self):
+        log(log.INFO, "Connection from {}".format(self.client_address))
+        while not self.closed:
+            data = self.request.recv(RECEIVE_CHUNK_SIZE)
+            if data:
+                self.data_received(data)
+            else:
+                log(log.WARNING, "Connection from {0} lost".format(self.client_address))
+                self.closed = True
 
     def data_received(self, data):
         if self.data:
@@ -113,9 +114,9 @@ class GameServerProtocol(asyncio.Protocol):
 
     def write_response(self, result, message=None):
         resp_message = '' if message is None else message
-        self.transport.write(result.to_bytes(4, byteorder='little'))
-        self.transport.write(len(resp_message).to_bytes(4, byteorder='little'))
-        self.transport.write(resp_message.encode('utf-8'))
+        self.request.sendall(result.to_bytes(4, byteorder='little'))
+        self.request.sendall(len(resp_message).to_bytes(4, byteorder='little'))
+        self.request.sendall(resp_message.encode('utf-8'))
 
     def error_response(self, result, error=None):
         if error is not None:
@@ -166,8 +167,8 @@ class GameServerProtocol(asyncio.Protocol):
         log(log.INFO, "Logout player: {}".format(self.player.name))
         self.game.stop()
         self.game = None
+        self.closed = True
         self.write_response(Result.OKEY)
-        self.transport.close()
 
     @check_game
     def on_get_map(self, data: dict):
@@ -213,19 +214,14 @@ class GameServerProtocol(asyncio.Protocol):
     }
 
 
-loop = asyncio.get_event_loop()
-# Each client connection will create a new protocol instance.
-coro = loop.create_server(GameServerProtocol, SERVER_ADDR, SERVER_PORT)
-server = loop.run_until_complete(coro)
-
-# Serve requests until Ctrl+C is pressed.
-log(log.INFO, "Serving on {}".format(server.sockets[0].getsockname()))
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    log(log.WARNING, "Server stopped by keyboard interrupt...")
-
-# Close the server.
-server.close()
-loop.run_until_complete(server.wait_closed())
-loop.close()
+if __name__ == "__main__":
+    server = ThreadingTCPServer((SERVER_ADDR, SERVER_PORT), GameServerRequestHandler)
+    log(log.INFO, "Serving on {}".format(server.socket.getsockname()))
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        log(log.WARNING, "Server stopped by keyboard interrupt...")
+    finally:
+        server.shutdown()
+        server.server_close()
+        server.socket.close()

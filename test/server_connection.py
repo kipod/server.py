@@ -47,8 +47,6 @@ class ServerConnection(object):
     def send_action(self, action: int, data=None, is_raw=False, wait_for_response=True):
         """ Sends action command.
         """
-        if action == 5:
-            import pdb; pdb.set_trace()
         self.send(action.to_bytes(4, byteorder='little'))
         if data is not None:
             if is_raw:
