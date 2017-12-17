@@ -95,6 +95,12 @@ class DbReplay(object):
         return actions
 
 
+def generate_replay00(database: DbReplay, session: ReplaySession):
+    """ Generates empty replay DB.
+    """
+    pass
+
+
 def generate_replay01(database: DbReplay, session: ReplaySession):
     """ Generates test game replay.
     """
@@ -138,6 +144,7 @@ def generate_replay01(database: DbReplay, session: ReplaySession):
 
 
 REPLAY_GENERATORS = {
+    'replay00': generate_replay00,
     'replay01': generate_replay01,
 }
 

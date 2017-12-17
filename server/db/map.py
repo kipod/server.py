@@ -515,7 +515,7 @@ MAP_GENERATORS = {
 
 
 @task
-def generate_map(ctx, map_version=config.CURRENT_MAP_VERSION):
+def generate_map(_, map_version=config.CURRENT_MAP_VERSION):
     """ Generates 'map.db'.
     """
     if map_version is not None and map_version not in MAP_GENERATORS:

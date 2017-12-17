@@ -3,6 +3,8 @@
 import json
 from socketserver import ThreadingTCPServer, BaseRequestHandler
 
+from invoke import task
+
 import errors
 from defs import SERVER_ADDR, SERVER_PORT, RECEIVE_CHUNK_SIZE, Action, Result
 from entity.game import Game
@@ -55,8 +57,9 @@ class GameServerRequestHandler(BaseRequestHandler):
             data = self.data + data
             self.data = None
         if self.process_data(data):
-            log(log.INFO, Action(self.action))
-            log(log.INFO, self.message)
+            log(log.INFO, 'Player: {}, action: {!r}\n{}'.format(
+                self.player.idx if self.player is not None else self.client_address,
+                Action(self.action), self.message))
             try:
                 data = json.loads(self.message)
                 if not isinstance(data, dict):
@@ -121,6 +124,7 @@ class GameServerRequestHandler(BaseRequestHandler):
 
     def write_response(self, result, message=None):
         resp_message = '' if message is None else message
+        log(log.DEBUG, '{!r}\n{}'.format(result, resp_message))
         self.request.sendall(result.to_bytes(4, byteorder='little'))
         self.request.sendall(len(resp_message).to_bytes(4, byteorder='little'))
         self.request.sendall(resp_message.encode('utf-8'))
@@ -183,13 +187,13 @@ class GameServerRequestHandler(BaseRequestHandler):
     @login_required
     def on_get_map(self, data: dict):
         self.check_keys(data, ['layer'])
-        message = self.game.get_map_layer(data['layer'])
+        message = self.game.get_map_layer(self.player, data['layer'])
         self.write_response(Result.OKEY, message)
 
     @login_required
     def on_move(self, data: dict):
         self.check_keys(data, ['train_idx', 'speed', 'line_idx'])
-        self.game.move_train(data['train_idx'], data['speed'], data['line_idx'])
+        self.game.move_train(self.player, data['train_idx'], data['speed'], data['line_idx'])
         self.write_response(Result.OKEY)
 
     @login_required
@@ -224,8 +228,11 @@ class GameServerRequestHandler(BaseRequestHandler):
     }
 
 
-if __name__ == "__main__":
-    server = ThreadingTCPServer((SERVER_ADDR, SERVER_PORT), GameServerRequestHandler)
+@task
+def run_server(_, address=SERVER_ADDR, port=SERVER_PORT):
+    """ Launches 'WG Forge' TCP server.
+    """
+    server = ThreadingTCPServer((address, port), GameServerRequestHandler)
     log(log.INFO, "Serving on {}".format(server.socket.getsockname()))
     try:
         server.serve_forever()

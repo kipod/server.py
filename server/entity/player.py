@@ -113,7 +113,7 @@ class Player(object):
 
     @property
     def rating(self):
-        """ calculate player's rating
+        """ Calculates player's rating.
         """
         rating_value = self.town.population * 1000
         rating_value += (self.town.product + self.town.armor)

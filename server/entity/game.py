@@ -131,7 +131,7 @@ class Game(Thread):
             del Game.GAMES[self.name]
 
     def run(self):
-        """ Thread's activity.
+        """ Thread's activity. The loop with game ticks.
         """
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
@@ -203,17 +203,19 @@ class Game(Thread):
         else:
             train.speed = 0
 
-    def move_train(self, train_idx, speed, line_idx):
+    def move_train(self, player, train_idx, speed, line_idx):
         """ Process action MOVE. Changes path or speed of the Train.
         """
         with self._lock:
             if train_idx not in self.trains:
                 raise errors.ResourceNotFound("Train index not found, index: {}".format(train_idx))
-            if train_idx in self.next_train_moves:
-                del self.next_train_moves[train_idx]
-            train = self.trains[train_idx]
             if line_idx not in self.map.line:
                 raise errors.ResourceNotFound("Line index not found, index: {}".format(line_idx))
+            train = self.trains[train_idx]
+            if train.player_id != player.idx:
+                raise errors.AccessDenied("Train's owner mismatch")
+            if train_idx in self.next_train_moves:
+                del self.next_train_moves[train_idx]
 
             # Check cooldown for the train:
             if train.cooldown > 0:
@@ -296,7 +298,7 @@ class Game(Thread):
         """ Makes all needed actions when Train arrives to Post.
         Behavior depends on PostType, train can be loaded or unloaded.
         """
-        if post.type == PostType.TOWN:
+        if post.type == PostType.TOWN and train.player_id == post.player_id:
             # Unload product from train to town:
             goods = 0
             if train.post_type == PostType.MARKET:
@@ -556,6 +558,8 @@ class Game(Thread):
                 post = self.map.post[post_id]
                 if post.type != PostType.TOWN:
                     raise errors.BadCommand("The post is not a Town, post: {}".format(post))
+                if post.player_id != player.idx:
+                    raise errors.AccessDenied("Town's owner mismatch")
                 posts.append(post)
 
             # Get trains from request:
@@ -564,6 +568,8 @@ class Game(Thread):
                 if train_id not in self.trains:
                     raise errors.ResourceNotFound("Train index not found, index: {}".format(train_id))
                 train = self.trains[train_id]
+                if train.player_id != player.idx:
+                    raise errors.AccessDenied("Train's owner mismatch")
                 trains.append(train)
 
             # Check existence of next level for each entity:
@@ -597,7 +603,7 @@ class Game(Thread):
                 train.set_level(train.level + 1)
                 log(log.INFO, "Train has been upgraded, post: {}".format(train))
 
-    def get_map_layer(self, layer):
+    def get_map_layer(self, player, layer):
         """ Returns specified game map layer.
         """
         if layer not in (0, 1, 10):
@@ -605,8 +611,8 @@ class Game(Thread):
 
         log(log.INFO, "Load game map layer, layer: {}".format(layer))
         message = self.map.layer_to_json_str(layer)
-        self.clean_events()
-        if layer == 1:  # Add ratings.
+        if layer == 1:  # Add ratings. TODO: Improve this code.
+            self.clean_user_events(player)
             data = json.loads(message)
             rating = {}
             for player in self.players.values():
@@ -615,13 +621,15 @@ class Game(Thread):
             message = json.dumps(data, sort_keys=True, indent=4)
         return message
 
-    def clean_events(self):
+    def clean_user_events(self, player):
         """ Cleans all existing events.
         """
         for train in self.map.train.values():
-            train.event = []
-        for post in self.map.post.values():
-            post.event = []
+            if train.player_id == player.idx:
+                train.event = []
+        for town in self.map.towns:
+            if town.player_id == player.idx:
+                town.event = []
 
     def update_cooldowns_on_tick(self):
         """ Decreases all cooldown values on game tick.
