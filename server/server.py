@@ -154,7 +154,7 @@ class GameServerRequestHandler(BaseRequestHandler):
             game_name = data['game']
             num_players = data['num_players']
 
-        game = Game.create(game_name, num_players)
+        game = Game.create(game_name, num_players)  # TODO: Check towns count
         if game.num_players != num_players:
             raise errors.BadCommand(
                 "Incorrect players number requested, game: {}, game players number: {}, "
