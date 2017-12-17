@@ -2,12 +2,13 @@
 """
 import json
 import unittest
-from time import time
 from datetime import datetime
+from time import time
 
 from attrdict import AttrDict
 
 from server.db.map import generate_map03, DbMap
+from server.db.session import map_session_ctx
 from server.defs import Action, Result
 from server.game_config import config
 from test.server_connection import ServerConnection
@@ -26,19 +27,20 @@ class TestMultiplay(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as database:
-            database.reset_db()
-            generate_map03(database)
+        database = DbMap()
+        database.reset_db()
+        with map_session_ctx() as session:
+            generate_map03(database, session)
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as database:
-            database.reset_db()
+        database = DbMap()
+        database.reset_db()
 
     def setUp(self):
         self.players = []
         for player_name in self.PLAYER_NAMES:
-            conn = ServerConnection(config.SERVER_ADDR, config.SERVER_PORT)
+            conn = ServerConnection()
             player = AttrDict({'name': player_name, 'conn': conn})
             self.players.append(player)
 

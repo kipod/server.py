@@ -7,18 +7,28 @@ from invoke import task
 from sqlalchemy import func, and_
 
 from db.models import ReplayBase, Game, Action
-from db.session import ReplaySession
+from db.session import ReplaySession, replay_session_ctx
 from defs import Action as ActionCodes
 from game_config import config
 
 TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
 
+def db_session(function):
+    def wrapped(*args, **kwargs):
+        if kwargs.get('session', None) is None:
+            with replay_session_ctx() as session:
+                kwargs['session'] = session
+                return function(*args, **kwargs)
+        else:
+            return function(*args, **kwargs)
+    return wrapped
+
+
 class DbReplay(object):
     """ Contains helpers for replay DB.
     """
     def __init__(self):
-        self.session = ReplaySession()
         self.current_game_id = None
 
     @staticmethod
@@ -28,32 +38,33 @@ class DbReplay(object):
         ReplayBase.metadata.drop_all()
         ReplayBase.metadata.create_all()
 
-    def add_game(self, name, map_name, date=None):
+    @db_session
+    def add_game(self, name, map_name, date=None, session=None):
         """ Creates new Game in DB.
         """
         _date = datetime.now() if date is None else date
         new_game = Game(name=name, date=_date, map_name=map_name)
-        self.session.add(new_game)
-        self.session.commit()  # Commit to get game's id.
+        session.add(new_game)
+        session.commit()  # Commit to get game's id.
         self.current_game_id = new_game.id
         return self.current_game_id
 
     # pylint: disable=R0913
-    def add_action(self, action, message, game_id=None, date=None, with_commit=True):
+    @db_session
+    def add_action(self, action, message, game_id=None, date=None, session=None):
         """ Creates new Action in DB.
         """
         _date = datetime.now() if date is None else date
         _game_id = self.current_game_id if game_id is None else game_id
         new_action = Action(game_id=_game_id, code=action, message=message, date=_date)
-        self.session.add(new_action)
-        if with_commit:  # What is the purpose of with_commit arg?
-            self.session.commit()
+        session.add(new_action)
 
-    def get_all_games(self):
+    @db_session
+    def get_all_games(self, session=None):
         """ Retrieves all games with their length.
         """
         games = []
-        rows = self.session.query(Game, func.count(Action.id)).outerjoin(
+        rows = session.query(Game, func.count(Action.id)).outerjoin(
             Action, and_(Game.id == Action.game_id, Action.code == ActionCodes.TURN)).group_by(
                 Game.id).order_by(Game.id).all()
         for row in rows:
@@ -68,11 +79,12 @@ class DbReplay(object):
             games.append(game)
         return games
 
-    def get_all_actions(self, game_id):
+    @db_session
+    def get_all_actions(self, game_id, session=None):
         """ Retrieves all actions for the game.
         """
         actions = []
-        rows = self.session.query(Action).filter(Action.game_id == game_id).order_by(Action.id).all()
+        rows = session.query(Action).filter(Action.game_id == game_id).order_by(Action.id).all()
         for row in rows:
             action = {
                 'code': row.code,
@@ -82,49 +94,33 @@ class DbReplay(object):
             actions.append(action)
         return actions
 
-    def close(self):
-        """ Closes and commits session.
-        """
-        self.session.commit()
-        self.session.close()
 
-    def commit(self):
-        """ Makes commit to DB.
-        """
-        self.session.commit()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.close()
-
-
-def generate_replay01(database: DbReplay):
+def generate_replay01(database: DbReplay, session: ReplaySession):
     """ Generates test game replay.
     """
-    database.add_game('Test', config.MAP_NAME)
-    database.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}')
+    database.add_game('Test', config.MAP_NAME, session=session)
+    database.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}', session=session)
 
-    def insert_replay_move_and_turns(database: DbReplay, line_idx: int, speed: int, train_idx: int, turns_count: int):
+    def insert_replay_move_and_turns(line_idx: int, speed: int, train_idx: int, turns_count: int):
         """ Inserts into replays database MOVE action + number of TURN actions.
         """
         database.add_action(
             ActionCodes.MOVE,
-            '{{"line_idx": {0}, "speed": {1}, "train_idx": {2}}}'.format(line_idx, speed, train_idx)
+            '{{"line_idx": {0}, "speed": {1}, "train_idx": {2}}}'.format(line_idx, speed, train_idx),
+            session=session
         )
         for _ in range(turns_count):
-            database.add_action(ActionCodes.TURN, None)
+            database.add_action(ActionCodes.TURN, None, session=session)
 
     def forward_move(line_idx: int, count_turns: int):
         """ Forward move. Inner helper to simplify records formatting.
         """
-        insert_replay_move_and_turns(database, line_idx, 1, 1, count_turns)
+        insert_replay_move_and_turns(line_idx, 1, 1, count_turns)
 
     def reverse_move(line_idx: int, count_turns: int):
         """ Reverse move. Inner helper to simplify records formatting.
         """
-        insert_replay_move_and_turns(database, line_idx, -1, 1, count_turns)
+        insert_replay_move_and_turns(line_idx, -1, 1, count_turns)
 
     forward = [
         (1, 3), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (7, 4), (8, 4), (9, 4),
@@ -150,15 +146,16 @@ REPLAY_GENERATORS = {
 def generate_replay(_, replay_name=None):
     """ Generates 'replay.db'.
     """
-    with DbReplay() as database:
-        if replay_name is not None and replay_name not in REPLAY_GENERATORS:
-            print("Error, unknown replay name: '{}', available: {}".format(
-                replay_name, ', '.join(REPLAY_GENERATORS.keys())))
-            sys.exit(1)
-        database.reset_db()
-        replays_to_generate = REPLAY_GENERATORS.keys() if replay_name is None else [replay_name, ]
+    if replay_name is not None and replay_name not in REPLAY_GENERATORS:
+        print("Error, unknown replay name: '{}', available: {}".format(
+            replay_name, ', '.join(REPLAY_GENERATORS.keys())))
+        sys.exit(1)
+    database = DbReplay()
+    database.reset_db()
+    replays_to_generate = REPLAY_GENERATORS.keys() if replay_name is None else [replay_name, ]
+    with replay_session_ctx() as session:
         for current_replay in replays_to_generate:
             replay_generator = REPLAY_GENERATORS[current_replay]
-            replay_generator(database)
+            replay_generator(database, session)
             print("Replay '{}' has been generated.".format(current_replay))
-        sys.exit(0)
+    sys.exit(0)

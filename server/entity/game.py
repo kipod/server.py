@@ -77,11 +77,16 @@ class Game(Thread):
         """ Adds player to the game.
         """
         if player.idx not in self.players:
+            # Check players count:
+            if len(self.players) == config.MAX_PLAYERS_COUNT:
+                raise errors.AccessDenied("The maximum number of players reached")
+
             with self._lock:
                 # Use first Town on the map as player's Town:
-                player_town = self.map.towns[0]
+                player_town = self.map.towns[0]  # TODO: Fix it for multiplay
                 player_home_point = self.map.point[player_town.point_id]
                 player.set_home(player_home_point, player_town)
+                player.in_game = True
                 self.players[player.idx] = player
                 # Add trains for the player:
                 for _ in range(config.DEFAULT_TRAINS_COUNT):
@@ -94,8 +99,9 @@ class Game(Thread):
                     # Put the Train into Town:
                     self.put_train_into_town(train, with_cooldown=False)
                 log(log.INFO, "Add new player to the game, player: {}".format(player))
+
             # Start thread with game ticks:
-            if not self.observed and (self.num_players == len(self.players)):
+            if not self.observed and self.num_players == len(self.players):
                 Thread.start(self)
                 self.state = GameState.RUN
 
@@ -123,34 +129,26 @@ class Game(Thread):
         self._stop_event.set()
         if self.name in Game.GAMES:
             del Game.GAMES[self.name]
-        if self.replay:
-            self.replay.commit()
 
     def run(self):
         """ Thread's activity.
         """
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
-        try:
-            while not self._stop_event.is_set():
-                self._start_tick_event.wait(config.TICK_TIME)
-                with self._lock:
-                    if self.state != GameState.RUN:
-                        break  # Finish game thread.
-                    self.tick()
-                    with self._done_tick_condition:
-                        self._done_tick_condition.notify_all()
-                    if self._start_tick_event.is_set():
-                        self._start_tick_event.clear()
-                    if replay:
-                        replay.add_action(
-                            Action.TURN, message=None, with_commit=False, game_id=self.current_game_id
-                        )
-            if replay:
-                replay.commit()
-        finally:
-            if replay:
-                replay.close()
+        while not self._stop_event.is_set():
+            self._start_tick_event.wait(config.TICK_TIME)
+            with self._lock:
+                if self.state != GameState.RUN:
+                    break  # Finish game thread.
+                self.tick()
+                with self._done_tick_condition:
+                    self._done_tick_condition.notify_all()
+                if self._start_tick_event.is_set():
+                    self._start_tick_event.clear()
+                if replay:
+                    replay.add_action(
+                        Action.TURN, message=None, game_id=self.current_game_id
+                    )
 
     def tick(self):
         """ Makes game tick. Updates dynamic game entities.
@@ -373,7 +371,7 @@ class Game(Thread):
                 player.town.armor = max(player.town.armor - hijackers_power, 0)
                 player.town.event.append(event)
             if self.replay:
-                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+                self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.HIJACKERS_ASSAULT] = round(
                 hijackers_power * config.HIJACKERS_COOLDOWN_COEF)
 
@@ -393,7 +391,7 @@ class Game(Thread):
                 player.town.product = max(player.town.product - parasites_power, 0)
                 player.town.event.append(event)
             if self.replay:
-                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+                self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.PARASITES_ASSAULT] = round(
                 parasites_power * config.PARASITES_COOLDOWN_COEF)
 
@@ -419,7 +417,7 @@ class Game(Thread):
                         GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, population=player.town.population)
                     )
             if self.replay:
-                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+                self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.REFUGEES_ARRIVAL] = round(
                 refugees_number * config.REFUGEES_COOLDOWN_COEF)
 
@@ -637,3 +635,6 @@ class Game(Thread):
         for train in self.trains.values():
             if train.cooldown != 0:
                 train.cooldown = max(train.cooldown - 1, 0)
+
+    def __del__(self):
+        log(log.INFO, "Game deleted, name: '{}'".format(self.name))

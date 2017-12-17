@@ -21,14 +21,14 @@ class Player(object):
     PLAYERS = {}
 
     def __init__(self, name, security_key=None):
+        self.idx = str(uuid.uuid4())
         self.name = name
-        self.idx = None
+        self.security_key = security_key
         self.train = {}
         self.home = None
         self.town = None
         self.turn_done = False
-        self.security_key = security_key
-        self.idx = str(uuid.uuid4())
+        self.in_game = False
 
     def __eq__(self, other):
         return self.idx == other.idx
@@ -81,12 +81,21 @@ class Player(object):
                 town['idx'], town['name'], town['type'], population=town['population'], armor=town['armor'],
                 product=town['product'], level=town['level'], player_id=town['player_id'], point_id=town['point_id']
             )
+        if data.get('turn_done'):
+            self.turn_done = data['turn_done']
+        if data.get('in_game'):
+            self.in_game = data['in_game']
+        if data.get('security_key'):
+            self.security_key = data['security_key']
 
     def to_json_str(self):
         """ store object to JSON string
         """
         data = {}
+        protected = ('security_key', )
         for key in self.__dict__:
+            if key in protected:
+                continue
             attribute = self.__dict__[key]
             if isinstance(attribute, dict):
                 data[key] = [i for i in attribute.values()]
@@ -95,8 +104,11 @@ class Player(object):
         return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __repr__(self):
-        return "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, trains_idx=[{}])>".format(
-            self.idx, self.name, self.home.idx, self.town.idx, ', '.join([str(idx) for idx in self.train])
+        return (
+            "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, "
+            "turn_done={}, in_game={}, trains_idx=[{}])>".format(
+                self.idx, self.name, self.home.idx, self.town.idx, self.turn_done, self.in_game,
+                ', '.join([str(idx) for idx in self.train]))
         )
 
     @property

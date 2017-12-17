@@ -6,6 +6,7 @@ import unittest
 
 from server.db.map import DbMap, generate_map03
 from server.db.replay import DbReplay, generate_replay01
+from server.db.session import map_session_ctx, replay_session_ctx
 from server.defs import Action, Result
 from server.game_config import config
 from test.server_connection import ServerConnection
@@ -24,41 +25,40 @@ class TestObserver(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls._conn = ServerConnection()
+        cls.connection = ServerConnection()
         cls.prepare_db()
 
     @classmethod
     def tearDownClass(cls):
-        del cls._conn
+        cls.connection.close()
         cls.reset_db()
 
     @staticmethod
     def prepare_db():
-        """ Prepare replay DB for tests.
+        """ Prepare replay DB and map DB for tests.
         """
-        with DbReplay() as database:
-            database.reset_db()
-            generate_replay01(database)
-        with DbMap() as database:
-            database.reset_db()
-            generate_map03(database)
+        replay_db = DbReplay()
+        replay_db.reset_db()
+        with replay_session_ctx() as session:
+            generate_replay01(replay_db, session)
+
+        map_db = DbMap()
+        map_db.reset_db()
+        with map_session_ctx() as session:
+            generate_map03(map_db, session)
 
     @staticmethod
     def reset_db():
-        """ Resets replay DB after tests.
+        """ Resets replay DB and map DB after tests.
         """
-        with DbReplay() as database:
-            database.reset_db()
-        with DbMap() as database:
-            database.reset_db()
+        replay_db = DbReplay()
+        replay_db.reset_db()
 
-    def test_0_connection(self):
-        """ Test connection.
-        """
-        self._conn.verify()
+        map_db = DbMap()
+        map_db.reset_db()
 
     def do_action(self, action, data):
-        return self._conn.do_action(action, data)
+        return self.connection.send_action(action, data)
 
     def test_1_observer_get_game_list(self):
         """ Connect as observer, get list of recorded games, verify list of games.
@@ -156,10 +156,10 @@ class TestObserver(unittest.TestCase):
         """ Verify if game on server writes to replay.db on game's tick.
         """
         conn = ServerConnection()
-        result, _ = conn.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})
+        result, _ = conn.send_action(Action.LOGIN, {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
         time.sleep(config.TICK_TIME + 1)  # Wait for game tick.
-        result, _ = conn.do_action(Action.LOGOUT, None)
+        result, _ = conn.send_action(Action.LOGOUT, None)
         self.assertEqual(Result.OKEY, result)
         time.sleep(2)  # Wait for DB commit.
         result, message = self.do_action(Action.OBSERVER, None)

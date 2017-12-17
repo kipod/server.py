@@ -3,8 +3,8 @@ import unittest
 from datetime import datetime
 
 from server.db.map import generate_map02, DbMap
+from server.db.session import map_session_ctx
 from server.defs import Action, Result
-from server.game_config import config
 from test.server_connection import ServerConnection
 
 
@@ -16,20 +16,21 @@ class TestErrors(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as database:
-            database.reset_db()
-            generate_map02(database)
+        database = DbMap()
+        database.reset_db()
+        with map_session_ctx() as session:
+            generate_map02(database, session)
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as database:
-            database.reset_db()
+        database = DbMap()
+        database.reset_db()
 
     def do_action(self, action, data):
         return self.connection.send_action(action, data)
 
     def setUp(self):
-        self.connection = ServerConnection(config.SERVER_ADDR, config.SERVER_PORT)
+        self.connection = ServerConnection()
         self.current_tick = 0
 
     def tearDown(self):
@@ -68,7 +69,6 @@ class TestErrors(unittest.TestCase):
         self.assertEqual(exp_result, result)
         return json.loads(message)
 
-    @unittest.skip
     def test_login(self):
         self.login()
         message = self.login(security_key='incorrect-key', exp_result=Result.ACCESS_DENIED)
@@ -79,13 +79,12 @@ class TestErrors(unittest.TestCase):
         non_existing_map_layer = 999999
         message = self.get_map(0, exp_result=Result.ACCESS_DENIED)
         self.assertIn('error', message)
-        self.assertIn("There is no game", message['error'])
+        self.assertIn("Login required", message['error'])
         self.login()
         message = self.get_map(non_existing_map_layer, exp_result=Result.RESOURCE_NOT_FOUND)
         self.assertIn('error', message)
         self.assertIn("Map layer not found", message['error'])
 
-    @unittest.skip
     def test_move_train(self):
         test_line_idx = 13
         next_line_idx = 2

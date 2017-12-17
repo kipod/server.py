@@ -11,10 +11,10 @@ from entity.player import Player
 from logger import log
 
 
-def check_game(func):
+def login_required(func):
     def wrapped(self, *args, **kwargs):
-        if self.game is None:
-            raise errors.AccessDenied("There is no game")
+        if self.game is None or self.player is None:
+            raise errors.AccessDenied("Login required")
         else:
             return func(self, *args, **kwargs)
     return wrapped
@@ -47,6 +47,8 @@ class GameServerRequestHandler(BaseRequestHandler):
 
     def finish(self):
         log(log.WARNING, "Connection from {0} lost".format(self.client_address))
+        if self.player is not None:
+            self.player.in_game = False
 
     def data_received(self, data):
         if self.data:
@@ -67,7 +69,7 @@ class GameServerRequestHandler(BaseRequestHandler):
                     method = self.COMMAND_MAP[self.action]
                     method(self, data)
                     if self.replay and self.action in (Action.MOVE, Action.LOGIN, Action.UPGRADE, ):
-                        self.replay.add_action(self.action, self.message, with_commit=False)
+                        self.replay.add_action(self.action, self.message)
 
             # Handle errors:
             except (json.decoder.JSONDecodeError, errors.BadCommand) as err:
@@ -144,55 +146,58 @@ class GameServerRequestHandler(BaseRequestHandler):
         self.check_keys(data, ['name'])
         game_name = 'Game of {}'.format(data['name'])
         num_players = 1
-        if 'game' in data:
-            self.check_keys(data, ['num_players'])
+        if 'game' in data and self.check_keys(data, ['num_players']):
             game_name = data['game']
             num_players = data['num_players']
-        self.game = Game.create(game_name, num_players)
-        game_num_players = self.game.num_players
-        if game_num_players != num_players:
-            self.game = None
+
+        game = Game.create(game_name, num_players)
+        if game.num_players != num_players:
             raise errors.BadCommand(
                 "Incorrect players number requested, game: {}, game players number: {}, "
-                "requested players number: {}".format(game_name, game_num_players, num_players)
+                "requested players number: {}".format(game_name, game.num_players, num_players)
             )
-        self.replay = self.game.replay
 
         security_key = data.get('security_key', None)
-        self.player = Player.create(data['name'], security_key)
-        if self.player.security_key != security_key:
+        player = Player.create(data['name'], security_key)
+        if player.security_key != security_key:
             raise errors.AccessDenied("Security key mismatch")
-        self.game.add_player(self.player)
-        log(log.INFO, "Login player: {}".format(data['name']))
+
+        game.add_player(player)
+        self.game = game
+        self.player = player
+        self.replay = game.replay
+
+        log(log.INFO, "Login player: {}".format(player))
         message = self.player.to_json_str()
         self.write_response(Result.OKEY, message)
 
-    @check_game
+    @login_required
     def on_logout(self, _):
         log(log.INFO, "Logout player: {}".format(self.player.name))
-        self.game.stop()
-        self.game = None
+        self.player.in_game = False
+        if not any([p.in_game for p in self.game.players.values()]):
+            self.game.stop()
         self.closed = True
         self.write_response(Result.OKEY)
 
-    @check_game
+    @login_required
     def on_get_map(self, data: dict):
         self.check_keys(data, ['layer'])
         message = self.game.get_map_layer(data['layer'])
         self.write_response(Result.OKEY, message)
 
-    @check_game
+    @login_required
     def on_move(self, data: dict):
         self.check_keys(data, ['train_idx', 'speed', 'line_idx'])
         self.game.move_train(data['train_idx'], data['speed'], data['line_idx'])
         self.write_response(Result.OKEY)
 
-    @check_game
+    @login_required
     def on_turn(self, _):
         self.game.turn(self.player)
         self.write_response(Result.OKEY)
 
-    @check_game
+    @login_required
     def on_upgrade(self, data: dict):
         self.check_keys(data, ['train', 'post'], agg_func=any)
         self.game.make_upgrade(
@@ -229,4 +234,3 @@ if __name__ == "__main__":
     finally:
         server.shutdown()
         server.server_close()
-        server.socket.close()

@@ -4,6 +4,7 @@ import json
 import unittest
 
 from server.db.map import generate_map02, DbMap
+from server.db.session import map_session_ctx
 from server.entity.map import Map
 from server.entity.player import Player
 from server.entity.point import Point
@@ -16,14 +17,15 @@ class TestEntity(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as database:
-            database.reset_db()
-            generate_map02(database)
+        database = DbMap()
+        database.reset_db()
+        with map_session_ctx() as session:
+            generate_map02(database, session)
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as database:
-            database.reset_db()
+        database = DbMap()
+        database.reset_db()
 
     def setUp(self):
         pass

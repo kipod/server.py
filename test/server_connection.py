@@ -4,16 +4,19 @@ import json
 import socket
 
 from server.defs import Result
+from server.game_config import config
 
 
 class ServerConnection(object):
     """ Connection object.
     """
 
+    ACTION_HEADER = 4
     RESULT_HEADER = 4
     MSGLEN_HEADER = 4
+    RECEIVE_CHUNK_SIZE = 1024
 
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=config.SERVER_ADDR, port=config.SERVER_PORT):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if host and port:
             self.connect(host, port)
@@ -37,7 +40,7 @@ class ServerConnection(object):
         chunks = []
         bytes_recd = 0
         while bytes_recd < msg_len:
-            chunk = self.sock.recv(min(msg_len - bytes_recd, 2048))
+            chunk = self.sock.recv(min(msg_len - bytes_recd, self.RECEIVE_CHUNK_SIZE))
             if chunk == b'':
                 raise RuntimeError("Socket connection broken")
             chunks.append(chunk)
@@ -47,13 +50,13 @@ class ServerConnection(object):
     def send_action(self, action: int, data=None, is_raw=False, wait_for_response=True):
         """ Sends action command.
         """
-        self.send(action.to_bytes(4, byteorder='little'))
+        self.send(action.to_bytes(self.ACTION_HEADER, byteorder='little'))
         if data is not None:
             if is_raw:
                 message = data
             else:
                 message = json.dumps(data, sort_keys=True, indent=4)
-            self.send(len(message).to_bytes(4, byteorder='little'))
+            self.send(len(message).to_bytes(self.MSGLEN_HEADER, byteorder='little'))
             self.send(message.encode('utf-8'))
 
         if wait_for_response:

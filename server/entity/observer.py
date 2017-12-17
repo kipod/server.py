@@ -54,7 +54,7 @@ class Observer(object):
             return Result.RESOURCE_NOT_FOUND, None
         if 'layer' in data:
             layer = data['layer']
-            return self._game.get_map_layer(layer)
+            return Result.OKEY, self._game.get_map_layer(layer)
         return Result.BAD_COMMAND, None
 
     def game_turn(self, turns):
