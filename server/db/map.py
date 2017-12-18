@@ -736,11 +736,8 @@ def generate_map04(db: DbMap, session: MapSession):
     add_line(4, p42, p43)
     add_line(4, p43, p44)
     add_line(4, p44, p45)
-<<<<<<< HEAD
     add_line(2, p45, p46)
-=======
     add_line(4, p45, p46)
->>>>>>> 349fc602b779adbe7895aaa5013fe9f9ca0a82b8
     add_line(4, p46, p47)
     add_line(4, p47, p48)
     add_line(4, p48, p49)
@@ -750,13 +747,8 @@ def generate_map04(db: DbMap, session: MapSession):
     add_line(5, p42, p52)
     add_line(5, p43, p53)
     add_line(5, p44, p54)
-<<<<<<< HEAD
     add_line(2, p45, p55)
     add_line(2, p46, p56)
-=======
-    add_line(5, p45, p55)
-    add_line(5, p46, p56)
->>>>>>> 349fc602b779adbe7895aaa5013fe9f9ca0a82b8
     add_line(5, p47, p57)
     add_line(5, p48, p58)
     add_line(5, p49, p59)
@@ -767,11 +759,8 @@ def generate_map04(db: DbMap, session: MapSession):
     add_line(4, p52, p53)
     add_line(4, p53, p54)
     add_line(4, p54, p55)
-<<<<<<< HEAD
     add_line(2, p55, p56)
-=======
     add_line(4, p55, p56)
->>>>>>> 349fc602b779adbe7895aaa5013fe9f9ca0a82b8
     add_line(4, p56, p57)
     add_line(4, p57, p58)
     add_line(4, p58, p59)
