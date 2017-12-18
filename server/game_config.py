@@ -6,7 +6,7 @@ from attrdict import AttrDict
 class BaseConfig(object):
     TICK_TIME = 10
     MAP_NAME = 'theMap'
-    CURRENT_MAP_VERSION = 'map03'
+    CURRENT_MAP_VERSION = 'map04'
     DEFAULT_TRAINS_COUNT = 2
 
     HIJACKERS_ASSAULT_PROBABILITY = 0
