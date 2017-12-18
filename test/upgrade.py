@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime
 
 from server.db.map import generate_map02, DbMap
+from server.db.session import map_session_ctx
 from server.defs import Action, Result
 from server.game_config import config
 from test.server_connection import ServerConnection
@@ -15,17 +16,18 @@ class TestUpgrade(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as database:
-            database.reset_db()
-            generate_map02(database)
+        database = DbMap()
+        database.reset_db()
+        with map_session_ctx() as session:
+            generate_map02(database, session)
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as database:
-            database.reset_db()
+        database = DbMap()
+        database.reset_db()
 
     def do_action(self, action, data):
-        return self.connection.do_action(action, data)
+        return self.connection.send_action(action, data)
 
     def setUp(self):
         self.connection = ServerConnection()
@@ -34,7 +36,7 @@ class TestUpgrade(unittest.TestCase):
 
     def tearDown(self):
         self.logout()
-        del self.connection
+        self.connection.close()
 
     def login(self):
         result, message = self.do_action(Action.LOGIN, {'name': self.PLAYER_NAME})

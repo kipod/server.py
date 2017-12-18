@@ -6,8 +6,8 @@ from attrdict import AttrDict
 class BaseConfig(object):
     TICK_TIME = 10
     MAP_NAME = 'theMap'
-    CURRENT_MAP_VERSION = 'map03'
-    DEFAULT_TRAINS_COUNT = 2
+    CURRENT_MAP_VERSION = 'map04'
+    DEFAULT_TRAINS_COUNT = 8
 
     HIJACKERS_ASSAULT_PROBABILITY = 0
     HIJACKERS_POWER_RANGE = (1, 3)
@@ -69,6 +69,8 @@ class BaseConfig(object):
 
 class TestingConfig(BaseConfig):
     DEFAULT_TRAINS_COUNT = 3
+    SERVER_ADDR = '127.0.0.1'
+    SERVER_PORT = 2000
 
 
 class TestingConfigWithEvents(TestingConfig):

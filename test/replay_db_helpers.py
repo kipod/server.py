@@ -17,12 +17,11 @@ class TestReplayDb(unittest.TestCase):
 
     def setUp(self):
         self.db = DbReplay()
-        self.session = ReplaySession()
         self.db.reset_db()
+        self.session = ReplaySession()
 
     def tearDown(self):
         self.db.reset_db()
-        self.db.close()
         self.session.close()
 
     def test_add_game(self):
@@ -57,7 +56,7 @@ class TestReplayDb(unittest.TestCase):
         date_1 = datetime.now()
         date_2 = datetime.now()
 
-        self.db.add_action(code_1, message_1, game_id, date_1, with_commit=True)
+        self.db.add_action(code_1, message_1, game_id, date_1)
         actions = self.session.query(Action).all()
         self.assertEqual(len(actions), 1)
         action = actions[0]
@@ -66,7 +65,7 @@ class TestReplayDb(unittest.TestCase):
         self.assertEqual(action.message, message_1)
         self.assertEqual(action.date, date_1)
 
-        self.db.add_action(code_2, message_2, game_id, date_2, with_commit=True)
+        self.db.add_action(code_2, message_2, game_id, date_2)
         actions = self.session.query(Action).all()
         self.assertEqual(len(actions), 2)
         action = actions[1]
@@ -77,7 +76,7 @@ class TestReplayDb(unittest.TestCase):
 
     def test_reset_db(self):
         self.db.add_game('TestGame', 'TestMap')
-        self.db.add_action(ActionCodes.LOGIN, '{"test": 1}', with_commit=True)
+        self.db.add_action(ActionCodes.LOGIN, '{"test": 1}')
 
         games = self.session.query(Game).all()
         self.assertEqual(len(games), 1)
@@ -98,10 +97,10 @@ class TestReplayDb(unittest.TestCase):
         map_name = 'FakeMap1'
 
         self.db.add_game(game_name, map_name, date=date)
-        self.db.add_action(ActionCodes.LOGIN, '{"message": "fake"}', with_commit=True)
+        self.db.add_action(ActionCodes.LOGIN, '{"message": "fake"}')
         for _ in range(length):
             self.db.add_action(ActionCodes.TURN, None)
-        self.db.add_action(ActionCodes.LOGOUT, '{"message": "fake"}', with_commit=True)
+        self.db.add_action(ActionCodes.LOGOUT, '{"message": "fake"}')
 
         games = self.db.get_all_games()
         self.assertEqual(len(games), 1)
@@ -119,8 +118,8 @@ class TestReplayDb(unittest.TestCase):
         message = '{"fake_message": 1}'
         date = datetime.now()
 
-        self.db.add_action(code, message, game_id_1, date, with_commit=True)
-        self.db.add_action(code, message, game_id_2, date, with_commit=True)
+        self.db.add_action(code, message, game_id_1, date)
+        self.db.add_action(code, message, game_id_2, date)
 
         actions = self.db.get_all_actions(game_id_1)
         self.assertEqual(len(actions), 1)

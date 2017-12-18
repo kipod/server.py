@@ -17,23 +17,31 @@ class Player(object):
     * home - point of the home town
     """
 
-    # All indexes of registered players.
+    # All registered players.
     PLAYERS = {}
 
-    def __init__(self, name):
+    def __init__(self, name, security_key=None):
+        self.idx = str(uuid.uuid4())
         self.name = name
-        self.idx = None
+        self.security_key = security_key
         self.train = {}
         self.home = None
         self.town = None
-
-        if name in Player.PLAYERS:
-            self.idx = Player.PLAYERS[name]
-        else:
-            Player.PLAYERS[name] = self.idx = str(uuid.uuid4())
+        self.turn_done = False
+        self.in_game = False
 
     def __eq__(self, other):
         return self.idx == other.idx
+
+    @staticmethod
+    def create(name, security_key=None):
+        """ Returns instance of class Player.
+        """
+        if name in Player.PLAYERS:
+            player = Player.PLAYERS[name]
+        else:
+            Player.PLAYERS[name] = player = Player(name, security_key=security_key)
+        return player
 
     def add_train(self, train):
         """ Adds train to the player.
@@ -73,12 +81,21 @@ class Player(object):
                 town['idx'], town['name'], town['type'], population=town['population'], armor=town['armor'],
                 product=town['product'], level=town['level'], player_id=town['player_id'], point_id=town['point_id']
             )
+        if data.get('turn_done'):
+            self.turn_done = data['turn_done']
+        if data.get('in_game'):
+            self.in_game = data['in_game']
+        if data.get('security_key'):
+            self.security_key = data['security_key']
 
     def to_json_str(self):
         """ store object to JSON string
         """
         data = {}
+        protected = ('security_key', )
         for key in self.__dict__:
+            if key in protected:
+                continue
             attribute = self.__dict__[key]
             if isinstance(attribute, dict):
                 data[key] = [i for i in attribute.values()]
@@ -87,13 +104,16 @@ class Player(object):
         return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __repr__(self):
-        return "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, trains_idx=[{}])>".format(
-            self.idx, self.name, self.home.idx, self.town.idx, ', '.join([str(idx) for idx in self.train])
+        return (
+            "<Player(idx={}, name='{}', home_point_idx={}, town_post_idx={}, "
+            "turn_done={}, in_game={}, trains_idx=[{}])>".format(
+                self.idx, self.name, self.home.idx, self.town.idx, self.turn_done, self.in_game,
+                ', '.join([str(idx) for idx in self.train]))
         )
 
     @property
     def rating(self):
-        """ calculate player's rating
+        """ Calculates player's rating.
         """
         rating_value = self.town.population * 1000
         rating_value += (self.town.product + self.town.armor)
