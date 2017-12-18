@@ -47,9 +47,14 @@ class Game(Thread):
         log(log.INFO, "Create game, name: '{}'".format(self.name))
         self.state = GameState.INIT
         self.observed = observed
-        self.replay = None if self.observed else DbReplay()
         self.map = Map(map_name)
         self.num_players = num_players
+        if self.num_players > len(self.map.towns):
+            raise errors.BadCommand(
+                "Unable to create game with {} players, maximum players count is {}".format(
+                    self.num_players, len(self.map.towns))
+            )
+        self.replay = None if self.observed else DbReplay()
         self.current_game_id = 0 if self.observed else self.replay.add_game(name, map_name=self.map.name)
         self.current_tick = 0
         self.players = {}
@@ -77,11 +82,16 @@ class Game(Thread):
         """ Adds player to the game.
         """
         if player.idx not in self.players:
+            # Check players count:
+            if len(self.players) == len(self.map.towns):
+                raise errors.AccessDenied("The maximum number of players reached")
+
             with self._lock:
-                # Use first Town on the map as player's Town:
-                player_town = self.map.towns[0]
+                # Pick first available Town on the map as player's Town:
+                player_town = [t for t in self.map.towns if t.player_id is None][0]
                 player_home_point = self.map.point[player_town.point_id]
                 player.set_home(player_home_point, player_town)
+                player.in_game = True
                 self.players[player.idx] = player
                 # Add trains for the player:
                 for _ in range(config.DEFAULT_TRAINS_COUNT):
@@ -94,8 +104,9 @@ class Game(Thread):
                     # Put the Train into Town:
                     self.put_train_into_town(train, with_cooldown=False)
                 log(log.INFO, "Add new player to the game, player: {}".format(player))
+
             # Start thread with game ticks:
-            if not self.observed and (self.num_players == len(self.players)):
+            if not self.observed and self.num_players == len(self.players):
                 Thread.start(self)
                 self.state = GameState.RUN
 
@@ -123,34 +134,26 @@ class Game(Thread):
         self._stop_event.set()
         if self.name in Game.GAMES:
             del Game.GAMES[self.name]
-        if self.replay:
-            self.replay.commit()
 
     def run(self):
-        """ Thread's activity.
+        """ Thread's activity. The loop with game ticks.
         """
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
-        try:
-            while not self._stop_event.is_set():
-                self._start_tick_event.wait(config.TICK_TIME)
-                with self._lock:
-                    if self.state != GameState.RUN:
-                        break  # Finish game thread.
-                    self.tick()
-                    with self._done_tick_condition:
-                        self._done_tick_condition.notify_all()
-                    if self._start_tick_event.is_set():
-                        self._start_tick_event.clear()
-                    if replay:
-                        replay.add_action(
-                            Action.TURN, message=None, with_commit=False, game_id=self.current_game_id
-                        )
-            if replay:
-                replay.commit()
-        finally:
-            if replay:
-                replay.close()
+        while not self._stop_event.is_set():
+            self._start_tick_event.wait(config.TICK_TIME)
+            with self._lock:
+                if self.state != GameState.RUN:
+                    break  # Finish game thread.
+                self.tick()
+                with self._done_tick_condition:
+                    self._done_tick_condition.notify_all()
+                if self._start_tick_event.is_set():
+                    self._start_tick_event.clear()
+                if replay:
+                    replay.add_action(
+                        Action.TURN, message=None, game_id=self.current_game_id
+                    )
 
     def tick(self):
         """ Makes game tick. Updates dynamic game entities.
@@ -205,17 +208,19 @@ class Game(Thread):
         else:
             train.speed = 0
 
-    def move_train(self, train_idx, speed, line_idx):
+    def move_train(self, player, train_idx, speed, line_idx):
         """ Process action MOVE. Changes path or speed of the Train.
         """
         with self._lock:
             if train_idx not in self.trains:
                 raise errors.ResourceNotFound("Train index not found, index: {}".format(train_idx))
-            if train_idx in self.next_train_moves:
-                del self.next_train_moves[train_idx]
-            train = self.trains[train_idx]
             if line_idx not in self.map.line:
                 raise errors.ResourceNotFound("Line index not found, index: {}".format(line_idx))
+            train = self.trains[train_idx]
+            if train.player_id != player.idx:
+                raise errors.AccessDenied("Train's owner mismatch")
+            if train_idx in self.next_train_moves:
+                del self.next_train_moves[train_idx]
 
             # Check cooldown for the train:
             if train.cooldown > 0:
@@ -298,7 +303,7 @@ class Game(Thread):
         """ Makes all needed actions when Train arrives to Post.
         Behavior depends on PostType, train can be loaded or unloaded.
         """
-        if post.type == PostType.TOWN:
+        if post.type == PostType.TOWN and train.player_id == post.player_id:
             # Unload product from train to town:
             goods = 0
             if train.post_type == PostType.MARKET:
@@ -373,7 +378,7 @@ class Game(Thread):
                 player.town.armor = max(player.town.armor - hijackers_power, 0)
                 player.town.event.append(event)
             if self.replay:
-                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+                self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.HIJACKERS_ASSAULT] = round(
                 hijackers_power * config.HIJACKERS_COOLDOWN_COEF)
 
@@ -393,7 +398,7 @@ class Game(Thread):
                 player.town.product = max(player.town.product - parasites_power, 0)
                 player.town.event.append(event)
             if self.replay:
-                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+                self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.PARASITES_ASSAULT] = round(
                 parasites_power * config.PARASITES_COOLDOWN_COEF)
 
@@ -419,7 +424,7 @@ class Game(Thread):
                         GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, population=player.town.population)
                     )
             if self.replay:
-                self.replay.add_action(Action.EVENT, event.to_json_str(), with_commit=False)
+                self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.REFUGEES_ARRIVAL] = round(
                 refugees_number * config.REFUGEES_COOLDOWN_COEF)
 
@@ -558,6 +563,8 @@ class Game(Thread):
                 post = self.map.post[post_id]
                 if post.type != PostType.TOWN:
                     raise errors.BadCommand("The post is not a Town, post: {}".format(post))
+                if post.player_id != player.idx:
+                    raise errors.AccessDenied("Town's owner mismatch")
                 posts.append(post)
 
             # Get trains from request:
@@ -566,6 +573,8 @@ class Game(Thread):
                 if train_id not in self.trains:
                     raise errors.ResourceNotFound("Train index not found, index: {}".format(train_id))
                 train = self.trains[train_id]
+                if train.player_id != player.idx:
+                    raise errors.AccessDenied("Train's owner mismatch")
                 trains.append(train)
 
             # Check existence of next level for each entity:
@@ -599,7 +608,7 @@ class Game(Thread):
                 train.set_level(train.level + 1)
                 log(log.INFO, "Train has been upgraded, post: {}".format(train))
 
-    def get_map_layer(self, layer):
+    def get_map_layer(self, player, layer):
         """ Returns specified game map layer.
         """
         if layer not in (0, 1, 10):
@@ -607,8 +616,8 @@ class Game(Thread):
 
         log(log.INFO, "Load game map layer, layer: {}".format(layer))
         message = self.map.layer_to_json_str(layer)
-        self.clean_events()
-        if layer == 1:  # Add ratings.
+        if layer == 1:  # Add ratings. TODO: Improve this code.
+            self.clean_user_events(player)
             data = json.loads(message)
             rating = {}
             for player in self.players.values():
@@ -617,13 +626,15 @@ class Game(Thread):
             message = json.dumps(data, sort_keys=True, indent=4)
         return message
 
-    def clean_events(self):
+    def clean_user_events(self, player):
         """ Cleans all existing events.
         """
         for train in self.map.train.values():
-            train.event = []
-        for post in self.map.post.values():
-            post.event = []
+            if train.player_id == player.idx:
+                train.event = []
+        for town in self.map.towns:
+            if town.player_id == player.idx:
+                town.event = []
 
     def update_cooldowns_on_tick(self):
         """ Decreases all cooldown values on game tick.
@@ -637,3 +648,6 @@ class Game(Thread):
         for train in self.trains.values():
             if train.cooldown != 0:
                 train.cooldown = max(train.cooldown - 1, 0)
+
+    def __del__(self):
+        log(log.INFO, "Game deleted, name: '{}'".format(self.name))

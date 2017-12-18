@@ -21,8 +21,6 @@ class Timeout(WgForgeServerError):
 
 
 class AccessDenied(WgForgeServerError):
-    """ Access to requested resource denied.
-    """
     pass
 
 
