@@ -36,7 +36,7 @@ class TestErrors(unittest.TestCase):
     def tearDown(self):
         self.connection.close()
 
-    def login(self, name=None, security_key=None, exp_result=Result.OKEY):
+    def login(self, name=None, security_key=SECURITY_KEY, exp_result=Result.OKEY):
         name = self.PLAYER_NAME if name is None else name
         result, message = self.do_action(
             Action.LOGIN,

@@ -51,13 +51,16 @@ class GameServerRequestHandler(BaseRequestHandler):
         log(log.WARNING, "Connection from {0} lost".format(self.client_address))
         if self.player is not None:
             self.player.in_game = False
+        if self.game is not None:
+            if not any([p.in_game for p in self.game.players.values()]):
+                self.game.stop()
 
     def data_received(self, data):
         if self.data:
             data = self.data + data
             self.data = None
         if self.process_data(data):
-            log(log.INFO, 'Player: {}, action: {!r}\n{}'.format(
+            log(log.INFO, 'Player: {}, action: {!r}, message:\n{}'.format(
                 self.player.idx if self.player is not None else self.client_address,
                 Action(self.action), self.message))
             try:
@@ -124,7 +127,9 @@ class GameServerRequestHandler(BaseRequestHandler):
 
     def write_response(self, result, message=None):
         resp_message = '' if message is None else message
-        log(log.DEBUG, '{!r}\n{}'.format(result, resp_message))
+        log(log.DEBUG, 'Player: {}, result: {!r}, message:\n{}'.format(
+            self.player.idx if self.player is not None else self.client_address,
+            result, resp_message))
         self.request.sendall(result.to_bytes(4, byteorder='little'))
         self.request.sendall(len(resp_message).to_bytes(4, byteorder='little'))
         self.request.sendall(resp_message.encode('utf-8'))
@@ -154,7 +159,7 @@ class GameServerRequestHandler(BaseRequestHandler):
             game_name = data['game']
             num_players = data['num_players']
 
-        game = Game.create(game_name, num_players)  # TODO: Check towns count
+        game = Game.create(game_name, num_players)
         if game.num_players != num_players:
             raise errors.BadCommand(
                 "Incorrect players number requested, game: {}, game players number: {}, "

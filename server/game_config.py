@@ -8,7 +8,6 @@ class BaseConfig(object):
     MAP_NAME = 'theMap'
     CURRENT_MAP_VERSION = 'map03'
     DEFAULT_TRAINS_COUNT = 2
-    MAX_PLAYERS_COUNT = 4  # TODO: Remove it, calculate towns on map
 
     HIJACKERS_ASSAULT_PROBABILITY = 0
     HIJACKERS_POWER_RANGE = (1, 3)

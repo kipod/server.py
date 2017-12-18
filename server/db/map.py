@@ -120,7 +120,7 @@ def generate_map01(db: DbMap, session: MapSession):
 
 
 def generate_map02(db: DbMap, session: MapSession):
-    """ Generates 'map02'. See 'map02.png'.
+    """ Generates 'map02'. See 'map02.png'. This map is used for tests.
     """
     # Map:
     db.add_map(name='theMap', size_x=330, size_y=248, session=session)
@@ -144,6 +144,7 @@ def generate_map02(db: DbMap, session: MapSession):
 
     # Posts:
     add_post(p1, 'town-one', PostType.TOWN, population=3, product=60, armor=3)
+    add_post(p3, 'town-two', PostType.TOWN, population=3, product=60, armor=3)
     add_post(p4, 'market-big', PostType.MARKET, product=36, replenishment=2)
     add_post(p5, 'market-medium', PostType.MARKET, product=28, replenishment=1)
     add_post(p7, 'market-small', PostType.MARKET, product=5, replenishment=1)

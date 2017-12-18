@@ -10,8 +10,6 @@
 
 ### Add fuel for trains
 
-### Add tests for multiplayer
+### Add more tests for multiplayer, errors
 
 ### Improve logging
-
-### Complete functionality which is responsible for game.num_players and Towns pick, when map for multiplayer will be created

@@ -47,9 +47,14 @@ class Game(Thread):
         log(log.INFO, "Create game, name: '{}'".format(self.name))
         self.state = GameState.INIT
         self.observed = observed
-        self.replay = None if self.observed else DbReplay()
         self.map = Map(map_name)
         self.num_players = num_players
+        if self.num_players > len(self.map.towns):
+            raise errors.BadCommand(
+                "Unable to create game with {} players, maximum players count is {}".format(
+                    self.num_players, len(self.map.towns))
+            )
+        self.replay = None if self.observed else DbReplay()
         self.current_game_id = 0 if self.observed else self.replay.add_game(name, map_name=self.map.name)
         self.current_tick = 0
         self.players = {}
@@ -78,12 +83,12 @@ class Game(Thread):
         """
         if player.idx not in self.players:
             # Check players count:
-            if len(self.players) == config.MAX_PLAYERS_COUNT:
+            if len(self.players) == len(self.map.towns):
                 raise errors.AccessDenied("The maximum number of players reached")
 
             with self._lock:
-                # Use first Town on the map as player's Town:
-                player_town = self.map.towns[0]  # TODO: Fix it for multiplay
+                # Pick first available Town on the map as player's Town:
+                player_town = [t for t in self.map.towns if t.player_id is None][0]
                 player_home_point = self.map.point[player_town.point_id]
                 player.set_home(player_home_point, player_town)
                 player.in_game = True
