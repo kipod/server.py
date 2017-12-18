@@ -216,8 +216,7 @@ class GameServerRequestHandler(BaseRequestHandler):
 
     def on_observer(self, _):
         if self.game or self.observer:
-            # TODO: raise error.BadCommand("<Error message>")
-            self.write_response(Result.BAD_COMMAND)
+            raise errors.BadCommand("Impossible connect as observer")
         else:
             self.observer = Observer()
             self.write_response(Result.OKEY, json.dumps(self.observer.games()))
