@@ -5,35 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Script",
+            "name": "generate-map",
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${file}",
-            "cwd": "",
-            "console": "none",
-            "env": {},
-            "envFile": "${workspaceRoot}/.env",
-            "debugOptions": [
-                "WaitOnAbnormalExit",
-                "WaitOnNormalExit"
-            ]
-        },
-        {
-            "name": "Map Generator",
-            "type": "python",
-            "request": "launch",
-            "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/server/db/gen_map_db.py",
-            "cwd": "${workspaceRoot}",
+            "module": "invoke",
+            "cwd": "${workspaceRoot}/server",
             "env": {},
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
                 "WaitOnNormalExit",
                 "RedirectOutput"
+            ],
+            "args": [
+                "generate-map"
+            ]
+        },
+        {
+            "name": "generate-replay",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "module": "invoke",
+            "cwd": "${workspaceRoot}/server",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ],
+            "args": [
+                "generate-replay"
             ]
         },
         {
@@ -54,6 +60,25 @@
             "args": [
                 "test.entity",
                 "test.replay_db_helpers"
+            ]
+        },
+        {
+            "name": "Multiplay test",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "module": "unittest",
+            "cwd": "${workspaceRoot}",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ],
+            "args": [
+                "test.multiplay"
             ]
         },
         {
@@ -84,7 +109,7 @@
             "request": "launch",
             "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "${workspaceRoot}/server/server.py",
+            "module": "invoke",
             "cwd": "${workspaceRoot}/server",
             "env": {},
             "envFile": "${workspaceRoot}/.env",
@@ -92,6 +117,9 @@
                 "WaitOnAbnormalExit",
                 "WaitOnNormalExit",
                 "RedirectOutput"
+            ],
+            "args": [
+                "run-server"
             ]
         }
     ]

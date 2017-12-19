@@ -11,6 +11,7 @@ DB_URI = {
     'map': MAP_DB_URI,
     'replay': REPLAY_DB_URI,
 }
+RECEIVE_CHUNK_SIZE = 1024
 
 
 class Action(IntEnum):
@@ -35,16 +36,7 @@ class Result(IntEnum):
     OKEY = 0
     BAD_COMMAND = 1
     RESOURCE_NOT_FOUND = 2
-    PATH_NOT_FOUND = 3
     ACCESS_DENIED = 5
-
-
-# Server errors:
-
-
-class WgForgeServerError(Exception):
-    pass
-
-
-class BadCommandError(WgForgeServerError):
-    pass
+    NOT_READY = 21
+    TIMEOUT = 258
+    INTERNAL_SERVER_ERROR = 500

@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime
 
 from server.db.map import generate_map02, DbMap
+from server.db.session import map_session_ctx
 from server.defs import Action, Result
 from server.entity.map import Map
 from server.game_config import config
@@ -19,35 +20,29 @@ class TestClient(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with DbMap() as database:
-            database.reset_db()
-            generate_map02(database)
+        database = DbMap()
+        database.reset_db()
+        with map_session_ctx() as session:
+            generate_map02(database, session)
         cls.connection = ServerConnection()
 
     @classmethod
     def tearDownClass(cls):
-        with DbMap() as database:
-            database.reset_db()
-        del cls.connection
+        database = DbMap()
+        database.reset_db()
+        cls.connection.close()
 
     @classmethod
     def do_action(cls, action, data):
         """ Send action.
         """
-        return cls.connection.do_action(action, data)
+        return cls.connection.send_action(action, data)
 
     @classmethod
     def do_action_raw(cls, action: int, json_str: str):
         """ Send action with raw string data.
         """
-        return cls.connection.do_action_raw(action, json_str)
-
-    def test_0_connection(self):
-        """ Test connection.
-        """
-        self.assertIsNotNone(self.connection._loop)
-        self.assertIsNotNone(self.connection._reader)
-        self.assertIsNotNone(self.connection._writer)
+        return cls.connection.send_action(action, json_str, is_raw=True)
 
     def test_1_login(self):
         """ Test login.
