@@ -10,6 +10,8 @@
 
 ### Add fuel for trains
 
-### Add more tests for multiplayer, errors
+### Add more tests
 
 ### Improve logging
+
+### Review entity.observer code, bring it up to date. Add handler for upgrade?
