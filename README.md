@@ -57,6 +57,13 @@ struct ResposeMessage
 ### Login
 
 This action message must be first in client-server "dialog". In data server expected to receive in data value **name**
+For multi play game need define two additional values:
+
+* **num_players** - number of players on the game
+* **game** - game name
+
+Non mandatory parameter **security_key** - uses for verification player connection for restore after disconnect.
+If player with same name try reconnect to existing game with another **security_key** - login will be rejected.
 
 #### Example login action bin data and message
 
@@ -524,3 +531,13 @@ Level 3 - is maximal train level
 
 Rating value (game score) calculated on server every turn for each player.
 This value figured on result of MAP(layer=1)
+
+Calculation formula
+rating = [population] *
+         1000 + sum([upgrade level cost]) *
+         10 + (town.product + town.armor)
+where:
+
+    * [population] = current population in player's town ( the value is multiplied by 1000 )
+    * sum( [upgrade level cost] ) = sum armor spent for upgrades all units (train(s), town) ( the value is multiplied by 10 )
+    * (town.product + town.armor) = sum accumulated values of armor and product in player's town
