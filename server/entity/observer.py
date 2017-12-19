@@ -53,8 +53,9 @@ class Observer(object):
         if self._game is None:
             return Result.RESOURCE_NOT_FOUND, None
         if 'layer' in data:
+            player = None
             layer = data['layer']
-            return Result.OKEY, self._game.get_map_layer(layer)
+            return Result.OKEY, self._game.get_map_layer(player, layer)
         return Result.BAD_COMMAND, None
 
     def game_turn(self, turns):
@@ -65,8 +66,9 @@ class Observer(object):
         for action in self._actions[self._current_action:]:
             self._current_action += 1
             if action['code'] == Action.MOVE:
+                player = None
                 data = json.loads(action['message'])
-                self._game.move_train(data['train_idx'], data['speed'], data['line_idx'])
+                self._game.move_train(player, data['train_idx'], data['speed'], data['line_idx'])
             elif action['code'] == Action.TURN:
                 self._game.tick()
                 sub_turn += 1
