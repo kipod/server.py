@@ -70,7 +70,9 @@
             "pythonPath": "${config:python.pythonPath}",
             "module": "unittest",
             "cwd": "${workspaceRoot}",
-            "env": {},
+            "env": {
+                "WG_FORGE_SERVER_CONFIG": "testing"
+            },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
@@ -89,7 +91,9 @@
             "pythonPath": "${config:python.pythonPath}",
             "module": "unittest",
             "cwd": "${workspaceRoot}",
-            "env": {},
+            "env": {
+                "WG_FORGE_SERVER_CONFIG": "testing"
+            },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
@@ -97,9 +101,9 @@
                 "RedirectOutput"
             ],
             "args": [
-                "test.client",
-                "test.observer",
-                "test.train_collisions",
+                //"test.client",
+                //"test.observer",
+                //"test.train_collisions",
                 "test.upgrade"
             ]
         },
