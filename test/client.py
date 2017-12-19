@@ -108,7 +108,7 @@ class TestClient(unittest.TestCase):
 
         map02 = Map()
         map02.from_json_str(message)
-        self.assertEqual(len(map02.post), 5)
+        self.assertEqual(len(map02.post), 6)
         self.assertEqual(len(map02.train), config.DEFAULT_TRAINS_COUNT)
 
     def test_2_get_map_layer_10(self):

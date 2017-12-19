@@ -115,14 +115,14 @@ class Game(Thread):
         """
         if self.state != GameState.RUN:
             raise errors.NotReady("Game state is not 'RUN', state: {}".format(self.state))
-        with self._lock:
-            player.turn_done = True
-            all_ready_for_turn = all([p.turn_done for p in self.players.values()])
-            if all_ready_for_turn:
-                self._start_tick_event.set()
-                for player in self.players.values():
-                    player.turn_done = False
         with self._done_tick_condition:
+            with self._lock:
+                player.turn_done = True
+                all_ready_for_turn = all([p.turn_done for p in self.players.values()])
+                if all_ready_for_turn:
+                    for _player in self.players.values():
+                        _player.turn_done = False
+                    self._start_tick_event.set()
             if not self._done_tick_condition.wait(config.TICK_TIME):
                 raise errors.Timeout("Game tick did not happen")
 
@@ -146,10 +146,10 @@ class Game(Thread):
                 if self.state != GameState.RUN:
                     break  # Finish game thread.
                 self.tick()
-                with self._done_tick_condition:
-                    self._done_tick_condition.notify_all()
                 if self._start_tick_event.is_set():
                     self._start_tick_event.clear()
+                with self._done_tick_condition:
+                    self._done_tick_condition.notify_all()
                 if replay:
                     replay.add_action(
                         Action.TURN, message=None, game_id=self.current_game_id
@@ -217,7 +217,7 @@ class Game(Thread):
             if line_idx not in self.map.line:
                 raise errors.ResourceNotFound("Line index not found, index: {}".format(line_idx))
             train = self.trains[train_idx]
-            if train.player_id != player.idx:
+            if not self.observed and train.player_id != player.idx:
                 raise errors.AccessDenied("Train's owner mismatch")
             if train_idx in self.next_train_moves:
                 del self.next_train_moves[train_idx]
@@ -563,7 +563,7 @@ class Game(Thread):
                 post = self.map.post[post_id]
                 if post.type != PostType.TOWN:
                     raise errors.BadCommand("The post is not a Town, post: {}".format(post))
-                if post.player_id != player.idx:
+                if not self.observed and post.player_id != player.idx:
                     raise errors.AccessDenied("Town's owner mismatch")
                 posts.append(post)
 
@@ -573,7 +573,7 @@ class Game(Thread):
                 if train_id not in self.trains:
                     raise errors.ResourceNotFound("Train index not found, index: {}".format(train_id))
                 train = self.trains[train_id]
-                if train.player_id != player.idx:
+                if not self.observed and train.player_id != player.idx:
                     raise errors.AccessDenied("Train's owner mismatch")
                 trains.append(train)
 
@@ -617,13 +617,14 @@ class Game(Thread):
         log(log.INFO, "Load game map layer, layer: {}".format(layer))
         message = self.map.layer_to_json_str(layer)
         if layer == 1:  # Add ratings. TODO: Improve this code.
-            self.clean_user_events(player)
             data = json.loads(message)
             rating = {}
-            for player in self.players.values():
-                rating[player.name] = player.rating
+            for _player in self.players.values():
+                rating[_player.name] = _player.rating
             data['rating'] = rating
             message = json.dumps(data, sort_keys=True, indent=4)
+            if not self.observed:
+                self.clean_user_events(player)
         return message
 
     def clean_user_events(self, player):
