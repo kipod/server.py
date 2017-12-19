@@ -45,7 +45,7 @@ class TestEntity(unittest.TestCase):
         self.assertEqual(len(game_map.point), 12)
         self.assertNotEqual(game_map.size, (None, None))
         self.assertEqual(len(game_map.coordinate), len(game_map.point))
-        self.assertEqual(len(game_map.post), 5)
+        self.assertEqual(len(game_map.post), 6)
         self.assertEqual(len(game_map.train), 1)
 
     def test_map_serialization(self):
@@ -96,7 +96,7 @@ class TestEntity(unittest.TestCase):
         self.assertEqual(len(new_map.point), 0)
         self.assertEqual(new_map.size, (None, None))
         self.assertEqual(len(new_map.coordinate), 0)
-        self.assertEqual(len(new_map.post), 5)
+        self.assertEqual(len(new_map.post), 6)
         self.assertEqual(len(new_map.train), 1)
 
         str_json = game_map.layer_to_json_str(10)

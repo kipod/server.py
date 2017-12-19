@@ -10,6 +10,7 @@ from attrdict import AttrDict
 from server.db.map import generate_map02, DbMap
 from server.db.session import map_session_ctx
 from server.defs import Action, Result
+from server.entity.event import Event, EventType
 from server.game_config import config
 from test.server_connection import ServerConnection
 
@@ -38,6 +39,7 @@ class TestMultiplay(unittest.TestCase):
         database.reset_db()
 
     def setUp(self):
+        self.current_tick = 0
         self.game_name = "Test Game {}".format(datetime.now().strftime('%H:%M:%S.%f'))
         self.players = []
         for player_name in self.PLAYER_NAMES:
@@ -80,6 +82,8 @@ class TestMultiplay(unittest.TestCase):
     def turn(self, player, exp_result=Result.OKEY):
         result, message = self.do_action(player, Action.TURN, {})
         self.assertEqual(exp_result, result)
+        if exp_result == Result.OKEY:
+            self.current_tick += 1
         if message:
             return json.loads(message)
 
@@ -89,6 +93,8 @@ class TestMultiplay(unittest.TestCase):
                 self.turn_no_resp(player)
             for player in players:
                 self.turn_check_resp(player, exp_result=exp_result)
+            if exp_result == Result.OKEY:
+                self.current_tick += 1
 
     def turn_no_resp(self, player):
         player.conn.send_action(Action.TURN, {}, wait_for_response=False)
@@ -112,6 +118,18 @@ class TestMultiplay(unittest.TestCase):
         if message:
             return json.loads(message)
 
+    def upgrade(self, player, posts=(), trains=(), exp_result=Result.OKEY):
+        result, message = self.do_action(
+            player, Action.UPGRADE,
+            {
+                'post': posts,
+                'train': trains
+            }
+        )
+        self.assertEqual(exp_result, result)
+        if message:
+            return json.loads(message)
+
     def get_map(self, player, layer, exp_result=Result.OKEY):
         result, message = self.do_action(player, Action.MAP, {'layer': layer})
         self.assertEqual(exp_result, result)
@@ -122,6 +140,20 @@ class TestMultiplay(unittest.TestCase):
         trains = {x['idx']: x for x in data['train']}
         self.assertIn(train_id, trains)
         return trains[train_id]
+
+    def get_post(self, player, post_id, exp_result=Result.OKEY):
+        data = self.get_map(player, 1, exp_result=exp_result)
+        posts = {x['idx']: x for x in data['post']}
+        self.assertIn(post_id, posts)
+        return posts[post_id]
+
+    def check_collision_event(self, events, ok_event):
+        for event in events:
+            if (event['type'] == ok_event.type
+                    and event['train'] == ok_event.train
+                    and event['tick'] == ok_event.tick):
+                return True
+        return False
 
     def test_login_and_logout(self):
         """ Test login and logout.
@@ -152,6 +184,9 @@ class TestMultiplay(unittest.TestCase):
             self.assertLess(elapsed, config.TICK_TIME)
 
         self.logout(self.players[1])
+        with self.assertRaises(BrokenPipeError):
+            self.turn(self.players[1])
+        self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
         self.logout(self.players[0])
 
     def test_players_number(self):
@@ -207,3 +242,88 @@ class TestMultiplay(unittest.TestCase):
 
         self.assertGreater(train_before.goods, 0)
         self.assertEqual(train_before.goods, train_after.goods)
+
+    def test_upgrade_train_owned_by_other_player(self):
+        """ Test upgrade of train which is owned by other player.
+        """
+        players_in_game = 2
+        player0 = AttrDict(self.login(self.players[0]))
+        player1 = AttrDict(self.login(self.players[1]))
+        town0 = AttrDict(self.get_post(self.players[0], player0.town.idx))
+        town1 = AttrDict(self.get_post(self.players[1], player1.town.idx))
+        train0 = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
+        train1 = AttrDict(self.get_train(self.players[1], player1.train[0].idx))
+
+        # Mine armor for 1-st player:
+        self.move_train(self.players[0], 18, train0.idx, -1)
+        self.players_turn(self.players[:players_in_game], turns_count=3)
+        self.move_train(self.players[0], 18, train0.idx, 1)
+        self.players_turn(self.players[:players_in_game], turns_count=3)
+        town0_after = AttrDict(self.get_post(self.players[0], player0.town.idx))
+        self.assertEqual(town0_after.armor, town0.armor + train0.goods_capacity)
+
+        # Mine armor for 2-nd player:
+        self.move_train(self.players[1], 3, train1.idx, -1)
+        self.players_turn(self.players[:players_in_game], turns_count=1)
+        self.move_train(self.players[1], 9, train1.idx, 1)
+        self.players_turn(self.players[:players_in_game], turns_count=2)
+        self.move_train(self.players[1], 10, train1.idx, 1)
+        self.players_turn(self.players[:players_in_game], turns_count=1)
+        self.move_train(self.players[1], 11, train1.idx, 1)
+        self.players_turn(self.players[:players_in_game], turns_count=3)
+        self.move_train(self.players[1], 6, train1.idx, 1)
+        self.players_turn(self.players[:players_in_game], turns_count=2)
+        self.players_turn(self.players[:players_in_game], turns_count=4)  # Wait for replenishment.
+        self.move_train(self.players[1], 17, train1.idx, -1)
+        self.players_turn(self.players[:players_in_game], turns_count=1)
+        self.move_train(self.players[1], 16, train1.idx, -1)
+        self.players_turn(self.players[:players_in_game], turns_count=3)
+        self.move_train(self.players[1], 15, train1.idx, -1)
+        self.players_turn(self.players[:players_in_game], turns_count=1)
+        town1_after = AttrDict(self.get_post(self.players[1], player1.town.idx))
+        self.assertEqual(town1_after.armor, town1.armor + train1.goods_capacity)
+
+        # Upgrade foreign train:
+        message = self.upgrade(self.players[0], trains=[train1.idx], exp_result=Result.ACCESS_DENIED)
+        self.assertIn('error', message)
+        self.assertIn("Train's owner mismatch", message['error'])
+        message = self.upgrade(self.players[1], trains=[train0.idx], exp_result=Result.ACCESS_DENIED)
+        self.assertIn('error', message)
+        self.assertIn("Train's owner mismatch", message['error'])
+
+        # Upgrade not foreign train:
+        self.upgrade(self.players[0], trains=[train0.idx])
+        self.upgrade(self.players[1], trains=[train1.idx])
+
+    def test_user_events(self):
+        """ Test users events independence.
+        """
+        players_in_game = 2
+        player0 = AttrDict(self.login(self.players[0]))
+        player1 = AttrDict(self.login(self.players[1]))
+        train0 = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
+        train1 = AttrDict(self.get_train(self.players[1], player1.train[0].idx))
+
+        self.move_train(self.players[0], 13, train0.idx, 1)
+        self.move_train(self.players[1], 14, train1.idx, -1)
+        self.players_turn(self.players[:players_in_game], turns_count=2)
+
+        train0_after = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
+        self.assertTrue(
+            self.check_collision_event(
+                train0_after.event,
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train1.idx)
+            )
+        )
+        self.assertEqual(train0_after.line_idx, train0.line_idx)
+        self.assertEqual(train0_after.position, train0.position)
+
+        train1_after = AttrDict(self.get_train(self.players[1], player1.train[0].idx))
+        self.assertTrue(
+            self.check_collision_event(
+                train1_after.event,
+                Event(EventType.TRAIN_COLLISION, self.current_tick, train=train0.idx)
+            )
+        )
+        self.assertEqual(train1_after.line_idx, train1.line_idx)
+        self.assertEqual(train1_after.position, train1.position)
