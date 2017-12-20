@@ -1,4 +1,5 @@
-""" tests for action UPGRADE """
+""" Tests for action UPGRADE.
+"""
 
 import json
 import unittest
