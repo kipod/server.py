@@ -184,8 +184,7 @@ class TestMultiplay(unittest.TestCase):
             self.assertLess(elapsed, CONFIG.TICK_TIME)
 
         self.logout(self.players[1])
-        # with self.assertRaises(BrokenPipeError):
-        with self.assertRaises(ConnectionAbortedError):
+        with self.assertRaises(ConnectionError):
             self.turn(self.players[1])
         self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
         self.logout(self.players[0])

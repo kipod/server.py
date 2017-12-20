@@ -1,12 +1,16 @@
-""" Game configuration """
+""" Game configurations.
+"""
 from os import getenv
 
 from attrdict import AttrDict
 
 
 class BaseConfig(object):
-    """ Base configuration"""
+    """ Base configuration.
+    """
     TICK_TIME = 10
+    MAX_TICK_CALCULATION_TIME = 5
+    TURN_TIMEOUT = TICK_TIME + MAX_TICK_CALCULATION_TIME
     MAP_NAME = 'theMap'
     CURRENT_MAP_VERSION = 'map04'
     DEFAULT_TRAINS_COUNT = 8
@@ -70,7 +74,8 @@ class BaseConfig(object):
 
 
 class TestingConfig(BaseConfig):
-    """ Test configuration """
+    """ Test configuration.
+    """
     SERVER_ADDR = '127.0.0.1'
     SERVER_PORT = 2000
     HIJACKERS_ASSAULT_PROBABILITY = 0
@@ -79,7 +84,8 @@ class TestingConfig(BaseConfig):
 
 
 class TestingConfigWithEvents(TestingConfig):
-    """ Test configuration with randome events """
+    """ Test configuration with random events.
+    """
     HIJACKERS_ASSAULT_PROBABILITY = 100
     HIJACKERS_POWER_RANGE = (1, 1)
     PARASITES_ASSAULT_PROBABILITY = 100
@@ -89,7 +95,8 @@ class TestingConfigWithEvents(TestingConfig):
 
 
 class ProductionConfig(BaseConfig):
-    """ Production configuration """
+    """ Production configuration.
+    """
     pass
 
 
