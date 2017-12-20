@@ -1,25 +1,27 @@
+""" Game configuration """
 from os import getenv
 
 from attrdict import AttrDict
 
 
 class BaseConfig(object):
+    """ Base configuration"""
     TICK_TIME = 10
     MAP_NAME = 'theMap'
     CURRENT_MAP_VERSION = 'map04'
     DEFAULT_TRAINS_COUNT = 8
 
-    HIJACKERS_ASSAULT_PROBABILITY = 0
+    HIJACKERS_ASSAULT_PROBABILITY = 20
     HIJACKERS_POWER_RANGE = (1, 3)
-    HIJACKERS_COOLDOWN_COEF = 5
+    HIJACKERS_COOLDOWN_COEFFICIENT = 5
 
-    PARASITES_ASSAULT_PROBABILITY = 0
+    PARASITES_ASSAULT_PROBABILITY = 20
     PARASITES_POWER_RANGE = (1, 3)
-    PARASITES_COOLDOWN_COEF = 5
+    PARASITES_COOLDOWN_COEFFICIENT = 5
 
-    REFUGEES_ARRIVAL_PROBABILITY = 0
+    REFUGEES_ARRIVAL_PROBABILITY = 5
     REFUGEES_NUMBER_RANGE = (1, 3)
-    REFUGEES_COOLDOWN_COEF = 5
+    REFUGEES_COOLDOWN_COEFFICIENT = 5
 
     TOWN_LEVELS = AttrDict({
         1: {
@@ -68,11 +70,16 @@ class BaseConfig(object):
 
 
 class TestingConfig(BaseConfig):
+    """ Test configuration """
     SERVER_ADDR = '127.0.0.1'
     SERVER_PORT = 2000
+    HIJACKERS_ASSAULT_PROBABILITY = 0
+    PARASITES_ASSAULT_PROBABILITY = 0
+    REFUGEES_ARRIVAL_PROBABILITY = 0
 
 
 class TestingConfigWithEvents(TestingConfig):
+    """ Test configuration with randome events """
     HIJACKERS_ASSAULT_PROBABILITY = 100
     HIJACKERS_POWER_RANGE = (1, 1)
     PARASITES_ASSAULT_PROBABILITY = 100
@@ -82,13 +89,14 @@ class TestingConfigWithEvents(TestingConfig):
 
 
 class ProductionConfig(BaseConfig):
+    """ Production configuration """
     pass
 
 
-server_configs = {
+SERVER_CONFIGS = {
     'testing': TestingConfig,
     'testing_with_events': TestingConfigWithEvents,
     'production': ProductionConfig,
 }
 
-config = server_configs[getenv('WG_FORGE_SERVER_CONFIG', 'production')]
+CONFIG = SERVER_CONFIGS[getenv('WG_FORGE_SERVER_CONFIG', 'production')]

@@ -15,7 +15,7 @@ from entity.player import Player
 from entity.point import Point
 from entity.post import PostType, Post
 from entity.train import Train
-from game_config import config
+from game_config import CONFIG
 from logger import log
 
 
@@ -42,7 +42,7 @@ class Game(Thread):
     # All registered games.
     GAMES = {}
 
-    def __init__(self, name, map_name=config.MAP_NAME, observed=False, num_players=1):
+    def __init__(self, name, map_name=CONFIG.MAP_NAME, observed=False, num_players=1):
         super(Game, self).__init__(name=name)
         log(log.INFO, "Create game, name: '{}'".format(self.name))
         self.state = GameState.INIT
@@ -78,6 +78,19 @@ class Game(Thread):
             Game.GAMES[name] = game = Game(name, num_players=num_players)
         return game
 
+    @staticmethod
+    def stop_all_games():
+        """ Stop all games.
+        Uses on server shutdown
+        """
+        while len(Game.GAMES):
+            for name in Game.GAMES.keys():
+                log(log.INFO, "Shutdown game. Name: '{}'".format(name))
+                game = Game.GAMES[name]
+                game.stop()
+                del game
+                break
+
     def add_player(self, player: Player):
         """ Adds player to the game.
         """
@@ -94,7 +107,7 @@ class Game(Thread):
                 player.in_game = True
                 self.players[player.idx] = player
                 # Add trains for the player:
-                for _ in range(config.DEFAULT_TRAINS_COUNT):
+                for _ in range(CONFIG.DEFAULT_TRAINS_COUNT):
                     # Create Train:
                     train = Train(idx=len(self.trains) + 1)
                     # Add Train:
@@ -123,7 +136,7 @@ class Game(Thread):
                     for _player in self.players.values():
                         _player.turn_done = False
                     self._start_tick_event.set()
-            if not self._done_tick_condition.wait(config.TICK_TIME):
+            if not self._done_tick_condition.wait(CONFIG.TICK_TIME * 2):
                 raise errors.Timeout("Game tick did not happen")
 
     def stop(self):
@@ -141,7 +154,7 @@ class Game(Thread):
         # Create db connection object for this thread if replay.
         replay = DbReplay() if self.replay else None
         while not self._stop_event.is_set():
-            self._start_tick_event.wait(config.TICK_TIME)
+            self._start_tick_event.wait(CONFIG.TICK_TIME)
             with self._lock:
                 if self.state != GameState.RUN:
                     break  # Finish game thread.
@@ -369,8 +382,8 @@ class Game(Thread):
             return
 
         rand_percent = random.randint(1, 100)
-        if rand_percent <= config.HIJACKERS_ASSAULT_PROBABILITY:
-            hijackers_power = random.randint(*config.HIJACKERS_POWER_RANGE)
+        if rand_percent <= CONFIG.HIJACKERS_ASSAULT_PROBABILITY:
+            hijackers_power = random.randint(*CONFIG.HIJACKERS_POWER_RANGE)
             log(log.INFO, "Hijackers assault happened, hijackers power: {}".format(hijackers_power))
             event = GameEvent(EventType.HIJACKERS_ASSAULT, self.current_tick, hijackers_power=hijackers_power)
             for player in self.players.values():
@@ -380,7 +393,7 @@ class Game(Thread):
             if self.replay:
                 self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.HIJACKERS_ASSAULT] = round(
-                hijackers_power * config.HIJACKERS_COOLDOWN_COEF)
+                hijackers_power * CONFIG.HIJACKERS_COOLDOWN_COEFFICIENT)
 
     def parasites_assault_on_tick(self):
         """ Makes parasites assault which decreases quantity of Town's product.
@@ -390,8 +403,8 @@ class Game(Thread):
             return
 
         rand_percent = random.randint(1, 100)
-        if rand_percent <= config.PARASITES_ASSAULT_PROBABILITY:
-            parasites_power = random.randint(*config.PARASITES_POWER_RANGE)
+        if rand_percent <= CONFIG.PARASITES_ASSAULT_PROBABILITY:
+            parasites_power = random.randint(*CONFIG.PARASITES_POWER_RANGE)
             log(log.INFO, "Parasites assault happened, parasites power: {}".format(parasites_power))
             event = GameEvent(EventType.PARASITES_ASSAULT, self.current_tick, parasites_power=parasites_power)
             for player in self.players.values():
@@ -400,7 +413,7 @@ class Game(Thread):
             if self.replay:
                 self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.PARASITES_ASSAULT] = round(
-                parasites_power * config.PARASITES_COOLDOWN_COEF)
+                parasites_power * CONFIG.PARASITES_COOLDOWN_COEFFICIENT)
 
     def refugees_arrival_on_tick(self):
         """ Makes refugees arrival which increases quantity of Town's population.
@@ -410,8 +423,8 @@ class Game(Thread):
             return
 
         rand_percent = random.randint(1, 100)
-        if rand_percent <= config.REFUGEES_ARRIVAL_PROBABILITY:
-            refugees_number = random.randint(*config.REFUGEES_NUMBER_RANGE)
+        if rand_percent <= CONFIG.REFUGEES_ARRIVAL_PROBABILITY:
+            refugees_number = random.randint(*CONFIG.REFUGEES_NUMBER_RANGE)
             log(log.INFO, "Refugees arrival happened, refugees number: {}".format(refugees_number))
             event = GameEvent(EventType.REFUGEES_ARRIVAL, self.current_tick, refugees_number=refugees_number)
             for player in self.players.values():
@@ -426,7 +439,7 @@ class Game(Thread):
             if self.replay:
                 self.replay.add_action(Action.EVENT, event.to_json_str())
             self.event_cooldowns[EventType.REFUGEES_ARRIVAL] = round(
-                refugees_number * config.REFUGEES_COOLDOWN_COEF)
+                refugees_number * CONFIG.REFUGEES_COOLDOWN_COEFFICIENT)
 
     def update_posts_on_tick(self):
         """ Updates all markets and storages.
@@ -578,8 +591,8 @@ class Game(Thread):
                 trains.append(train)
 
             # Check existence of next level for each entity:
-            posts_has_next_lvl = all([p.level + 1 in config.TOWN_LEVELS for p in posts])
-            trains_has_next_lvl = all([t.level + 1 in config.TRAIN_LEVELS for t in trains])
+            posts_has_next_lvl = all([p.level + 1 in CONFIG.TOWN_LEVELS for p in posts])
+            trains_has_next_lvl = all([t.level + 1 in CONFIG.TRAIN_LEVELS for t in trains])
             if not all([posts_has_next_lvl, trains_has_next_lvl]):
                 raise errors.BadCommand("Not all entities requested for upgrade have next levels")
 

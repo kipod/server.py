@@ -4,7 +4,7 @@ import json
 import socket
 
 from server.defs import Result
-from server.game_config import config
+from server.game_config import CONFIG
 
 
 class ServerConnection(object):
@@ -16,7 +16,7 @@ class ServerConnection(object):
     MSGLEN_HEADER = 4
     RECEIVE_CHUNK_SIZE = 1024
 
-    def __init__(self, host=config.SERVER_ADDR, port=config.SERVER_PORT):
+    def __init__(self, host=CONFIG.SERVER_ADDR, port=CONFIG.SERVER_PORT):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if host and port:
             self.connect(host, port)

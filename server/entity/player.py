@@ -3,7 +3,7 @@
 import json
 import uuid
 
-from game_config import config
+from game_config import CONFIG
 from entity.point import Point
 from entity.post import Post
 from entity.train import Train
@@ -120,9 +120,9 @@ class Player(object):
         sum_next_level_price = 0
         for train in self.train.values():
             for level in range(1, train.level):
-                sum_next_level_price += config.TRAIN_LEVELS[level]['next_level_price']
+                sum_next_level_price += CONFIG.TRAIN_LEVELS[level]['next_level_price']
         for level in range(1, self.town.level):
-            sum_next_level_price += config.TOWN_LEVELS[level]['next_level_price']
+            sum_next_level_price += CONFIG.TOWN_LEVELS[level]['next_level_price']
         rating_value += sum_next_level_price
 
         return rating_value

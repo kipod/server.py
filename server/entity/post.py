@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-from game_config import config
+from game_config import CONFIG
 
 
 class PostType(IntEnum):
@@ -62,7 +62,7 @@ class Post(object):
             self.armor = armor
             self.player_id = player_id
             # Additional attributes from game_config:
-            for key, value in config.TOWN_LEVELS[self.level].items():
+            for key, value in CONFIG.TOWN_LEVELS[self.level].items():
                 setattr(self, key, value)
 
         if self.type == PostType.MARKET:
@@ -77,7 +77,7 @@ class Post(object):
 
     def set_level(self, next_lvl):
         self.level = next_lvl
-        for key, value in config.TOWN_LEVELS[self.level].items():
+        for key, value in CONFIG.TOWN_LEVELS[self.level].items():
             setattr(self, key, value)
 
     def __repr__(self):

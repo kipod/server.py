@@ -243,5 +243,8 @@ def run_server(_, address=SERVER_ADDR, port=SERVER_PORT):
     except KeyboardInterrupt:
         log(log.WARNING, "Server stopped by keyboard interrupt...")
     finally:
-        server.shutdown()
-        server.server_close()
+        try:
+            Game.stop_all_games()
+        finally:
+            server.shutdown()
+            server.server_close()

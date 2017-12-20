@@ -9,7 +9,7 @@ from sqlalchemy import func, and_
 from db.models import ReplayBase, Game, Action
 from db.session import ReplaySession, replay_session_ctx
 from defs import Action as ActionCodes
-from game_config import config
+from game_config import CONFIG
 
 TIME_FORMAT = '%b %d %Y %I:%M:%S.%f'
 
@@ -104,7 +104,7 @@ def generate_replay00(database: DbReplay, session: ReplaySession):
 def generate_replay01(database: DbReplay, session: ReplaySession):
     """ Generates test game replay.
     """
-    database.add_game('Test', config.MAP_NAME, session=session)
+    database.add_game('Test', CONFIG.MAP_NAME, session=session)
     database.add_action(ActionCodes.LOGIN, '{"name": "TestPlayer"}', session=session)
 
     def insert_replay_move_and_turns(line_idx: int, speed: int, train_idx: int, turns_count: int):

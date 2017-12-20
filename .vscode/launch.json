@@ -101,10 +101,11 @@
                 "RedirectOutput"
             ],
             "args": [
-                //"test.client",
-                //"test.observer",
-                //"test.train_collisions",
-                "test.upgrade"
+                "test.client",
+                "test.observer",
+                "test.train_collisions",
+                "test.upgrade",
+                "test.multiplay"
             ]
         },
         {
@@ -117,6 +118,7 @@
             "cwd": "${workspaceRoot}/server",
             "env": {},
             "envFile": "${workspaceRoot}/.env",
+            "console": "externalTerminal",
             "debugOptions": [
                 "WaitOnAbnormalExit",
                 "WaitOnNormalExit",

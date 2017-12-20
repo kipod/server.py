@@ -1,6 +1,6 @@
 """ Train entity
 """
-from game_config import config
+from game_config import CONFIG
 
 
 class Train(object):
@@ -41,7 +41,7 @@ class Train(object):
         self.player_id = player_id
         self.level = level
         # Additional attributes from game_config:
-        for key, value in config.TRAIN_LEVELS[self.level].items():
+        for key, value in CONFIG.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
         # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
         self.goods = goods
@@ -51,7 +51,7 @@ class Train(object):
 
     def set_level(self, next_lvl):
         self.level = next_lvl
-        for key, value in config.TRAIN_LEVELS[self.level].items():
+        for key, value in CONFIG.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
 
     def __repr__(self):
