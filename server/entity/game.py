@@ -80,16 +80,10 @@ class Game(Thread):
 
     @staticmethod
     def stop_all_games():
-        """ Stop all games.
-        Uses on server shutdown
+        """ Stops all games. Uses on server shutdown.
         """
-        while len(Game.GAMES):
-            for name in Game.GAMES.keys():
-                log(log.INFO, "Shutdown game. Name: '{}'".format(name))
-                game = Game.GAMES[name]
-                game.stop()
-                del game
-                break
+        for game in Game.GAMES.values():
+            game.stop()
 
     def add_player(self, player: Player):
         """ Adds player to the game.
@@ -136,7 +130,7 @@ class Game(Thread):
                     for _player in self.players.values():
                         _player.turn_done = False
                     self._start_tick_event.set()
-            if not self._done_tick_condition.wait(CONFIG.TICK_TIME * 2):
+            if not self._done_tick_condition.wait(CONFIG.TURN_TIMEOUT):
                 raise errors.Timeout("Game tick did not happen")
 
     def stop(self):
