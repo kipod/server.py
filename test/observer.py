@@ -8,7 +8,7 @@ from server.db.map import DbMap, generate_map03
 from server.db.replay import DbReplay, generate_replay01
 from server.db.session import map_session_ctx, replay_session_ctx
 from server.defs import Action, Result
-from server.game_config import config
+from server.game_config import CONFIG
 from test.server_connection import ServerConnection
 
 
@@ -158,7 +158,7 @@ class TestObserver(unittest.TestCase):
         conn = ServerConnection()
         result, _ = conn.send_action(Action.LOGIN, {'name': self.PLAYER_NAME})
         self.assertEqual(Result.OKEY, result)
-        time.sleep(config.TICK_TIME + 1)  # Wait for game tick.
+        time.sleep(CONFIG.TICK_TIME + 1)  # Wait for game tick.
         result, _ = conn.send_action(Action.LOGOUT, None)
         self.assertEqual(Result.OKEY, result)
         time.sleep(2)  # Wait for DB commit.

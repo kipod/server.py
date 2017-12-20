@@ -11,7 +11,7 @@ from server.db.map import generate_map02, DbMap
 from server.db.session import map_session_ctx
 from server.defs import Action, Result
 from server.entity.event import Event, EventType
-from server.game_config import config
+from server.game_config import CONFIG
 from test.server_connection import ServerConnection
 
 
@@ -181,10 +181,11 @@ class TestMultiplay(unittest.TestCase):
             self.turn_check_resp(self.players[1])
             elapsed = time() - start
             # Ensure that game tick has been forced by players:
-            self.assertLess(elapsed, config.TICK_TIME)
+            self.assertLess(elapsed, CONFIG.TICK_TIME)
 
         self.logout(self.players[1])
-        with self.assertRaises(BrokenPipeError):
+        # with self.assertRaises(BrokenPipeError):
+        with self.assertRaises(ConnectionAbortedError):
             self.turn(self.players[1])
         self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
         self.logout(self.players[0])

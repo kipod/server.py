@@ -10,7 +10,7 @@ from server.entity.player import Player
 from server.entity.point import Point
 from server.entity.post import Post, PostType
 from server.entity.train import Train
-from server.game_config import config
+from server.game_config import CONFIG
 
 
 class TestEntity(unittest.TestCase):
@@ -36,7 +36,7 @@ class TestEntity(unittest.TestCase):
     def test_map_init(self):
         """ Test create map entity.
         """
-        game_map = Map(config.MAP_NAME)
+        game_map = Map(CONFIG.MAP_NAME)
         train = Train(idx=1, line_idx=game_map.line[1].idx, position=0)
         game_map.add_train(train)
 
@@ -51,7 +51,7 @@ class TestEntity(unittest.TestCase):
     def test_map_serialization(self):
         """ Test Map entity serialization/deserialization.
         """
-        game_map = Map(config.MAP_NAME)
+        game_map = Map(CONFIG.MAP_NAME)
         train = Train(idx=1, line_idx=game_map.line[1].idx, position=0)
         game_map.add_train(train)
 

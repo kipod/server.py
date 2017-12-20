@@ -8,7 +8,7 @@ from invoke import task
 from db.models import MapBase, Map, Line, Point, Post
 from db.session import MapSession, map_session_ctx
 from entity.post import PostType
-from game_config import config
+from game_config import CONFIG
 
 
 def db_session(function):
@@ -863,7 +863,7 @@ MAP_GENERATORS = {
 
 
 @task
-def generate_map(_, map_version=config.CURRENT_MAP_VERSION):
+def generate_map(_, map_version=CONFIG.CURRENT_MAP_VERSION):
     """ Generates 'map.db'.
     """
     if map_version is not None and map_version not in MAP_GENERATORS:
