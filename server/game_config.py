@@ -73,6 +73,9 @@ class TestingConfig(BaseConfig):
     """ Test configuration """
     SERVER_ADDR = '127.0.0.1'
     SERVER_PORT = 2000
+    HIJACKERS_ASSAULT_PROBABILITY = 0
+    PARASITES_ASSAULT_PROBABILITY = 0
+    REFUGEES_ARRIVAL_PROBABILITY = 0
 
 
 class TestingConfigWithEvents(TestingConfig):
