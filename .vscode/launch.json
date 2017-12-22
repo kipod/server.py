@@ -84,6 +84,27 @@
             ]
         },
         {
+            "name": "Multiplay Client",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": false,
+            "pythonPath": "${config:python.pythonPath}",
+            "module": "unittest",
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "WG_FORGE_SERVER_CONFIG": "production"
+            },
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit",
+                "RedirectOutput"
+            ],
+            "args": [
+                "test.multiclient"
+            ]
+        },
+        {
             "name": "All Server Tests",
             "type": "python",
             "request": "launch",
@@ -116,7 +137,9 @@
             "pythonPath": "${config:python.pythonPath}",
             "module": "invoke",
             "cwd": "${workspaceRoot}/server",
-            "env": {},
+            "env": {
+                "WG_FORGE_SERVER_CONFIG": "testing"
+            },
             "envFile": "${workspaceRoot}/.env",
             "console": "externalTerminal",
             "debugOptions": [

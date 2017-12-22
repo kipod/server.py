@@ -184,7 +184,7 @@ class TestMultiplay(unittest.TestCase):
             self.assertLess(elapsed, CONFIG.TICK_TIME)
 
         self.logout(self.players[1])
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(Exception):
             self.turn(self.players[1])
         self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
         self.logout(self.players[0])
@@ -266,7 +266,7 @@ class TestMultiplay(unittest.TestCase):
         path_line = [10, 29, 48, 67, 77, 78, 79, 80]
         for line_idx in path_line:
             self.move_train(self.players[0], line_idx, train0.idx, 1)
-            self.players_turn(self.players[:players_in_game], turns_count=50)
+            self.players_turn(self.players[:players_in_game], turns_count=20)
 
         for line_idx in reversed(path_line):
             self.move_train(self.players[0], line_idx, train0.idx, -1)
@@ -284,7 +284,7 @@ class TestMultiplay(unittest.TestCase):
             self.players_turn(self.players[:players_in_game], turns_count=5)
         for line_idx in path_line2:
             self.move_train(self.players[1], line_idx, train1.idx, -1)
-            self.players_turn(self.players[:players_in_game], turns_count=4)
+            self.players_turn(self.players[:players_in_game], turns_count=20)
         for line_idx in reversed(path_line2):
             self.move_train(self.players[1], line_idx, train1.idx, 1)
             self.players_turn(self.players[:players_in_game], turns_count=4)
