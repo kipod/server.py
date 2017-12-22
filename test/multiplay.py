@@ -7,7 +7,7 @@ from time import time
 
 from attrdict import AttrDict
 
-from server.db.map import generate_map02, DbMap
+from server.db.map import generate_map04, DbMap
 from server.db.session import map_session_ctx
 from server.defs import Action, Result
 from server.entity.event import Event, EventType
@@ -19,7 +19,7 @@ class TestMultiplay(unittest.TestCase):
     """ Multiplay test cases.
     """
     TIME_SUFFIX = datetime.now().strftime('%H:%M:%S.%f')
-    NUM_TOWNS = 2
+    NUM_TOWNS = 4
     PLAYER_NAMES = [
         "Test Player Name 1 {}".format(TIME_SUFFIX),
         "Test Player Name 2 {}".format(TIME_SUFFIX),
@@ -31,7 +31,7 @@ class TestMultiplay(unittest.TestCase):
         database = DbMap()
         database.reset_db()
         with map_session_ctx() as session:
-            generate_map02(database, session)
+            generate_map04(database, session)
 
     @classmethod
     def tearDownClass(cls):
@@ -168,9 +168,9 @@ class TestMultiplay(unittest.TestCase):
         """
         turns_num = 3
 
-        self.login(self.players[0])
+        self.login(self.players[0], num_players=2)
         self.turn(self.players[0], exp_result=Result.NOT_READY)
-        self.login(self.players[1])
+        self.login(self.players[1], num_players=2)
         self.turn(self.players[0], exp_result=Result.OKEY)  # Waiting for game tick.
 
         for _ in range(turns_num):
@@ -196,13 +196,13 @@ class TestMultiplay(unittest.TestCase):
         self.assertIn('error', message)
         self.assertIn("Unable to create game", message['error'])
 
-        self.login(self.players[0])
+        self.login(self.players[0], num_players=2)
         message = self.login(self.players[1], num_players=self.NUM_TOWNS + 1, exp_result=Result.BAD_COMMAND)
         self.assertIn('error', message)
         self.assertIn("Incorrect players number requested", message['error'])
 
-        self.login(self.players[1])
-        message = self.login(self.players[2], exp_result=Result.ACCESS_DENIED)
+        self.login(self.players[1], num_players=2)
+        message = self.login(self.players[2], num_players=2, exp_result=Result.ACCESS_DENIED)
         self.assertIn('error', message)
         self.assertIn("The maximum number of players reached", message['error'])
 
@@ -223,20 +223,27 @@ class TestMultiplay(unittest.TestCase):
         """ Test train unload in foreign town.
         """
         players_in_game = 2
-        player0 = AttrDict(self.login(self.players[0]))
-        self.login(self.players[1])
+        player0 = AttrDict(self.login(self.players[0], num_players=players_in_game))
+        self.login(self.players[1], num_players=players_in_game)
 
-        self.move_train(self.players[0], 1, player0.train[0].idx, 1)
-        self.players_turn(self.players[:players_in_game])
+        self.move_train(self.players[0], 10, player0.train[0].idx, 1)
+        self.players_turn(self.players[:players_in_game], turns_count=3)
+
+        # path to Market
+        #10-29-48-58-59-60 51-32-13
+        for line_idx in (10, 29, 48, 58, 59, 60):
+            self.move_train(self.players[0], line_idx, player0.train[0].idx, 1)
+            self.players_turn(self.players[:players_in_game], turns_count=5)
+
+        for line_idx in (51, 32, 13):
+            self.move_train(self.players[0], line_idx, player0.train[0].idx, -1)
+            self.players_turn(self.players[:players_in_game], turns_count=5)
 
         train_before = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
 
-        self.move_train(self.players[0], 7, player0.train[0].idx, 1)
-        self.players_turn(self.players[:players_in_game])
-        self.move_train(self.players[0], 8, player0.train[0].idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=2)
-        self.move_train(self.players[0], 3, player0.train[0].idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=2)  # One more turn in town to be sure.
+        for line_idx in range(4, 10):
+            self.move_train(self.players[0], line_idx, player0.train[0].idx, 1)
+            self.players_turn(self.players[:players_in_game], turns_count=4)
 
         train_after = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
 
@@ -247,39 +254,44 @@ class TestMultiplay(unittest.TestCase):
         """ Test upgrade of train which is owned by other player.
         """
         players_in_game = 2
-        player0 = AttrDict(self.login(self.players[0]))
-        player1 = AttrDict(self.login(self.players[1]))
+        player0 = AttrDict(self.login(self.players[0], num_players=players_in_game))
+        player1 = AttrDict(self.login(self.players[1], num_players=players_in_game))
         town0 = AttrDict(self.get_post(self.players[0], player0.town.idx))
         town1 = AttrDict(self.get_post(self.players[1], player1.town.idx))
         train0 = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
         train1 = AttrDict(self.get_train(self.players[1], player1.train[0].idx))
 
         # Mine armor for 1-st player:
-        self.move_train(self.players[0], 18, train0.idx, -1)
-        self.players_turn(self.players[:players_in_game], turns_count=3)
-        self.move_train(self.players[0], 18, train0.idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=3)
+        # 10-29-48-67-77-78-79-80
+        path_line = [10, 29, 48, 67, 77, 78, 79, 80]
+        for line_idx in path_line:
+            self.move_train(self.players[0], line_idx, train0.idx, 1)
+            self.players_turn(self.players[:players_in_game], turns_count=50)
+
+        for line_idx in reversed(path_line):
+            self.move_train(self.players[0], line_idx, train0.idx, -1)
+            self.players_turn(self.players[:players_in_game], turns_count=5)
+
         town0_after = AttrDict(self.get_post(self.players[0], player0.town.idx))
         self.assertEqual(town0_after.armor, town0.armor + train0.goods_capacity)
 
         # Mine armor for 2-nd player:
-        self.move_train(self.players[1], 3, train1.idx, -1)
-        self.players_turn(self.players[:players_in_game], turns_count=1)
-        self.move_train(self.players[1], 9, train1.idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=2)
-        self.move_train(self.players[1], 10, train1.idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=1)
-        self.move_train(self.players[1], 11, train1.idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=3)
-        self.move_train(self.players[1], 6, train1.idx, 1)
-        self.players_turn(self.players[:players_in_game], turns_count=2)
-        self.players_turn(self.players[:players_in_game], turns_count=4)  # Wait for replenishment.
-        self.move_train(self.players[1], 17, train1.idx, -1)
-        self.players_turn(self.players[:players_in_game], turns_count=1)
-        self.move_train(self.players[1], 16, train1.idx, -1)
-        self.players_turn(self.players[:players_in_game], turns_count=3)
-        self.move_train(self.players[1], 15, train1.idx, -1)
-        self.players_turn(self.players[:players_in_game], turns_count=1)
+        # 19-38-57-76 85-84-83-82
+        path_line1 = [19, 38, 57, 76]
+        path_line2 = [85, 84, 83, 82]
+        for line_idx in path_line1:
+            self.move_train(self.players[1], line_idx, train1.idx, 1)
+            self.players_turn(self.players[:players_in_game], turns_count=5)
+        for line_idx in path_line2:
+            self.move_train(self.players[1], line_idx, train1.idx, -1)
+            self.players_turn(self.players[:players_in_game], turns_count=4)
+        for line_idx in reversed(path_line2):
+            self.move_train(self.players[1], line_idx, train1.idx, 1)
+            self.players_turn(self.players[:players_in_game], turns_count=4)
+        for line_idx in reversed(path_line1):
+            self.move_train(self.players[1], line_idx, train1.idx, -1)
+            self.players_turn(self.players[:players_in_game], turns_count=5)
+
         town1_after = AttrDict(self.get_post(self.players[1], player1.town.idx))
         self.assertEqual(town1_after.armor, town1.armor + train1.goods_capacity)
 
@@ -299,14 +311,20 @@ class TestMultiplay(unittest.TestCase):
         """ Test users events independence.
         """
         players_in_game = 2
-        player0 = AttrDict(self.login(self.players[0]))
-        player1 = AttrDict(self.login(self.players[1]))
+        player0 = AttrDict(self.login(self.players[0], num_players=players_in_game))
+        player1 = AttrDict(self.login(self.players[1], num_players=players_in_game))
         train0 = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
         train1 = AttrDict(self.get_train(self.players[1], player1.train[0].idx))
 
-        self.move_train(self.players[0], 13, train0.idx, 1)
-        self.move_train(self.players[1], 14, train1.idx, -1)
-        self.players_turn(self.players[:players_in_game], turns_count=2)
+        # path to Market
+        #1-2-3-4
+        for line_idx in (1, 2, 3, 4):
+            self.move_train(self.players[0], line_idx, train0.idx, 1)
+            self.players_turn(self.players[:players_in_game], turns_count=4)
+
+        for line_idx in (9, 8, 7, 6, 5):
+            self.move_train(self.players[1], line_idx, train1.idx, -1)
+            self.players_turn(self.players[:players_in_game], turns_count=4)
 
         train0_after = AttrDict(self.get_train(self.players[0], player0.train[0].idx))
         self.assertTrue(
