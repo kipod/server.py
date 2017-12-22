@@ -327,7 +327,8 @@ class Game(Thread):
                 post.armor += goods
                 if post.armor == post.armor_capacity:
                     post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, armor=post.armor))
-            train.goods -= goods
+            # train.goods -= goods
+            train.goods = 0 # train always unload all goods
             if train.goods == 0:
                 train.post_type = None
 
