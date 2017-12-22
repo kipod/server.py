@@ -90,7 +90,7 @@ class Game(Thread):
         """
         if player.idx not in self.players:
             # Check players count:
-            if len(self.players) == len(self.map.towns):
+            if len(self.players) == len(self.map.towns) or len(self.players) == self.num_players:
                 raise errors.AccessDenied("The maximum number of players reached")
 
             with self._lock:
