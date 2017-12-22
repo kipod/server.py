@@ -61,7 +61,11 @@ class Game(Thread):
         self.name = name
         self.trains = {}
         self.next_train_moves = {}
-        self.event_cooldowns = {}
+        self.event_cooldowns = {
+            EventType.PARASITES_ASSAULT: CONFIG.PARASITES_POWER_RANGE[-1] * CONFIG.PARASITES_COOLDOWN_COEFFICIENT,
+            EventType.HIJACKERS_ASSAULT: CONFIG.HIJACKERS_POWER_RANGE[-1] * CONFIG.HIJACKERS_COOLDOWN_COEFFICIENT,
+            EventType.REFUGEES_ARRIVAL: CONFIG.REFUGEES_NUMBER_RANGE[-1] * CONFIG.REFUGEES_COOLDOWN_COEFFICIENT
+        }
         self._lock = Lock()
         self._stop_event = Event()
         self._start_tick_event = Event()
@@ -90,7 +94,7 @@ class Game(Thread):
         """
         if player.idx not in self.players:
             # Check players count:
-            if len(self.players) == len(self.map.towns):
+            if len(self.players) == len(self.map.towns) or len(self.players) == self.num_players:
                 raise errors.AccessDenied("The maximum number of players reached")
 
             with self._lock:
@@ -323,7 +327,8 @@ class Game(Thread):
                 post.armor += goods
                 if post.armor == post.armor_capacity:
                     post.event.append(GameEvent(EventType.RESOURCE_OVERFLOW, self.current_tick, armor=post.armor))
-            train.goods -= goods
+            # train.goods -= goods
+            train.goods = 0 # train always unload all goods
             if train.goods == 0:
                 train.post_type = None
 

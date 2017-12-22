@@ -23,7 +23,7 @@ class BaseConfig(object):
     PARASITES_POWER_RANGE = (1, 3)
     PARASITES_COOLDOWN_COEFFICIENT = 5
 
-    REFUGEES_ARRIVAL_PROBABILITY = 5
+    REFUGEES_ARRIVAL_PROBABILITY = 1
     REFUGEES_NUMBER_RANGE = (1, 3)
     REFUGEES_COOLDOWN_COEFFICIENT = 5
 
@@ -97,6 +97,8 @@ class TestingConfigWithEvents(TestingConfig):
 class ProductionConfig(BaseConfig):
     """ Production configuration.
     """
+    SERVER_ADDR = 'wgforge-srv.wargaming.net'
+    SERVER_PORT = 443
     pass
 
 

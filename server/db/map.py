@@ -630,23 +630,23 @@ def generate_map04(db: DbMap, session: MapSession):
 
     # Posts:
     # Towns:
-    add_post(p1, 'Kiev', PostType.TOWN, population=3, product=200, armor=100)
-    add_post(p10, 'Minsk', PostType.TOWN, population=3, product=200, armor=100)
-    add_post(p91, 'Saint Petersburg', PostType.TOWN, population=3, product=200, armor=100)
-    add_post(p100, 'Tallinn', PostType.TOWN, population=3, product=200, armor=100)
+    add_post(p1, 'Kiev', PostType.TOWN, population=0, product=200, armor=100)
+    add_post(p10, 'Minsk', PostType.TOWN, population=0, product=200, armor=100)
+    add_post(p91, 'Saint Petersburg', PostType.TOWN, population=0, product=200, armor=100)
+    add_post(p100, 'Tallinn', PostType.TOWN, population=0, product=200, armor=100)
     # Markets:
     add_post(p34, 'market-01', PostType.MARKET, product=500, replenishment=10)
     add_post(p37, 'market-02', PostType.MARKET, product=500, replenishment=10)
     add_post(p64, 'market-03', PostType.MARKET, product=500, replenishment=10)
     add_post(p67, 'market-04', PostType.MARKET, product=500, replenishment=10)
     # Storages:
-    add_post(p45, 'storage-01', PostType.STORAGE, armor=100, replenishment=15)
-    add_post(p46, 'storage-02', PostType.STORAGE, armor=100, replenishment=15)
-    add_post(p55, 'storage-03', PostType.STORAGE, armor=100, replenishment=15)
-    add_post(p56, 'storage-04', PostType.STORAGE, armor=100, replenishment=15)
+    add_post(p45, 'storage-01', PostType.STORAGE, armor=20, replenishment=5)
+    add_post(p46, 'storage-02', PostType.STORAGE, armor=20, replenishment=5)
+    add_post(p55, 'storage-03', PostType.STORAGE, armor=20, replenishment=5)
+    add_post(p56, 'storage-04', PostType.STORAGE, armor=20, replenishment=5)
 
     # Lines:
-    add_line(4, p1, p2)
+    add_line(4, p1, p2) # 1
     add_line(4, p2, p3)
     add_line(4, p3, p4)
     add_line(4, p4, p5)
@@ -654,21 +654,20 @@ def generate_map04(db: DbMap, session: MapSession):
     add_line(4, p6, p7)
     add_line(4, p7, p8)
     add_line(4, p8, p9)
-    add_line(4, p9, p10)
+    add_line(4, p9, p10) # 9
 
-    add_line(5, p1, p11)
-    add_line(5, p2, p12)
-    add_line(5, p3, p13)
-    add_line(5, p4, p14)
+    add_line(5, p1, p11) # 10
+    add_line(5, p2, p12) # 11
+    add_line(5, p3, p13) # 12
+    add_line(5, p4, p14) # 13
     add_line(5, p5, p15)
     add_line(5, p6, p16)
     add_line(5, p7, p17)
     add_line(5, p8, p18)
     add_line(5, p9, p19)
-    add_line(5, p10, p20)
+    add_line(5, p10, p20) # 19
 
-
-    add_line(4, p11, p12)  # noqa E303
+    add_line(4, p11, p12) # 20
     add_line(4, p12, p13)
     add_line(4, p13, p14)
     add_line(4, p14, p15)
@@ -676,52 +675,51 @@ def generate_map04(db: DbMap, session: MapSession):
     add_line(4, p16, p17)
     add_line(4, p17, p18)
     add_line(4, p18, p19)
-    add_line(4, p19, p20)
+    add_line(4, p19, p20) # 28
 
-    add_line(5, p11, p21)
-    add_line(5, p12, p22)
-    add_line(5, p13, p23)
-    add_line(5, p14, p24)
+    add_line(5, p11, p21) # 29
+    add_line(5, p12, p22) # 30
+    add_line(5, p13, p23) # 31
+    add_line(5, p14, p24) # 32
     add_line(5, p15, p25)
     add_line(5, p16, p26)
     add_line(5, p17, p27)
     add_line(5, p18, p28)
     add_line(5, p19, p29)
-    add_line(5, p20, p30)
+    add_line(5, p20, p30) # 38
 
-
-    add_line(4, p21, p22)  # noqa E303
-    add_line(4, p22, p23)
+    add_line(4, p21, p22) # 39
+    add_line(4, p22, p23) # 40
     add_line(4, p23, p24)
     add_line(4, p24, p25)
     add_line(4, p25, p26)
     add_line(4, p26, p27)
     add_line(4, p27, p28)
     add_line(4, p28, p29)
-    add_line(4, p29, p30)
+    add_line(4, p29, p30) # 47
 
-    add_line(5, p21, p31)
-    add_line(5, p22, p32)
-    add_line(5, p23, p33)
-    add_line(5, p24, p34)
+    add_line(5, p21, p31) # 48
+    add_line(5, p22, p32) # 49
+    add_line(5, p23, p33) # 50
+    add_line(5, p24, p34) # 51
     add_line(5, p25, p35)
     add_line(5, p26, p36)
     add_line(5, p27, p37)
     add_line(5, p28, p38)
     add_line(5, p29, p39)
-    add_line(5, p30, p40)
+    add_line(5, p30, p40) # 57
 
-    add_line(4, p31, p32)
+    add_line(4, p31, p32) # 58
     add_line(4, p32, p33)
-    add_line(4, p33, p34)
+    add_line(4, p33, p34) # 60
     add_line(4, p34, p35)
     add_line(4, p35, p36)
     add_line(4, p36, p37)
     add_line(4, p37, p38)
     add_line(4, p38, p39)
-    add_line(4, p39, p40)
+    add_line(4, p39, p40) # 66
 
-    add_line(5, p31, p41)
+    add_line(5, p31, p41) # 67
     add_line(5, p32, p42)
     add_line(5, p33, p43)
     add_line(5, p34, p44)
