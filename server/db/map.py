@@ -630,20 +630,20 @@ def generate_map04(db: DbMap, session: MapSession):
 
     # Posts:
     # Towns:
-    add_post(p1, 'Kiev', PostType.TOWN, population=3, product=200, armor=100)
-    add_post(p10, 'Minsk', PostType.TOWN, population=3, product=200, armor=100)
-    add_post(p91, 'Saint Petersburg', PostType.TOWN, population=3, product=200, armor=100)
-    add_post(p100, 'Tallinn', PostType.TOWN, population=3, product=200, armor=100)
+    add_post(p1, 'Kiev', PostType.TOWN, population=0, product=200, armor=100)
+    add_post(p10, 'Minsk', PostType.TOWN, population=0, product=200, armor=100)
+    add_post(p91, 'Saint Petersburg', PostType.TOWN, population=0, product=200, armor=100)
+    add_post(p100, 'Tallinn', PostType.TOWN, population=0, product=200, armor=100)
     # Markets:
     add_post(p34, 'market-01', PostType.MARKET, product=500, replenishment=10)
     add_post(p37, 'market-02', PostType.MARKET, product=500, replenishment=10)
     add_post(p64, 'market-03', PostType.MARKET, product=500, replenishment=10)
     add_post(p67, 'market-04', PostType.MARKET, product=500, replenishment=10)
     # Storages:
-    add_post(p45, 'storage-01', PostType.STORAGE, armor=100, replenishment=15)
-    add_post(p46, 'storage-02', PostType.STORAGE, armor=100, replenishment=15)
-    add_post(p55, 'storage-03', PostType.STORAGE, armor=100, replenishment=15)
-    add_post(p56, 'storage-04', PostType.STORAGE, armor=100, replenishment=15)
+    add_post(p45, 'storage-01', PostType.STORAGE, armor=20, replenishment=5)
+    add_post(p46, 'storage-02', PostType.STORAGE, armor=20, replenishment=5)
+    add_post(p55, 'storage-03', PostType.STORAGE, armor=20, replenishment=5)
+    add_post(p56, 'storage-04', PostType.STORAGE, armor=20, replenishment=5)
 
     # Lines:
     add_line(4, p1, p2) # 1

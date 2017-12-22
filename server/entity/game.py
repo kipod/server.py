@@ -61,7 +61,11 @@ class Game(Thread):
         self.name = name
         self.trains = {}
         self.next_train_moves = {}
-        self.event_cooldowns = {}
+        self.event_cooldowns = {
+            EventType.PARASITES_ASSAULT: CONFIG.PARASITES_POWER_RANGE[-1] * CONFIG.PARASITES_COOLDOWN_COEFFICIENT,
+            EventType.HIJACKERS_ASSAULT: CONFIG.HIJACKERS_POWER_RANGE[-1] * CONFIG.HIJACKERS_COOLDOWN_COEFFICIENT,
+            EventType.REFUGEES_ARRIVAL: CONFIG.REFUGEES_NUMBER_RANGE[-1] * CONFIG.REFUGEES_COOLDOWN_COEFFICIENT
+        }
         self._lock = Lock()
         self._stop_event = Event()
         self._start_tick_event = Event()
