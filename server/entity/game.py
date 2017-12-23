@@ -632,7 +632,10 @@ class Game(Thread):
             data = json.loads(message)
             rating = {}
             for _player in self.players.values():
-                rating[_player.name] = _player.rating
+                rating[_player.idx] = { 
+                    'rating': _player.rating,
+                    'name': _player.name
+                }
             data['rating'] = rating
             message = json.dumps(data, sort_keys=True, indent=4)
             if not self.observed:
