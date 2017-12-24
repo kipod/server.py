@@ -55,7 +55,7 @@ class Game(Thread):
                     self.num_players, len(self.map.towns))
             )
         self.replay = None if self.observed else DbReplay()
-        self.current_game_id = 0 if self.observed else self.replay.add_game(name, map_name=self.map.name)
+        self.current_game_id = 0 if self.observed else self.replay.add_game(name, map_name=self.map.name, num_players=num_players)
         self.current_tick = 0
         self.players = {}
         self.name = name
