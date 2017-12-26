@@ -632,9 +632,10 @@ class Game(Thread):
             data = json.loads(message)
             rating = {}
             for _player in self.players.values():
-                rating[_player.idx] = { 
+                rating[_player.idx] = {
                     'rating': _player.rating,
-                    'name': _player.name
+                    'name': _player.name,
+                    'idx': _player.idx
                 }
             data['rating'] = rating
             message = json.dumps(data, sort_keys=True, indent=4)
