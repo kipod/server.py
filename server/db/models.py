@@ -90,10 +90,11 @@ class Game(ReplayBase):
     date = Column(DateTime)
     map_name = Column(String)
     actions = relationship('Action', backref='game', lazy='dynamic')
+    num_players = Column(Integer)
 
     def __repr__(self):
-        return "<Game(id='{}', name='{}', date='{}', map_name='{}')>".format(
-           self.id, self.name, self.date, self.map_name)
+        return "<Game(id='{}', name='{}', date='{}', map_name='{}', num_players='{}')>".format(
+            self.id, self.name, self.date, self.map_name, self.num_players)
 
 
 class Action(ReplayBase):
@@ -108,4 +109,4 @@ class Action(ReplayBase):
 
     def __repr__(self):
         return "<Action(id='{}', game_id='{}', code='{}', message='{}', date='{}')>".format(
-           self.id, self.game_id, self.code, self.message, self.date)
+            self.id, self.game_id, self.code, self.message, self.date)

@@ -154,6 +154,9 @@ class Test(unittest.TestCase):
         player2 = AttrDict(self.login(self.players[2], num_players=players_in_game))
         player3 = AttrDict(self.login(self.players[3], num_players=players_in_game))
 
+        map_0_0 = self.get_map(self.players[0], 0)
+        map_0_1 = self.get_map(self.players[0], 1)
+
         line_path = (
             [1, 19, 162, 180],
             [2, 38, 143, 179],

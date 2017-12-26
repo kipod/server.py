@@ -183,7 +183,10 @@ Hex: |0A 00 00 00|0D 00 00 00|"{ "layer": 0 }"
         }
     ],
     "rating": {
-        "Nikolay": 3000
+        "41acf370-e1f3-414d-8a35-50e00ff4930f": {
+            "name": "Nikolay",
+            "rating": 12345
+        },
     },
     "train": [
         {

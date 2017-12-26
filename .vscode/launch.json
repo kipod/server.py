@@ -92,7 +92,7 @@
             "module": "unittest",
             "cwd": "${workspaceRoot}",
             "env": {
-                "WG_FORGE_SERVER_CONFIG": "production"
+                "WG_FORGE_SERVER_CONFIG": "testing"
             },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [

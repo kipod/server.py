@@ -39,11 +39,11 @@ class DbReplay(object):
         ReplayBase.metadata.create_all()
 
     @db_session
-    def add_game(self, name, map_name, date=None, session=None):
+    def add_game(self, name, map_name, date=None, num_players=1, session=None):
         """ Creates new Game in DB.
         """
         _date = datetime.now() if date is None else date
-        new_game = Game(name=name, date=_date, map_name=map_name)
+        new_game = Game(name=name, date=_date, map_name=map_name, num_players=num_players)
         session.add(new_game)
         session.commit()  # Commit to get game's id.
         self.current_game_id = new_game.id
@@ -75,6 +75,7 @@ class DbReplay(object):
                 'date': game_data.date.strftime(TIME_FORMAT),
                 'map': game_data.map_name,
                 'length': game_length,
+                'num_players': game_data.num_players,
             }
             games.append(game)
         return games

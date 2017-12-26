@@ -24,6 +24,7 @@ class Observer(object):
         self._current_turn = 0
         self._current_action = 0
         self._max_turn = 0
+        self.num_players = 0
 
     def games(self):
         """ Retrieves list of games.
@@ -33,7 +34,7 @@ class Observer(object):
     def reset_game(self):
         """ Resets the game to initial state.
         """
-        self._game = Game(self._game_name, self._map_name, observed=True)
+        self._game = Game(self._game_name, self._map_name, num_players=self.num_players, observed=True)
         for action in self._actions:
             if action['code'] == Action.LOGIN:
                 data = json.loads(action['message'])
@@ -114,6 +115,7 @@ class Observer(object):
             if game['idx'] == game_id:
                 game_name = game['name']
                 self._game_name = game_name
+                self.num_players = game['num_players']
                 self._map_name = game['map']
                 log(log.INFO, "Observer selected game: {}".format(game_name))
                 self._actions = self._db.get_all_actions(game_id)
