@@ -8,9 +8,10 @@
 * **Action.Event**. Inserts in in table ReplayDB:action
 * Game process Action Event. This Action generates by Observer
 
-### Add fuel for trains
-
 ### Add more tests
+
+* Reverse train on move
+* Fuel consumption
 
 ### Improve logging
 
