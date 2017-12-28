@@ -239,17 +239,14 @@ class Game(Thread):
             if train.cooldown > 0:
                 raise errors.BadCommand("The train is under cooldown, cooldown: {}".format(train.cooldown))
 
-            # Stop the train:
-            if speed == 0:
+            # Stop the train; reverse direction on move; continue run the train:
+            if speed == 0 or train.line_idx == line_idx:
                 train.speed = speed
 
             # The train is standing:
             elif train.speed == 0:
-                # Continue run the train:
-                if train.line_idx == line_idx:
-                    train.speed = speed
                 # The train is standing at the end of the line:
-                elif self.map.line[train.line_idx].length == train.position:
+                if self.map.line[train.line_idx].length == train.position:
                     line_from = self.map.line[train.line_idx]
                     line_to = self.map.line[line_idx]
                     if line_from.point[1] in line_to.point:
