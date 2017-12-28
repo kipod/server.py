@@ -93,6 +93,7 @@ class TestingConfig(BaseConfig):
     PARASITES_ASSAULT_PROBABILITY = 0
     REFUGEES_ARRIVAL_PROBABILITY = 0
     EVENT_COOLDOWNS_ON_START = {}
+    TRAIN_ALWAYS_DEVASTATED = False  # There is at least one test which awaits non-devastated train, TODO: check it
 
 
 class TestingConfigWithEvents(TestingConfig):

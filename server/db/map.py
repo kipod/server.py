@@ -731,7 +731,7 @@ def generate_map04(db: DbMap, session: MapSession):
     add_line(5, p40, p50)  # 76
 
 
-    add_line(4, p41, p42)  # 77 noqa E303
+    add_line(4, p41, p42)  # 77 # noqa E303
     add_line(4, p42, p43)  # 78
     add_line(4, p43, p44)  # 79
     add_line(4, p44, p45)  # 80
