@@ -4,17 +4,21 @@ from os import getenv
 
 from attrdict import AttrDict
 
+from entity.event import EventType
+
 
 class BaseConfig(object):
     """ Base configuration.
     """
     TICK_TIME = 10
-    MAX_TICK_CALCULATION_TIME = 5
+    MAX_TICK_CALCULATION_TIME = 3
     TURN_TIMEOUT = TICK_TIME + MAX_TICK_CALCULATION_TIME
-    MAP_NAME = 'theMap'
+    MAP_NAME = 'WG-Forge-Game-Map'
     CURRENT_MAP_VERSION = 'map04'
-    DEFAULT_TRAINS_COUNT = 8
+    TRAINS_COUNT = 8
     FUEL_ENABLED = False
+    TRAIN_ALWAYS_DEVASTATED = True
+    COLLISIONS_ENABLED = True
 
     HIJACKERS_ASSAULT_PROBABILITY = 20
     HIJACKERS_POWER_RANGE = (1, 3)
@@ -27,6 +31,12 @@ class BaseConfig(object):
     REFUGEES_ARRIVAL_PROBABILITY = 1
     REFUGEES_NUMBER_RANGE = (1, 3)
     REFUGEES_COOLDOWN_COEFFICIENT = 5
+
+    EVENT_COOLDOWNS_ON_START = {
+        EventType.PARASITES_ASSAULT: PARASITES_POWER_RANGE[-1] * PARASITES_COOLDOWN_COEFFICIENT,
+        EventType.HIJACKERS_ASSAULT: HIJACKERS_POWER_RANGE[-1] * HIJACKERS_COOLDOWN_COEFFICIENT,
+        EventType.REFUGEES_ARRIVAL: REFUGEES_NUMBER_RANGE[-1] * REFUGEES_COOLDOWN_COEFFICIENT,
+    }
 
     TOWN_LEVELS = AttrDict({
         1: {
@@ -82,6 +92,7 @@ class TestingConfig(BaseConfig):
     HIJACKERS_ASSAULT_PROBABILITY = 0
     PARASITES_ASSAULT_PROBABILITY = 0
     REFUGEES_ARRIVAL_PROBABILITY = 0
+    EVENT_COOLDOWNS_ON_START = {}
 
 
 class TestingConfigWithEvents(TestingConfig):
@@ -100,7 +111,6 @@ class ProductionConfig(BaseConfig):
     """
     SERVER_ADDR = 'wgforge-srv.wargaming.net'
     SERVER_PORT = 443
-    pass
 
 
 SERVER_CONFIGS = {

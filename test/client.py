@@ -109,7 +109,7 @@ class TestClient(unittest.TestCase):
         map02 = Map()
         map02.from_json_str(message)
         self.assertEqual(len(map02.post), 6)
-        self.assertEqual(len(map02.train), CONFIG.DEFAULT_TRAINS_COUNT)
+        self.assertEqual(len(map02.train), CONFIG.TRAINS_COUNT)
 
     def test_2_get_map_layer_10(self):
         """ Test layer_to_json_str and from_json_str for layer 10.

@@ -33,7 +33,7 @@ class ServerConnection(object):
         while total_sent < msg_len:
             sent = self.sock.send(message[total_sent:])
             if sent == 0:
-                raise RuntimeError("Socket connection broken")
+                raise ConnectionError("Socket connection broken")
             total_sent += sent
 
     def receive(self, msg_len):
@@ -42,7 +42,7 @@ class ServerConnection(object):
         while bytes_recd < msg_len:
             chunk = self.sock.recv(min(msg_len - bytes_recd, self.RECEIVE_CHUNK_SIZE))
             if chunk == b'':
-                raise RuntimeError("Socket connection broken")
+                raise ConnectionError("Socket connection broken")
             chunks.append(chunk)
             bytes_recd += len(chunk)
         return b''.join(chunks)
