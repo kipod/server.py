@@ -305,8 +305,8 @@ class TestUpgrade(unittest.TestCase):
         self.assertGreater(town_now['armor_capacity'], town['armor_capacity'])
         self.assertGreater(town_now['next_level_price'], town['next_level_price'])
         self.assertTrue(
-            town_now['train_cooldown_on_collision'] < town['train_cooldown_on_collision']
-            or town_now['train_cooldown_on_collision'] == 0
+            town_now['train_cooldown'] < town['train_cooldown']
+            or town_now['train_cooldown'] == 0
         )
 
         self.assertEqual(map_data['train'][0]['level'], train_1['level'])
@@ -334,7 +334,7 @@ class TestUpgrade(unittest.TestCase):
         self.assertEqual(town_now['product_capacity'], town['product_capacity'])
         self.assertEqual(town_now['armor_capacity'], town['armor_capacity'])
         self.assertEqual(town_now['next_level_price'], town['next_level_price'])
-        self.assertEqual(town_now['train_cooldown_on_collision'], town['train_cooldown_on_collision'])
+        self.assertEqual(town_now['train_cooldown'], town['train_cooldown'])
 
         self.assertEqual(map_data['train'][0]['level'], train_1['level'])
         self.assertEqual(map_data['train'][0]['goods_capacity'], train_1['goods_capacity'])

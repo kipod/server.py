@@ -331,6 +331,8 @@ class Game(Thread):
             train.goods = 0 # train always unload all goods
             if train.goods == 0:
                 train.post_type = None
+            # Fill up trains's tank:
+            train.fuel = train.fuel_capacity
 
         elif post.type == PostType.MARKET:
             # Load product from market to train:
@@ -371,7 +373,7 @@ class Game(Thread):
         if with_cooldown:
             # Get Train owner's town:
             player_town = self.players[train.player_id].town
-            train.cooldown = player_town.train_cooldown_on_collision
+            train.cooldown = player_town.train_cooldown
 
     def hijackers_assault_on_tick(self):
         """ Makes hijackers assault which decreases quantity of Town's armor and population.
@@ -454,6 +456,10 @@ class Game(Thread):
         """ Update trains positions.
         """
         for train in self.trains.values():
+            if train.speed != 0:
+                train.fuel -= train.fuel_consumption
+                if train.fuel < 0:
+                    self.put_train_into_town(train, with_unload=True, with_cooldown=True)
             line = self.map.line[train.line_idx]
             if train.speed > 0 and train.position < line.length:
                 train.position += 1
