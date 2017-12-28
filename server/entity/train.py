@@ -43,7 +43,7 @@ class Train(object):
         # Additional attributes from game_config:
         for key, value in CONFIG.TRAIN_LEVELS[self.level].items():
             setattr(self, key, value)
-        # self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
+        self.fuel = self.fuel_capacity if hasattr(self, 'fuel_capacity') else 0
         self.goods = goods
         self.post_type = post_type
         self.event = []

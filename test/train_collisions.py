@@ -430,10 +430,10 @@ class TestTrainCollisions(unittest.TestCase):
         self.move_train(test_line_idx, train_2['idx'], 1)
         self.turn()
 
-        for i in range(town['train_cooldown_on_collision']):
+        for i in range(town['train_cooldown']):
             map_data = self.get_map(1)
-            self.assertEqual(map_data['train'][0]['cooldown'], town['train_cooldown_on_collision'] - i)
-            self.assertEqual(map_data['train'][1]['cooldown'], town['train_cooldown_on_collision'] - i)
+            self.assertEqual(map_data['train'][0]['cooldown'], town['train_cooldown'] - i)
+            self.assertEqual(map_data['train'][1]['cooldown'], town['train_cooldown'] - i)
             self.move_train(test_line_idx, train_1['idx'], 1, exp_result=Result.BAD_COMMAND)
             self.move_train(test_line_idx, train_2['idx'], 1, exp_result=Result.BAD_COMMAND)
             self.turn()

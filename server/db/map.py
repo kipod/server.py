@@ -81,7 +81,7 @@ def generate_map01(db: DbMap, session: MapSession):
     """ Generates 'map01'. See 'map01.png'.
     """
     # Map:
-    db.add_map(name='TheMap', size_x=330, size_y=248, session=session)
+    db.add_map(name=CONFIG.MAP_NAME, size_x=330, size_y=248, session=session)
     add_point = partial(db.add_point, session=session)
     add_post = partial(db.add_post, session=session)
     add_line = partial(db.add_line, session=session)
@@ -123,7 +123,7 @@ def generate_map02(db: DbMap, session: MapSession):
     """ Generates 'map02'. See 'map02.png'. This map is used for tests.
     """
     # Map:
-    db.add_map(name='theMap', size_x=330, size_y=248, session=session)
+    db.add_map(name=CONFIG.MAP_NAME, size_x=330, size_y=248, session=session)
     add_point = partial(db.add_point, session=session)
     add_post = partial(db.add_post, session=session)
     add_line = partial(db.add_line, session=session)
@@ -175,7 +175,7 @@ def generate_map03(db: DbMap, session: MapSession):
     """ Generates 'map03'. See 'map03.png'.
     """
     # Map:
-    db.add_map(name='theMap', size_x=200, size_y=200, session=session)
+    db.add_map(name=CONFIG.MAP_NAME, size_x=200, size_y=200, session=session)
     add_point = partial(db.add_point, session=session)
     add_post = partial(db.add_post, session=session)
     add_line = partial(db.add_line, session=session)
@@ -512,7 +512,7 @@ def generate_map04(db: DbMap, session: MapSession):
     """ Generates 'map04'. See 'map04.png'.
     """
     # Map:
-    db.add_map(name='theMap', size_x=200, size_y=200, session=session)
+    db.add_map(name=CONFIG.MAP_NAME, size_x=200, size_y=200, session=session)
     add_point = partial(db.add_point, session=session)
     add_post = partial(db.add_post, session=session)
     add_line = partial(db.add_line, session=session)
@@ -646,111 +646,111 @@ def generate_map04(db: DbMap, session: MapSession):
     add_post(p56, 'storage-04', PostType.STORAGE, armor=20, replenishment=5)
 
     # Lines:
-    add_line(4, p1, p2) # 1
-    add_line(4, p2, p3)
-    add_line(4, p3, p4)
-    add_line(4, p4, p5)
-    add_line(4, p5, p6)
-    add_line(4, p6, p7)
-    add_line(4, p7, p8)
-    add_line(4, p8, p9)
-    add_line(4, p9, p10) # 9
+    add_line(4, p1, p2)  # 1
+    add_line(4, p2, p3)  # 2
+    add_line(4, p3, p4)  # 3
+    add_line(4, p4, p5)  # 4
+    add_line(4, p5, p6)  # 5
+    add_line(4, p6, p7)  # 6
+    add_line(4, p7, p8)  # 7
+    add_line(4, p8, p9)  # 8
+    add_line(4, p9, p10)  # 9
 
-    add_line(5, p1, p11) # 10
-    add_line(5, p2, p12) # 11
-    add_line(5, p3, p13) # 12
-    add_line(5, p4, p14) # 13
-    add_line(5, p5, p15)
-    add_line(5, p6, p16)
-    add_line(5, p7, p17)
-    add_line(5, p8, p18)
-    add_line(5, p9, p19)
-    add_line(5, p10, p20) # 19
+    add_line(5, p1, p11)  # 10
+    add_line(5, p2, p12)  # 11
+    add_line(5, p3, p13)  # 12
+    add_line(5, p4, p14)  # 13
+    add_line(5, p5, p15)  # 14
+    add_line(5, p6, p16)  # 15
+    add_line(5, p7, p17)  # 16
+    add_line(5, p8, p18)  # 17
+    add_line(5, p9, p19)  # 18
+    add_line(5, p10, p20)  # 19
 
-    add_line(4, p11, p12) # 20
-    add_line(4, p12, p13)
-    add_line(4, p13, p14)
-    add_line(4, p14, p15)
-    add_line(4, p15, p16)
-    add_line(4, p16, p17)
-    add_line(4, p17, p18)
-    add_line(4, p18, p19)
-    add_line(4, p19, p20) # 28
+    add_line(4, p11, p12)  # 20
+    add_line(4, p12, p13)  # 21
+    add_line(4, p13, p14)  # 22
+    add_line(4, p14, p15)  # 23
+    add_line(4, p15, p16)  # 24
+    add_line(4, p16, p17)  # 25
+    add_line(4, p17, p18)  # 26
+    add_line(4, p18, p19)  # 27
+    add_line(4, p19, p20)  # 28
 
-    add_line(5, p11, p21) # 29
-    add_line(5, p12, p22) # 30
-    add_line(5, p13, p23) # 31
-    add_line(5, p14, p24) # 32
-    add_line(5, p15, p25)
-    add_line(5, p16, p26)
-    add_line(5, p17, p27)
-    add_line(5, p18, p28)
-    add_line(5, p19, p29)
-    add_line(5, p20, p30) # 38
+    add_line(5, p11, p21)  # 29
+    add_line(5, p12, p22)  # 30
+    add_line(5, p13, p23)  # 31
+    add_line(5, p14, p24)  # 32
+    add_line(5, p15, p25)  # 33
+    add_line(5, p16, p26)  # 34
+    add_line(5, p17, p27)  # 35
+    add_line(5, p18, p28)  # 36
+    add_line(5, p19, p29)  # 37
+    add_line(5, p20, p30)  # 38
 
-    add_line(4, p21, p22) # 39
-    add_line(4, p22, p23) # 40
-    add_line(4, p23, p24)
-    add_line(4, p24, p25)
-    add_line(4, p25, p26)
-    add_line(4, p26, p27)
-    add_line(4, p27, p28)
-    add_line(4, p28, p29)
-    add_line(4, p29, p30) # 47
+    add_line(4, p21, p22)  # 39
+    add_line(4, p22, p23)  # 40
+    add_line(4, p23, p24)  # 41
+    add_line(4, p24, p25)  # 42
+    add_line(4, p25, p26)  # 43
+    add_line(4, p26, p27)  # 44
+    add_line(4, p27, p28)  # 45
+    add_line(4, p28, p29)  # 46
+    add_line(4, p29, p30)  # 47
 
-    add_line(5, p21, p31) # 48
-    add_line(5, p22, p32) # 49
-    add_line(5, p23, p33) # 50
-    add_line(5, p24, p34) # 51
-    add_line(5, p25, p35)
-    add_line(5, p26, p36)
-    add_line(5, p27, p37)
-    add_line(5, p28, p38)
-    add_line(5, p29, p39)
-    add_line(5, p30, p40) # 57
+    add_line(5, p21, p31)  # 48
+    add_line(5, p22, p32)  # 49
+    add_line(5, p23, p33)  # 50
+    add_line(5, p24, p34)  # 51
+    add_line(5, p25, p35)  # 52
+    add_line(5, p26, p36)  # 53
+    add_line(5, p27, p37)  # 54
+    add_line(5, p28, p38)  # 55
+    add_line(5, p29, p39)  # 56
+    add_line(5, p30, p40)  # 57
 
-    add_line(4, p31, p32) # 58
-    add_line(4, p32, p33)
-    add_line(4, p33, p34) # 60
-    add_line(4, p34, p35)
-    add_line(4, p35, p36)
-    add_line(4, p36, p37)
-    add_line(4, p37, p38)
-    add_line(4, p38, p39)
-    add_line(4, p39, p40) # 66
+    add_line(4, p31, p32)  # 58
+    add_line(4, p32, p33)  # 59
+    add_line(4, p33, p34)  # 60
+    add_line(4, p34, p35)  # 61
+    add_line(4, p35, p36)  # 62
+    add_line(4, p36, p37)  # 63
+    add_line(4, p37, p38)  # 64
+    add_line(4, p38, p39)  # 65
+    add_line(4, p39, p40)  # 66
 
-    add_line(5, p31, p41) # 67
-    add_line(5, p32, p42)
-    add_line(5, p33, p43)
-    add_line(5, p34, p44)
-    add_line(5, p35, p45)
-    add_line(5, p36, p46)
-    add_line(5, p37, p47)
-    add_line(5, p38, p48)
-    add_line(5, p39, p49)
-    add_line(5, p40, p50)
+    add_line(5, p31, p41)  # 67
+    add_line(5, p32, p42)  # 68
+    add_line(5, p33, p43)  # 69
+    add_line(5, p34, p44)  # 70
+    add_line(5, p35, p45)  # 71
+    add_line(5, p36, p46)  # 72
+    add_line(5, p37, p47)  # 73
+    add_line(5, p38, p48)  # 74
+    add_line(5, p39, p49)  # 75
+    add_line(5, p40, p50)  # 76
 
 
-    add_line(4, p41, p42)  # noqa E303
-    add_line(4, p42, p43)
-    add_line(4, p43, p44)
-    add_line(4, p44, p45)
-    add_line(2, p45, p46)
-    add_line(4, p46, p47)
-    add_line(4, p47, p48)
-    add_line(4, p48, p49)
-    add_line(4, p49, p50)
+    add_line(4, p41, p42)  # 77 # noqa E303
+    add_line(4, p42, p43)  # 78
+    add_line(4, p43, p44)  # 79
+    add_line(4, p44, p45)  # 80
+    add_line(2, p45, p46)  # 81
+    add_line(4, p46, p47)  # 82
+    add_line(4, p47, p48)  # 83
+    add_line(4, p48, p49)  # 84
+    add_line(4, p49, p50)  # 85
 
-    add_line(5, p41, p51)
-    add_line(5, p42, p52)
-    add_line(5, p43, p53)
-    add_line(5, p44, p54)
-    add_line(2, p45, p55)
-    add_line(2, p46, p56)
-    add_line(5, p47, p57)
-    add_line(5, p48, p58)
-    add_line(5, p49, p59)
-    add_line(5, p50, p60)
+    add_line(5, p41, p51)  # 86
+    add_line(5, p42, p52)  # 87
+    add_line(5, p43, p53)  # 88
+    add_line(5, p44, p54)  # 89
+    add_line(2, p45, p55)  # 90
+    add_line(2, p46, p56)  # 91
+    add_line(5, p47, p57)  # 92
+    add_line(5, p48, p58)  # 93
+    add_line(5, p49, p59)  # 94
+    add_line(5, p50, p60)  # 95
 
 
     add_line(4, p51, p52)  # noqa E303
